@@ -26,4 +26,4 @@ jobs:
             git pull origin main
             npm install
             npm run build
-            pm2 restart numbers || pm2 start npm --name "numbers" -- start -- -p 9999
+            pm2 restart numbers || pm2 start npm --name "numbers" -- start -- -p 3333 -H 0.0.0.0
