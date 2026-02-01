@@ -98,7 +98,7 @@ export default function EventList({
                 {/* 설명 */}
                 {event.description && (
                   <div className="mt-3 p-3 bg-orange-50 rounded-lg">
-                    <p className="text-sm text-gray-700">{event.description}</p>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{event.description}</p>
                   </div>
                 )}
               </div>
