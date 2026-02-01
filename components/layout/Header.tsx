@@ -5,6 +5,7 @@
  */
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 
@@ -27,8 +28,17 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           {/* 로고 */}
           <Link href="/" className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-primary">No.S</h1>
-            <span className="text-sm text-gray-600">넘버에스</span>
+            <Image
+              src="/logo.svg"
+              alt="No.S 로고"
+              width={40}
+              height={40}
+              className="text-primary"
+            />
+            <div className="flex items-baseline gap-1">
+              <h1 className="text-2xl font-bold text-primary">No.S</h1>
+              <span className="text-sm text-gray-600">넘버에스</span>
+            </div>
           </Link>
 
           {/* 네비게이션 */}

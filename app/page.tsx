@@ -5,6 +5,7 @@
  */
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/lib/hooks/useAuth';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -20,6 +21,15 @@ export default function Home() {
         {/* Hero Section */}
         <section className="py-20 px-4">
           <div className="max-w-4xl mx-auto text-center">
+            <div className="flex justify-center mb-6">
+              <Image
+                src="/logo.svg"
+                alt="No.S 로고"
+                width={120}
+                height={120}
+                className="drop-shadow-lg"
+              />
+            </div>
             <h1 className="text-6xl md:text-7xl font-bold text-primary mb-4">
               No.S
             </h1>

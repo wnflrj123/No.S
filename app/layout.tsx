@@ -16,6 +16,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "No.S - 넘버에스 | 삼성전자 뮤지컬 동호회",
   description: "삼성전자 뮤지컬 동호회 No.S의 예약 공유 플랫폼",
+  icons: {
+    icon: "/logo.svg",
+    apple: "/logo.svg",
+  },
 };
 
 export default function RootLayout({

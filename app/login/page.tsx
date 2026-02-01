@@ -6,6 +6,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAuth } from '@/lib/hooks/useAuth';
 import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
 
@@ -31,6 +32,15 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12 max-w-md w-full">
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <Image
+              src="/logo.svg"
+              alt="No.S 로고"
+              width={80}
+              height={80}
+              className="drop-shadow-md"
+            />
+          </div>
           <h1 className="text-4xl font-bold text-primary mb-2">No.S</h1>
           <p className="text-xl text-gray-600 mb-1">넘버에스</p>
           <p className="text-sm text-gray-500">삼성전자 뮤지컬 동호회</p>
