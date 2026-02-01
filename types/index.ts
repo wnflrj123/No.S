@@ -17,6 +17,7 @@ export interface Reservation {
   location: LocationType;
   customLocation?: string; // "기타" 선택 시만 사용
   purpose: string;
+  repeatGroupId?: string; // 반복 일정 그룹 ID
   createdAt: Date;
   updatedAt: Date;
 }
@@ -58,6 +59,32 @@ export interface User {
 export interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isAdmin: boolean;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+}
+
+// 동호회 행사 인터페이스
+export interface ClubEvent {
+  id: string;
+  title: string;
+  description: string;
+  date: string; // YYYY-MM-DD 형식
+  startTime?: string; // HH:mm 형식 (선택)
+  endTime?: string; // HH:mm 형식 (선택)
+  location?: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// 동호회 행사 폼 데이터
+export interface ClubEventFormData {
+  title: string;
+  description: string;
+  date: string;
+  startTime?: string;
+  endTime?: string;
+  location?: string;
 }

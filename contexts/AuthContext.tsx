@@ -12,7 +12,8 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 import { User, AuthContextType } from '@/types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,9 +21,25 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // 운영진 여부 확인
+  const checkAdminStatus = async (uid: string): Promise<boolean> => {
+    try {
+      const adminDoc = await getDoc(doc(db, 'settings', 'admins'));
+      if (adminDoc.exists()) {
+        const adminList = adminDoc.data().uids || [];
+        return adminList.includes(uid);
+      }
+      return false;
+    } catch (error) {
+      console.error('운영진 확인 실패:', error);
+      return false;
+    }
+  };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         setUser({
           uid: firebaseUser.uid,
@@ -30,8 +47,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: firebaseUser.email,
           photoURL: firebaseUser.photoURL,
         });
+
+        // 운영진 여부 확인
+        const adminStatus = await checkAdminStatus(firebaseUser.uid);
+        setIsAdmin(adminStatus);
       } else {
         setUser(null);
+        setIsAdmin(false);
       }
       setLoading(false);
     });
@@ -61,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextType = {
     user,
     loading,
+    isAdmin,
     signInWithGoogle,
     signOut,
   };

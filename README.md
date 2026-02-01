@@ -1,37 +1,81 @@
+# No.S (넘버에스)
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+삼성전자 뮤지컬 동호회 **No.S**의 예약 현황 공유 시스템입니다.
 
-## Getting Started
+> ⚠️ 이 사이트는 실제 예약 시스템이 아닙니다. 회사 시스템에서 예약한 내용을 동호회원들과 공유하는 용도입니다.
 
-First, run the development server:
+## 주요 기능
+
+- 🔐 **Google 로그인** - 동호회원 인증
+- 📅 **예약 현황 조회** - 캘린더/목록 뷰로 예약 확인
+- ✏️ **예약 정보 등록** - 예약한 내용 공유 (반복 일정 지원)
+- 🎭 **동호회 행사** - 공연, 워크샵 등 행사 일정 공유
+- 👑 **운영진 관리** - 운영진 추가/삭제 기능
+
+## 기술 스택
+
+- **Frontend**: Next.js 14, React, TypeScript
+- **Styling**: TailwindCSS
+- **Backend**: Firebase (Authentication, Firestore)
+- **Deployment**: Self-hosted Server with PM2
+
+## 시작하기
+
+### 1. 패키지 설치
+
+```bash
+npm install
+```
+
+### 2. 환경 변수 설정
+
+`.env.local` 파일을 생성하고 Firebase 설정을 추가:
+
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+```
+
+### 3. 개발 서버 실행
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 4. 프로덕션 빌드
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 배포
 
-## Learn More
+GitHub Actions를 통해 `main` 브랜치에 push하면 자동으로 서버에 배포됩니다.
 
-To learn more about Next.js, take a look at the following resources:
+## 프로젝트 구조
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+├── app/                    # Next.js App Router 페이지
+│   ├── page.tsx           # 메인(랜딩) 페이지
+│   ├── login/             # 로그인 페이지
+│   ├── reservations/      # 예약 현황 페이지
+│   └── admin/             # 운영진 관리 페이지
+├── components/            # React 컴포넌트
+│   ├── common/            # 공통 컴포넌트
+│   ├── layout/            # 레이아웃 (Header, Footer)
+│   ├── auth/              # 인증 관련
+│   ├── reservations/      # 예약 관련
+│   └── events/            # 행사 관련
+├── contexts/              # React Context
+├── lib/                   # 유틸리티, Firebase 설정
+└── types/                 # TypeScript 타입 정의
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 라이선스
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Private - 삼성전자 뮤지컬 동호회 No.S 전용
