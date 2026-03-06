@@ -23,8 +23,8 @@ jobs:
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            cd ~/Jool/Numbers || git clone https://github.com/wnflrj123/No.S.git ~/Jool/Numbers
-            cd ~/Jool/Numbers
+            cd ~/Deploy/No.S || git clone https://github.com/wnflrj123/No.S.git ~/Deploy/No.S
+            cd ~/Deploy/No.S
             git pull origin main
             npm install
             npm run build
