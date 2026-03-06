@@ -21,8 +21,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           script: |
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            export PATH="/opt/homebrew/bin:$PATH"
             cd ~/Deploy/No.S || git clone https://github.com/wnflrj123/No.S.git ~/Deploy/No.S
             cd ~/Deploy/No.S
             git pull origin main
