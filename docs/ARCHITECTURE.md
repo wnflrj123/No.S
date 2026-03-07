@@ -87,11 +87,13 @@ No.S/
 {
   title: string
   description?: string
-  date: string             // "YYYY-MM-DD"
+  date: string             // "YYYY-MM-DD" (시작일)
+  endDate?: string         // "YYYY-MM-DD" (종료일, 여러날 행사)
   startTime?: string       // "HH:mm" (선택)
   endTime?: string         // "HH:mm" (선택)
   location?: LocationType
   customLocation?: string
+  locationUrl?: string     // 지도 링크 (네이버지도, 카카오맵 등)
   createdBy: string        // userId
   createdByName: string
   createdAt: Timestamp

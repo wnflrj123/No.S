@@ -5,7 +5,7 @@ import { collection, addDoc, updateDoc, doc, Timestamp } from 'firebase/firestor
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { ClubEvent, ClubEventFormData, LocationType } from '@/types';
-import { FiCalendar } from 'react-icons/fi';
+import { FiCalendar, FiLink } from 'react-icons/fi';
 import TimePicker from '@/components/common/TimePicker';
 
 const LOCATIONS: LocationType[] = ['합동연습실', 'ART8실', '댄스3실', '기타'];
@@ -34,13 +34,16 @@ export default function EventForm({
     return '기타';
   };
 
+  const [isMultiDay, setIsMultiDay] = useState(!!editingEvent?.endDate);
   const [formData, setFormData] = useState<ClubEventFormData>({
     title: editingEvent?.title || '',
     description: editingEvent?.description || '',
     date: editingEvent?.date || defaultDate || new Date().toISOString().split('T')[0],
+    endDate: editingEvent?.endDate || '',
     startTime: editingEvent?.startTime || '18:00',
     endTime: editingEvent?.endTime || '21:00',
     location: editingEvent?.location || '합동연습실',
+    locationUrl: editingEvent?.locationUrl || '',
   });
 
   const [selectedLocationType, setSelectedLocationType] = useState<LocationType>(getInitialLocationType());
@@ -84,6 +87,10 @@ export default function EventForm({
       setError('날짜를 선택해주세요');
       return false;
     }
+    if (isMultiDay && formData.endDate && formData.endDate < formData.date) {
+      setError('종료일은 시작일보다 늦어야 해요');
+      return false;
+    }
     if (formData.startTime && formData.endTime && formData.startTime >= formData.endTime) {
       setError('종료 시간은 시작 시간보다 늦어야 해요');
       return false;
@@ -115,9 +122,11 @@ export default function EventForm({
         title: formData.title.trim(),
         description: formData.description.trim(),
         date: formData.date,
+        endDate: isMultiDay && formData.endDate ? formData.endDate : null,
         ...(formData.startTime && { startTime: formData.startTime }),
         ...(formData.endTime && { endTime: formData.endTime }),
         location: finalLocation,
+        locationUrl: formData.locationUrl?.trim() || null,
         updatedAt: Timestamp.now(),
       };
 
@@ -179,17 +188,45 @@ export default function EventForm({
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
-            날짜 <span className="text-red-400">*</span>
-          </label>
-          <input
-            type="date"
-            name="date"
-            value={formData.date}
-            onChange={handleChange}
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent text-sm bg-white"
-            required
-          />
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-sm font-medium" style={{ color: '#4e5968' }}>
+              {isMultiDay ? '시작일' : '날짜'} <span className="text-red-400">*</span>
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isMultiDay}
+                onChange={(e) => setIsMultiDay(e.target.checked)}
+                className="w-3.5 h-3.5 text-orange-500 rounded focus:ring-orange-400"
+              />
+              <span className="text-xs font-medium" style={{ color: '#8b95a1' }}>여러 날</span>
+            </label>
+          </div>
+          <div className={isMultiDay ? 'grid grid-cols-2 gap-2' : ''}>
+            <input
+              type="date"
+              name="date"
+              value={formData.date}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent text-sm bg-white"
+              required
+            />
+            {isMultiDay && (
+              <input
+                type="date"
+                name="endDate"
+                value={formData.endDate}
+                onChange={handleChange}
+                min={formData.date}
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent text-sm bg-white"
+                placeholder="종료일"
+                required
+              />
+            )}
+          </div>
+          {isMultiDay && (
+            <p className="text-[11px] mt-1" style={{ color: '#8b95a1' }}>시작일부터 종료일까지 캘린더에 표시돼요</p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -251,6 +288,22 @@ export default function EventForm({
             />
           </div>
         )}
+
+        <div>
+          <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
+            <FiLink className="inline-block mr-1" size={13} />
+            지도 링크
+          </label>
+          <input
+            type="url"
+            name="locationUrl"
+            value={formData.locationUrl}
+            onChange={handleChange}
+            placeholder="네이버지도, 카카오맵 등의 링크를 붙여넣으세요"
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent text-sm"
+          />
+          <p className="text-[11px] mt-1" style={{ color: '#8b95a1' }}>지도 앱에서 공유 링크를 복사해 붙여넣으면 돼요</p>
+        </div>
 
         <div>
           <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>

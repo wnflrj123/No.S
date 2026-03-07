@@ -17,6 +17,7 @@ import {
 import { ko } from 'date-fns/locale';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { eachDayOfInterval, parse } from 'date-fns';
 import { FiChevronLeft, FiChevronRight, FiStar } from 'react-icons/fi';
 
 interface ReservationCalendarProps {
@@ -53,9 +54,10 @@ export default function ReservationCalendar({
       where('date', '<=', monthEnd)
     );
 
+    // 여러날 행사: date <= monthEnd이고, endDate >= monthStart이거나 date >= monthStart인 행사
+    // Firestore 제약으로 date <= monthEnd만 쿼리하고 클라이언트에서 필터
     const eventQuery = query(
       collection(db, 'events'),
-      where('date', '>=', monthStart),
       where('date', '<=', monthEnd)
     );
 
@@ -104,9 +106,29 @@ export default function ReservationCalendar({
       eventQuery,
       (snapshot) => {
         eventData = {};
-        snapshot.docs.forEach((doc) => {
-          const date = doc.data().date;
-          eventData[date] = doc.data().title;
+        snapshot.docs.forEach((d) => {
+          const data = d.data();
+          const eventStart = data.date;
+          const eventEnd = data.endDate || data.date;
+
+          // 이 달과 겹치지 않으면 스킵
+          if (eventEnd < monthStart) return;
+
+          // 여러날 행사: 각 날짜에 타이틀 매핑
+          const rangeStart = eventStart < monthStart ? monthStart : eventStart;
+          const rangeEnd = eventEnd > monthEnd ? monthEnd : eventEnd;
+
+          try {
+            const days = eachDayOfInterval({
+              start: parse(rangeStart, 'yyyy-MM-dd', new Date()),
+              end: parse(rangeEnd, 'yyyy-MM-dd', new Date()),
+            });
+            days.forEach((day) => {
+              eventData[format(day, 'yyyy-MM-dd')] = data.title;
+            });
+          } catch {
+            eventData[eventStart] = data.title;
+          }
         });
         eventLoaded = true;
         updateDayData();

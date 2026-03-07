@@ -19,9 +19,9 @@ import ReservationForm from '@/components/reservations/ReservationForm';
 import ReservationList from '@/components/reservations/ReservationList';
 import EventForm from '@/components/events/EventForm';
 import EventList from '@/components/events/EventList';
-import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay } from 'date-fns';
+import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay, eachDayOfInterval, parse } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { FiPlus, FiCalendar, FiList, FiStar, FiClock, FiMapPin, FiFilter, FiEdit2 } from 'react-icons/fi';
+import { FiPlus, FiCalendar, FiList, FiStar, FiClock, FiMapPin, FiFilter, FiEdit2, FiExternalLink } from 'react-icons/fi';
 
 type FormType = 'none' | 'reservation' | 'event';
 type RangePreset = '1week' | '2weeks' | '1month' | 'custom';
@@ -106,7 +106,7 @@ export default function ReservationsPage() {
     return () => unsubscribe();
   }, [user, selectedDate, refreshTrigger, viewMode]);
 
-  // Calendar view: single date events
+  // Calendar view: single date events (여러날 행사 포함)
   useEffect(() => {
     if (!user || viewMode !== 'calendar') return;
 
@@ -115,20 +115,26 @@ export default function ReservationsPage() {
 
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
 
+    // date <= selectedDate인 행사를 가져와서 클라이언트에서 필터
     const q = query(
       collection(db, 'events'),
-      where('date', '==', dateStr)
+      where('date', '<=', dateStr)
     );
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const data: ClubEvent[] = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate(),
-          updatedAt: doc.data().updatedAt?.toDate(),
-        })) as ClubEvent[];
+        const data: ClubEvent[] = snapshot.docs
+          .map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.toDate(),
+            updatedAt: doc.data().updatedAt?.toDate(),
+          }))
+          .filter((event: any) => {
+            const endDate = event.endDate || event.date;
+            return endDate >= dateStr;
+          }) as ClubEvent[];
         setEvents(data);
         setEventsLoading(false);
       },
@@ -156,9 +162,9 @@ export default function ReservationsPage() {
       orderBy('startTime', 'asc')
     );
 
+    // 여러날 행사: date <= end인 행사를 가져와서 클라이언트에서 필터
     const evtQuery = query(
       collection(db, 'events'),
-      where('date', '>=', start),
       where('date', '<=', end)
     );
 
@@ -182,12 +188,17 @@ export default function ReservationsPage() {
     }, () => { resLoaded = true; checkDone(); });
 
     const unsubEvt = onSnapshot(evtQuery, (snapshot) => {
-      const data: ClubEvent[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate(),
-        updatedAt: doc.data().updatedAt?.toDate(),
-      })) as ClubEvent[];
+      const data: ClubEvent[] = snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate(),
+          updatedAt: doc.data().updatedAt?.toDate(),
+        }))
+        .filter((event: any) => {
+          const endDate = event.endDate || event.date;
+          return endDate >= start;
+        }) as ClubEvent[];
       setListEvents(data);
       evtLoaded = true;
       checkDone();
@@ -198,6 +209,7 @@ export default function ReservationsPage() {
 
   // Group list data by date
   const groupedByDate = () => {
+    const { start, end } = getDateRange();
     const map = new Map<string, { reservations: Reservation[]; events: ClubEvent[] }>();
 
     if (!showEventsOnly) {
@@ -208,8 +220,28 @@ export default function ReservationsPage() {
     }
 
     listEvents.forEach((e) => {
-      if (!map.has(e.date)) map.set(e.date, { reservations: [], events: [] });
-      map.get(e.date)!.events.push(e);
+      // 여러날 행사: 범위 내 각 날짜에 분배
+      const eventStart = e.date < start ? start : e.date;
+      const eventEnd = (e.endDate || e.date) > end ? end : (e.endDate || e.date);
+
+      try {
+        const days = eachDayOfInterval({
+          start: parse(eventStart, 'yyyy-MM-dd', new Date()),
+          end: parse(eventEnd, 'yyyy-MM-dd', new Date()),
+        });
+        days.forEach((day) => {
+          const dateStr = format(day, 'yyyy-MM-dd');
+          if (!map.has(dateStr)) map.set(dateStr, { reservations: [], events: [] });
+          // 같은 행사 중복 추가 방지
+          const existing = map.get(dateStr)!.events;
+          if (!existing.find((ev) => ev.id === e.id)) {
+            existing.push(e);
+          }
+        });
+      } catch {
+        if (!map.has(e.date)) map.set(e.date, { reservations: [], events: [] });
+        map.get(e.date)!.events.push(e);
+      }
     });
 
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
@@ -546,15 +578,19 @@ export default function ReservationsPage() {
                   {/* Events for this date */}
                   {data.events.map((event) => (
                     <div
-                      key={event.id}
+                      key={`${event.id}-${dateStr}`}
                       className="bg-white rounded-2xl p-4 border border-gray-100 border-l-[3px] border-l-orange-400 mb-2 card-hover"
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <FiStar className="text-orange-500 shrink-0" size={13} />
                         <span className="text-sm font-bold text-foreground">{event.title}</span>
-                        <span className="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-md font-medium">행사</span>
+                        <span className="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-md font-medium">
+                          {event.endDate
+                            ? `${format(new Date(event.date + 'T00:00:00'), 'M/d', { locale: ko })}~${format(new Date(event.endDate + 'T00:00:00'), 'M/d', { locale: ko })}`
+                            : '행사'}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-3 text-xs" style={{ color: '#8b95a1' }}>
+                      <div className="flex items-center gap-3 text-xs flex-wrap" style={{ color: '#8b95a1' }}>
                         {(event.startTime || event.endTime) && (
                           <span className="flex items-center gap-1">
                             <FiClock size={11} />
@@ -562,10 +598,24 @@ export default function ReservationsPage() {
                           </span>
                         )}
                         {event.location && (
-                          <span className="flex items-center gap-1">
-                            <FiMapPin size={11} />
-                            {event.location}
-                          </span>
+                          event.locationUrl ? (
+                            <a
+                              href={event.locationUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-primary hover:underline font-medium"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <FiMapPin size={11} />
+                              {event.location}
+                              <FiExternalLink size={10} />
+                            </a>
+                          ) : (
+                            <span className="flex items-center gap-1">
+                              <FiMapPin size={11} />
+                              {event.location}
+                            </span>
+                          )
                         )}
                       </div>
                     </div>

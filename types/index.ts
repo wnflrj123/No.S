@@ -73,10 +73,12 @@ export interface ClubEvent {
   id: string;
   title: string;
   description: string;
-  date: string; // YYYY-MM-DD 형식
+  date: string; // YYYY-MM-DD 형식 (시작일)
+  endDate?: string; // YYYY-MM-DD 형식 (종료일, 여러날 행사)
   startTime?: string; // HH:mm 형식 (선택)
   endTime?: string; // HH:mm 형식 (선택)
   location?: string;
+  locationUrl?: string; // 지도 링크 (네이버지도, 카카오맵 등)
   createdBy: string;
   createdByName: string;
   createdAt: Date;
@@ -88,7 +90,9 @@ export interface ClubEventFormData {
   title: string;
   description: string;
   date: string;
+  endDate?: string;
   startTime?: string;
   endTime?: string;
   location?: string;
+  locationUrl?: string;
 }

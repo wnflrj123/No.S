@@ -5,7 +5,9 @@ import { deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { ClubEvent } from '@/types';
-import { FiEdit2, FiTrash2, FiMapPin, FiClock, FiCalendar } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiMapPin, FiClock, FiCalendar, FiExternalLink } from 'react-icons/fi';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 interface EventListProps {
   events: ClubEvent[];
@@ -70,7 +72,7 @@ export default function EventList({
                   <FiCalendar className="text-orange-500 shrink-0" size={15} />
                   <h4 className="text-[15px] font-bold text-foreground">{event.title}</h4>
                   <span className="text-[11px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-lg font-medium">
-                    행사
+                    {event.endDate ? `${format(new Date(event.date + 'T00:00:00'), 'M/d', { locale: ko })}~${format(new Date(event.endDate + 'T00:00:00'), 'M/d', { locale: ko })}` : '행사'}
                   </span>
                 </div>
 
@@ -88,7 +90,19 @@ export default function EventList({
                 {event.location && (
                   <div className="flex items-center gap-2 mb-3">
                     <FiMapPin size={14} className="shrink-0" style={{ color: '#8b95a1' }} />
-                    <span className="text-sm" style={{ color: '#4e5968' }}>{event.location}</span>
+                    {event.locationUrl ? (
+                      <a
+                        href={event.locationUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
+                      >
+                        {event.location}
+                        <FiExternalLink size={12} />
+                      </a>
+                    ) : (
+                      <span className="text-sm" style={{ color: '#4e5968' }}>{event.location}</span>
+                    )}
                   </div>
                 )}
 
