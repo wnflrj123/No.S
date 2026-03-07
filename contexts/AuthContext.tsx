@@ -8,7 +8,7 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, writeBatch, Timestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { User, AuthContextType } from '@/types';
 
@@ -117,10 +117,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const trimmed = name.trim();
     const newCustomName = trimmed || null;
+    const newDisplayName = newCustomName || user.displayName || '익명';
 
+    // 1. users 컬렉션 업데이트
     await updateDoc(doc(db, 'users', user.uid), {
       customName: newCustomName,
     });
+
+    // 2. 기존 예약의 userName 일괄 업데이트
+    try {
+      const q = query(
+        collection(db, 'reservations'),
+        where('userId', '==', user.uid)
+      );
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+        const batch = writeBatch(db);
+        snapshot.docs.forEach((d) => {
+          batch.update(d.ref, { userName: newDisplayName });
+        });
+        await batch.commit();
+      }
+    } catch (e) {
+      console.error('예약 이름 업데이트 실패:', e);
+    }
 
     setUser((prev) => prev ? { ...prev, customName: newCustomName } : null);
   };
