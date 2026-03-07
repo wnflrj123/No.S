@@ -1,10 +1,6 @@
 'use client';
 
-/**
- * 인증 상태 관리 Context
- */
-
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import {
   GoogleAuthProvider,
   signInWithPopup,
@@ -12,7 +8,7 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { User, AuthContextType } from '@/types';
 
@@ -23,6 +19,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+
+  const effectiveName = useMemo(() => {
+    if (!user) return '익명';
+    return user.customName || user.displayName || '익명';
+  }, [user]);
 
   const checkRoles = async (uid: string): Promise<{ admin: boolean; owner: boolean }> => {
     try {
@@ -46,11 +47,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
+        // Firestore에서 customName 읽기
+        let customName: string | null = null;
+        try {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (userDoc.exists()) {
+            customName = userDoc.data().customName || null;
+          }
+        } catch (e) {
+          console.error('사용자 정보 조회 실패:', e);
+        }
+
         setUser({
           uid: firebaseUser.uid,
           displayName: firebaseUser.displayName,
           email: firebaseUser.email,
           photoURL: firebaseUser.photoURL,
+          customName,
         });
 
         // users 컬렉션에 사용자 정보 저장/업데이트
@@ -99,13 +112,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateCustomName = async (name: string) => {
+    if (!user) throw new Error('로그인이 필요해요');
+
+    const trimmed = name.trim();
+    const newCustomName = trimmed || null;
+
+    await updateDoc(doc(db, 'users', user.uid), {
+      customName: newCustomName,
+    });
+
+    setUser((prev) => prev ? { ...prev, customName: newCustomName } : null);
+  };
+
   const value: AuthContextType = {
     user,
     loading,
     isAdmin,
     isOwner,
+    effectiveName,
     signInWithGoogle,
     signOut,
+    updateCustomName,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

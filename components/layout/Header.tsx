@@ -1,13 +1,32 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import { FiEdit2, FiCheck, FiX } from 'react-icons/fi';
 
 export default function Header() {
-  const { user, isOwner, signOut } = useAuth();
+  const { user, isOwner, effectiveName, signOut, updateCustomName } = useAuth();
   const router = useRouter();
+  const [showProfile, setShowProfile] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setShowProfile(false);
+        setEditingName(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -15,6 +34,27 @@ export default function Header() {
       router.push('/');
     } catch (error) {
       console.error('로그아웃 실패:', error);
+    }
+  };
+
+  const startEditName = () => {
+    setNameInput(user?.customName || '');
+    setEditingName(true);
+    setSaveMessage(null);
+  };
+
+  const handleSaveName = async () => {
+    setSaving(true);
+    try {
+      await updateCustomName(nameInput);
+      setEditingName(false);
+      setSaveMessage('이름이 변경되었어요');
+      setTimeout(() => setSaveMessage(null), 2000);
+    } catch (e) {
+      console.error('이름 변경 실패:', e);
+      setSaveMessage('변경에 실패했어요');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -51,25 +91,101 @@ export default function Header() {
             )}
 
             {user ? (
-              <div className="flex items-center gap-3 ml-2">
-                <div className="flex items-center gap-2">
+              <div className="relative ml-2" ref={profileRef}>
+                <button
+                  onClick={() => { setShowProfile(!showProfile); setEditingName(false); }}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                >
                   {user.photoURL && (
                     <img
                       src={user.photoURL}
-                      alt={user.displayName || '사용자'}
+                      alt={effectiveName}
                       className="w-7 h-7 rounded-full ring-2 ring-gray-100"
                     />
                   )}
                   <span className="text-sm text-gray-600 hidden sm:inline">
-                    {user.displayName}
+                    {effectiveName}
                   </span>
-                </div>
-                <button
-                  onClick={handleSignOut}
-                  className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  로그아웃
                 </button>
+
+                {showProfile && (
+                  <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl border border-gray-100 shadow-lg p-4 animate-slide-down z-50">
+                    {/* Profile info */}
+                    <div className="flex items-center gap-3 mb-3">
+                      {user.photoURL && (
+                        <img
+                          src={user.photoURL}
+                          alt={effectiveName}
+                          className="w-11 h-11 rounded-full"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-foreground truncate">{effectiveName}</p>
+                        <p className="text-xs truncate" style={{ color: '#8b95a1' }}>{user.email}</p>
+                      </div>
+                    </div>
+
+                    {/* Name edit */}
+                    <div className="border-t border-gray-100 pt-3 mb-3">
+                      <p className="text-xs font-medium mb-2" style={{ color: '#8b95a1' }}>표시 이름</p>
+                      {editingName ? (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={nameInput}
+                            onChange={(e) => setNameInput(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                            placeholder={user.displayName || '이름 입력'}
+                            className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                            autoFocus
+                            maxLength={20}
+                          />
+                          <button
+                            onClick={handleSaveName}
+                            disabled={saving}
+                            className="w-8 h-8 flex items-center justify-center text-primary hover:bg-primary/8 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            <FiCheck size={16} />
+                          </button>
+                          <button
+                            onClick={() => setEditingName(false)}
+                            className="w-8 h-8 flex items-center justify-center text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+                          >
+                            <FiX size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={startEditName}
+                          className="w-full flex items-center justify-between px-3 py-2 bg-secondary rounded-xl text-sm hover:bg-gray-200 transition-colors"
+                        >
+                          <span style={{ color: '#4e5968' }}>
+                            {user.customName || (
+                              <span style={{ color: '#b0b8c1' }}>이름을 설정해보세요</span>
+                            )}
+                          </span>
+                          <FiEdit2 size={13} style={{ color: '#8b95a1' }} />
+                        </button>
+                      )}
+                      {saveMessage && (
+                        <p className="text-xs text-primary mt-1.5 font-medium">{saveMessage}</p>
+                      )}
+                      {!editingName && (
+                        <p className="text-[11px] mt-1.5" style={{ color: '#b0b8c1' }}>
+                          비우면 Google 이름({user.displayName})이 사용돼요
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Sign out */}
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full py-2.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors font-medium"
+                    >
+                      로그아웃
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <Link

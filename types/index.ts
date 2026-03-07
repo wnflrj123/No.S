@@ -53,6 +53,7 @@ export interface User {
   displayName: string | null;
   email: string | null;
   photoURL?: string | null;
+  customName?: string | null;
 }
 
 // 인증 컨텍스트 타입
@@ -61,8 +62,10 @@ export interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   isOwner: boolean;
+  effectiveName: string;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  updateCustomName: (name: string) => Promise<void>;
 }
 
 // 동호회 행사 인터페이스

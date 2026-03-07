@@ -20,6 +20,7 @@ interface MemberUser {
   uid: string;
   email: string;
   displayName: string;
+  customName?: string;
   photoURL?: string;
 }
 
@@ -203,6 +204,7 @@ export default function AdminPage() {
         uid: doc.id,
         email: doc.data().email || '',
         displayName: doc.data().displayName || '',
+        customName: doc.data().customName || '',
         photoURL: doc.data().photoURL || '',
       }));
 
@@ -613,7 +615,9 @@ export default function AdminPage() {
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-medium text-foreground truncate">{member.displayName || '(이름 없음)'}</p>
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {member.customName || member.displayName || '(이름 없음)'}
+                          </p>
                           {role === 'owner' && (
                             <span className="text-[10px] bg-orange-400 text-white px-1.5 py-0.5 rounded-md font-medium shrink-0">Owner</span>
                           )}
@@ -621,7 +625,13 @@ export default function AdminPage() {
                             <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-md font-medium shrink-0">Admin</span>
                           )}
                         </div>
-                        <p className="text-xs truncate" style={{ color: '#8b95a1' }}>{member.email}</p>
+                        <p className="text-xs truncate" style={{ color: '#8b95a1' }}>
+                          {member.customName && member.displayName ? (
+                            <>{member.displayName} · {member.email}</>
+                          ) : (
+                            member.email
+                          )}
+                        </p>
                       </div>
                       {role === 'member' && (
                         <button

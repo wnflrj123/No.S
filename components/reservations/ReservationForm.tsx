@@ -37,7 +37,7 @@ export default function ReservationForm({
   editingReservation,
   defaultDate,
 }: ReservationFormProps) {
-  const { user } = useAuth();
+  const { user, effectiveName } = useAuth();
   const isEditing = !!editingReservation;
 
   const [formData, setFormData] = useState<ReservationFormData>({
@@ -162,7 +162,7 @@ export default function ReservationForm({
     try {
       const baseReservationData = {
         userId: user.uid,
-        userName: user.displayName || '익명',
+        userName: effectiveName,
         userEmail: user.email || '',
         startTime: formData.startTime,
         endTime: formData.endTime,
