@@ -3,8 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import {
   GoogleAuthProvider,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User as FirebaseUser,
@@ -90,15 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // signInWithRedirect 후 돌아왔을 때 결과를 처리하는 Promise
-    const redirectPromise = getRedirectResult(auth).catch((error) => {
-      console.error('리다이렉트 로그인 처리 실패:', error);
-    });
-
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      // 리다이렉트 결과가 처리될 때까지 대기 (첫 호출 시 null이 올 수 있음)
-      await redirectPromise;
-
       await handleFirebaseUser(firebaseUser);
       setLoading(false);
     });
@@ -109,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithRedirect(auth, provider);
+      await signInWithPopup(auth, provider);
     } catch (error) {
       console.error('Google 로그인 실패:', error);
       throw error;
