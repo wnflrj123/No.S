@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 
 export default function Header() {
-  const { user, signOut } = useAuth();
+  const { user, isOwner, signOut } = useAuth();
   const router = useRouter();
 
   const handleSignOut = async () => {
@@ -39,6 +39,14 @@ export default function Header() {
                 className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-foreground rounded-lg hover:bg-gray-100 transition-colors"
               >
                 예약 현황
+              </Link>
+            )}
+            {isOwner && (
+              <Link
+                href="/admin"
+                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-foreground rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                관리
               </Link>
             )}
 

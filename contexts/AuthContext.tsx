@@ -12,7 +12,7 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { User, AuthContextType } from '@/types';
 
@@ -22,19 +22,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
 
-  // 운영진 여부 확인
-  const checkAdminStatus = async (uid: string): Promise<boolean> => {
+  const checkRoles = async (uid: string): Promise<{ admin: boolean; owner: boolean }> => {
     try {
       const adminDoc = await getDoc(doc(db, 'settings', 'admins'));
       if (adminDoc.exists()) {
-        const adminList = adminDoc.data().uids || [];
-        return adminList.includes(uid);
+        const data = adminDoc.data();
+        const adminList = data.uids || [];
+        const ownerUid = data.ownerUid || '';
+        return {
+          admin: adminList.includes(uid) || ownerUid === uid,
+          owner: ownerUid === uid,
+        };
       }
-      return false;
+      return { admin: false, owner: false };
     } catch (error) {
-      console.error('운영진 확인 실패:', error);
-      return false;
+      console.error('권한 확인 실패:', error);
+      return { admin: false, owner: false };
     }
   };
 
@@ -48,12 +53,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           photoURL: firebaseUser.photoURL,
         });
 
-        // 운영진 여부 확인
-        const adminStatus = await checkAdminStatus(firebaseUser.uid);
-        setIsAdmin(adminStatus);
+        const roles = await checkRoles(firebaseUser.uid);
+        setIsAdmin(roles.admin);
+        setIsOwner(roles.owner);
       } else {
         setUser(null);
         setIsAdmin(false);
+        setIsOwner(false);
       }
       setLoading(false);
     });
@@ -84,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     loading,
     isAdmin,
+    isOwner,
     signInWithGoogle,
     signOut,
   };

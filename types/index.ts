@@ -60,6 +60,7 @@ export interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
+  isOwner: boolean;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
 }
