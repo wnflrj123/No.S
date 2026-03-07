@@ -33,6 +33,12 @@ import {
   FiCheck,
   FiArrowLeft,
 } from 'react-icons/fi';
+import dynamic from 'next/dynamic';
+
+const RichTextEditor = dynamic(
+  () => import('@/components/notices/RichTextEditor'),
+  { ssr: false }
+);
 
 const PAGE_SIZE = 10;
 
@@ -177,21 +183,22 @@ export default function NoticesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !formData.title.trim() || !formData.content.trim()) return;
+    const contentEmpty = !formData.content || formData.content === '<p></p>';
+    if (!user || !formData.title.trim() || contentEmpty) return;
 
     setSaving(true);
     try {
       if (editingNotice) {
         await updateDoc(doc(db, 'notices', editingNotice.id), {
           title: formData.title.trim(),
-          content: formData.content.trim(),
+          content: formData.content,
           pinned: formData.pinned,
           updatedAt: Timestamp.now(),
         });
       } else {
         await addDoc(collection(db, 'notices'), {
           title: formData.title.trim(),
-          content: formData.content.trim(),
+          content: formData.content,
           pinned: formData.pinned,
           createdBy: user.uid,
           createdByName: user.customName || user.displayName || '익명',
@@ -244,13 +251,10 @@ export default function NoticesPage() {
             required
             className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
           />
-          <textarea
-            value={formData.content}
-            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+          <RichTextEditor
+            content={formData.content}
+            onChange={(html) => setFormData({ ...formData, content: html })}
             placeholder="내용을 입력하세요"
-            required
-            rows={6}
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
           />
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -380,12 +384,20 @@ export default function NoticesPage() {
 
               {/* 공지 본문 */}
               <div className="px-6 py-6">
-                <p
-                  className="text-sm leading-relaxed whitespace-pre-wrap"
-                  style={{ color: '#4e5968' }}
-                >
-                  {notice.content}
-                </p>
+                {notice.content.includes('<') ? (
+                  <div
+                    className="prose prose-sm max-w-none text-sm leading-relaxed notice-content"
+                    style={{ color: '#191f28' }}
+                    dangerouslySetInnerHTML={{ __html: notice.content }}
+                  />
+                ) : (
+                  <p
+                    className="text-sm leading-relaxed whitespace-pre-wrap"
+                    style={{ color: '#191f28' }}
+                  >
+                    {notice.content}
+                  </p>
+                )}
               </div>
 
               {/* 하단 액션 */}
@@ -542,7 +554,7 @@ export default function NoticesPage() {
                           className="text-sm mb-2 line-clamp-2"
                           style={{ color: '#6b7684' }}
                         >
-                          {notice.content}
+                          {notice.content.replace(/<[^>]*>/g, '')}
                         </p>
                         <div
                           className="flex items-center gap-2 text-xs"
