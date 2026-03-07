@@ -1,61 +1,23 @@
-# Claude 작업 기록
+# No.S (넘버에스)
 
-이 파일은 대화 중 기록해야 할 중요한 정보들을 저장합니다.
+삼성전자 뮤지컬 동호회 예약 공유 플랫폼
 
-## 프로젝트 정보
-- **프로젝트명**: NumberS
-- **위치**: `/Users/juri/Library/Mobile Documents/com~apple~CloudDocs/Project/NumberS`
-- **프로젝트 목적**: 삼성전자 뮤지컬 동호회 웹사이트
-- **동호회명**: No.S (넘버에스)
-- **도메인**: 구매 예정, 추후 연결
+## 기본 정보
 
-### 디자인 컨셉
-- **색상**: 블루 & 화이트
-- **분위기**: 밝고 화사한 느낌
+- **기술 스택**: Next.js 16 + React 19 + Firebase (Auth/Firestore) + TailwindCSS 4
+- **배포**: GitHub Actions → 자체 서버 (PM2, port 3333)
+- **인증**: Google OAuth (Firebase Auth)
+- **언어**: 한국어
 
-### 페이지 구성
-- **메인페이지**:
-  - 동호회 간략 소개
-  - 랜딩 페이지
+## 문서 구조
 
-### 기술 스택
-- **프론트엔드/백엔드**: Next.js (React 기반, 풀스택)
-- **데이터베이스**: Firebase
-  - Firestore (데이터베이스)
-  - Firebase Authentication (사용자 인증)
-  - Firebase Hosting (배포)
-- **스타일링**: TailwindCSS 또는 styled-components (블루&화이트 테마)
+- `docs/PLAN.md` — 기획서, 기능 명세, 로드맵
+- `docs/ARCHITECTURE.md` — 기술 아키텍처, Firestore 스키마, 컴포넌트 구조, 배포
 
-### 인증 및 권한
-- **인증 방식**: 구글 계정 연동 (Google OAuth)
-- **회원가입/로그인 필수**
-- 회원만 예약 및 수정 가능
-- 본인이 만든 예약만 수정/삭제 가능
-- Firebase Authentication의 Google Provider 사용
+## 작업 규칙
 
-### 기능 우선순위
-1. **동호회 예약 공유 시스템** (최우선)
-   - **중요**: 실제 예약은 회사 별도 시스템에서 진행됨
-   - 이 사이트는 동호회원들이 예약한 내용을 공유하는 용도
-   - 회원이 회사 시스템에서 예약 후, 이 사이트에 예약 정보 게시
-   - 다른 회원들이 동호회 예약 현황 확인 가능
-   - 본인이 올린 예약 정보 수정/삭제 가능
-   - **예약 충돌 체크 불필요** (회사 시스템에서 관리)
-
-2. **예약 장소**:
-   - 합동연습실
-   - ART8실
-   - 댄스3실
-   - 기타 (직접 입력)
-
-3. **공지사항 게시판** (차순위)
-4. **회원 명단 관리** (차순위)
-
-## 사용자 설정 및 선호사항
-- 언어: 한국어
-- 이 파일(CLAUDE.md)에 중요한 정보를 기록하고 참고하며 대답할 것
-
-## 대화 기록
-### 2026-02-01
-- 사용자가 Claude pricing 정보 요청 → 계정 정보 접근 불가, claude.ai 또는 console.anthropic.com에서 확인 필요
-- CLAUDE.md 파일 생성: 앞으로 기록이 필요한 내용과 참고사항을 이 파일에 저장
+- 한국어로 대화
+- 코드 수정 시 TypeScript strict mode 준수
+- TailwindCSS 유틸리티 클래스 사용 (CSS 모듈 X)
+- 컴포넌트는 'use client' 명시 필요 여부 확인
+- Firebase 클라이언트(lib/firebase.ts)와 서버(lib/firebase-admin.ts) 구분하여 사용
