@@ -21,7 +21,7 @@ import EventForm from '@/components/events/EventForm';
 import EventList from '@/components/events/EventList';
 import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { FiPlus, FiCalendar, FiList, FiStar, FiClock, FiMapPin, FiFilter } from 'react-icons/fi';
+import { FiPlus, FiCalendar, FiList, FiStar, FiClock, FiMapPin, FiFilter, FiEdit2 } from 'react-icons/fi';
 
 type FormType = 'none' | 'reservation' | 'event';
 type RangePreset = '1week' | '2weeks' | '1month' | 'custom';
@@ -573,12 +573,12 @@ export default function ReservationsPage() {
 
                   {/* Reservations for this date */}
                   {data.reservations.map((reservation) => {
-                    const isOwner = user?.uid === reservation.userId;
+                    const isMine = user?.uid === reservation.userId;
                     return (
                       <div
                         key={reservation.id}
                         className={`bg-white rounded-2xl p-4 border border-gray-100 mb-2 card-hover ${
-                          isOwner ? 'border-l-[3px] border-l-primary' : ''
+                          isMine ? 'border-l-[3px] border-l-primary' : ''
                         }`}
                       >
                         <div className="flex items-start justify-between">
@@ -587,7 +587,7 @@ export default function ReservationsPage() {
                               <span className="text-sm font-bold text-foreground">
                                 {reservation.startTime} ~ {reservation.endTime}
                               </span>
-                              {isOwner && (
+                              {isMine && (
                                 <span className="text-[10px] bg-primary/8 text-primary px-1.5 py-0.5 rounded-md font-medium">나</span>
                               )}
                               {reservation.repeatGroupId && (
@@ -607,6 +607,21 @@ export default function ReservationsPage() {
                               </p>
                             )}
                           </div>
+                          {isMine && (
+                            <div className="flex gap-1 ml-2 shrink-0">
+                              <button
+                                onClick={() => {
+                                  setSelectedDate(new Date(reservation.date + 'T00:00:00'));
+                                  setViewMode('calendar');
+                                  setTimeout(() => handleEditReservation(reservation), 100);
+                                }}
+                                className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-primary hover:bg-primary/8 rounded-lg transition-colors"
+                                title="수정"
+                              >
+                                <FiEdit2 size={14} />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );

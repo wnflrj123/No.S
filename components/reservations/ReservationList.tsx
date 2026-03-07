@@ -156,7 +156,7 @@ export default function ReservationList({
   onDeleted,
   loading = false,
 }: ReservationListProps) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteModalReservation, setDeleteModalReservation] = useState<Reservation | null>(null);
 
@@ -266,7 +266,7 @@ export default function ReservationList({
     <>
       <div className="space-y-3">
         {reservations.map((reservation, index) => {
-          const isOwner = user?.uid === reservation.userId;
+          const isMine = user?.uid === reservation.userId;
           const isDeleting = deletingId === reservation.id;
           const isRepeatReservation = !!reservation.repeatGroupId;
 
@@ -274,7 +274,7 @@ export default function ReservationList({
             <div
               key={reservation.id}
               className={`bg-white rounded-2xl p-5 border border-gray-100 card-hover animate-fade-in-up ${
-                isOwner ? 'border-l-[3px] border-l-primary' : ''
+                isMine ? 'border-l-[3px] border-l-primary' : ''
               } ${isDeleting ? 'opacity-50' : ''}`}
               style={{ animationDelay: `${index * 0.05}s` }}
             >
@@ -304,7 +304,7 @@ export default function ReservationList({
                   <div className="flex items-center gap-2 mb-3">
                     <FiUser size={14} className="shrink-0" style={{ color: '#8b95a1' }} />
                     <span className="text-sm" style={{ color: '#6b7684' }}>{reservation.userName}</span>
-                    {isOwner && (
+                    {isMine && (
                       <span className="text-[11px] bg-primary/8 text-primary px-2 py-0.5 rounded-lg font-medium">
                         나
                       </span>
@@ -318,16 +318,18 @@ export default function ReservationList({
                 </div>
 
                 {/* Actions */}
-                {isOwner && (
+                {(isMine || isAdmin) && (
                   <div className="flex gap-1 ml-3 shrink-0">
-                    <button
-                      onClick={() => onEdit?.(reservation)}
-                      disabled={isDeleting}
-                      className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-primary hover:bg-primary/8 rounded-xl transition-colors"
-                      title="수정"
-                    >
-                      <FiEdit2 size={16} />
-                    </button>
+                    {isMine && (
+                      <button
+                        onClick={() => onEdit?.(reservation)}
+                        disabled={isDeleting}
+                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-primary hover:bg-primary/8 rounded-xl transition-colors"
+                        title="수정"
+                      >
+                        <FiEdit2 size={16} />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDeleteClick(reservation)}
                       disabled={isDeleting}
