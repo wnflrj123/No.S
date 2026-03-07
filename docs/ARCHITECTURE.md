@@ -13,6 +13,7 @@
 | 서버 SDK | firebase-admin | 13.7.0 |
 | 날짜 처리 | date-fns | 4.1.0 |
 | 아이콘 | react-icons | 5.5.0 |
+| 리치 텍스트 | TipTap (@tiptap/react, starter-kit 등) | — |
 
 ## 디렉토리 구조
 
@@ -26,6 +27,7 @@ No.S/
 │   ├── opengraph-image.tsx       # 동적 OG 이미지 (Edge Runtime)
 │   ├── login/page.tsx            # 로그인 (인앱 브라우저 감지 포함)
 │   ├── reservations/page.tsx     # 예약 현황 (캘린더/리스트 뷰)
+│   ├── notices/page.tsx           # 공지사항 (목록/상세/작성/수정)
 │   ├── admin/page.tsx            # 관리 페이지 (Owner 전용)
 │   └── api/admin/sync-users/     # 회원 동기화 API (서버 라우트)
 │       └── route.ts
@@ -39,11 +41,14 @@ No.S/
 │   │   ├── ReservationCalendar.tsx  # 월간 캘린더 (예약/이벤트 카운트 표시)
 │   │   ├── ReservationForm.tsx      # 예약 등록/수정 폼 (반복 예약 지원)
 │   │   └── ReservationList.tsx      # 예약 목록 (삭제 모달 포함)
+│   ├── notices/
+│   │   └── RichTextEditor.tsx    # TipTap 리치 텍스트 에디터
 │   ├── events/
 │   │   ├── EventForm.tsx         # 이벤트 등록/수정 (Admin 전용)
 │   │   └── EventList.tsx         # 이벤트 목록
 │   └── common/
-│       └── TimePicker.tsx        # 커스텀 시간 선택 (시→분 2단계)
+│       ├── TimePicker.tsx        # 커스텀 시간 선택 (시→분 2단계)
+│       └── InstallPrompt.tsx     # PWA 설치 유도 배너
 ├── contexts/
 │   └── AuthContext.tsx           # 인증 상태 관리 (user, isAdmin, isOwner)
 ├── lib/
@@ -111,6 +116,20 @@ No.S/
   photoURL?: string
   customName?: string      // 사용자 지정 닉네임
   lastLoginAt: Timestamp
+}
+```
+
+### `notices` 컬렉션
+
+```typescript
+{
+  title: string
+  content: string             // HTML (리치 텍스트 에디터 출력)
+  pinned: boolean             // 고정 공지 여부
+  createdBy: string           // userId
+  createdByName: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
 }
 ```
 
