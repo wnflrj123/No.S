@@ -28,6 +28,7 @@ export default function Home() {
                 width={120}
                 height={120}
                 className="drop-shadow-lg"
+                priority
               />
             </div>
             <h1 className="text-6xl md:text-7xl font-bold text-primary mb-4">
