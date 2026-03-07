@@ -281,8 +281,8 @@ export default function ReservationCalendar({
             `}
             style={{ gridColumn: `${startCol} / ${endCol}` }}
           >
-            {isBarStart && <FiStar size={9} className="shrink-0" />}
-            {isBarStart && <span className="truncate">{event.title}</span>}
+            <FiStar size={9} className="shrink-0" />
+            <span className="truncate">{event.title}</span>
           </div>
         );
       });
