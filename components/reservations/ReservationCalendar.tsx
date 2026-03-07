@@ -201,7 +201,17 @@ export default function ReservationCalendar({
       const rowStartStr = format(rowStartDate, 'yyyy-MM-dd');
       const rowEndStr = format(addDays(rowStartDate, 6), 'yyyy-MM-dd');
 
-      // 날짜 셀 렌더링
+      // 이 주에 걸치는 행사 계산
+      const rowEvents = eventSpans.filter(
+        (e) => e.startDate <= rowEndStr && e.endDate >= rowStartStr
+      );
+      // 각 날짜별 행사 목록 계산
+      const dayEventsMap: { [dateStr: string]: EventSpan[] } = {};
+      for (let i = 0; i < 7; i++) {
+        const dStr = format(addDays(rowStartDate, i), 'yyyy-MM-dd');
+        dayEventsMap[dStr] = rowEvents.filter((e) => e.startDate <= dStr && e.endDate >= dStr);
+      }
+
       const dateCells = [];
       for (let i = 0; i < 7; i++) {
         const cloneDay = new Date(day.getTime());
@@ -210,13 +220,21 @@ export default function ReservationCalendar({
         const isCurrentMonth = isSameMonth(day, monthStart);
         const isSelected = isSameDay(day, selectedDate);
         const isTodayDate = isToday(day);
+        const cellEvents = dayEventsMap[dateStr] || [];
+        const eventCount = cellEvents.length;
+
+        // 여러날 행사가 1건만 있을 때 이어지는 스타일
+        const singleMultiDay = eventCount === 1 && cellEvents[0].startDate !== cellEvents[0].endDate;
+        const isEventStart = singleMultiDay && cellEvents[0].startDate === dateStr;
+        const isEventEnd = singleMultiDay && cellEvents[0].endDate === dateStr;
+        const isEventMid = singleMultiDay && !isEventStart && !isEventEnd;
 
         dateCells.push(
           <div
             key={dateStr}
             onClick={() => isCurrentMonth && onDateSelect(cloneDay)}
             className={`
-              flex flex-col min-h-[44px] p-1 transition-all rounded-xl m-0.5
+              flex flex-col min-h-[54px] p-1 transition-all rounded-xl m-0.5
               ${!isCurrentMonth ? 'text-gray-300 cursor-default' : 'cursor-pointer hover:bg-gray-100 active:scale-95'}
               ${isSelected ? 'bg-primary/10 ring-2 ring-primary' : ''}
               ${isTodayDate && !isSelected ? 'bg-blue-50' : ''}
@@ -239,62 +257,47 @@ export default function ReservationCalendar({
               )}
             </div>
 
-            {/* 예약 뱃지 */}
-            {isCurrentMonth && data.reservationCount > 0 && (
-              <div className="flex-1 flex flex-col justify-end mt-0.5">
+            <div className="flex-1 flex flex-col justify-end mt-0.5 gap-0.5">
+              {/* 예약 뱃지 */}
+              {isCurrentMonth && data.reservationCount > 0 && (
                 <div className="bg-primary text-white text-[10px] rounded-lg px-1 py-[1px] text-center font-medium leading-tight">
                   {data.reservationCount}건
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* 행사 뱃지 */}
+              {isCurrentMonth && eventCount > 0 && (
+                singleMultiDay ? (
+                  // 여러날 행사 1건: 셀 간 이어지는 스타일
+                  <div
+                    className={`bg-orange-400 text-white text-[10px] font-medium py-[2px] leading-tight flex items-center gap-0.5 truncate
+                      ${isEventStart ? 'rounded-l-lg pl-1 -mr-[6px]' : ''}
+                      ${isEventEnd ? 'rounded-r-lg pr-1 -ml-[6px]' : ''}
+                      ${isEventMid ? '-mx-[6px]' : ''}
+                    `}
+                  >
+                    {isEventStart && <FiStar size={8} className="shrink-0" />}
+                    {isEventStart && <span className="truncate">{cellEvents[0].title}</span>}
+                    {!isEventStart && <span className="invisible text-[10px]">.</span>}
+                  </div>
+                ) : (
+                  // 단일 행사 또는 여러 건: 셀 내 뱃지
+                  <div className="bg-orange-400 text-white text-[10px] rounded-lg px-1 py-[1px] text-center font-medium leading-tight flex items-center justify-center gap-0.5 truncate">
+                    <FiStar size={8} className="shrink-0" />
+                    <span className="truncate">{eventCount > 1 ? `${eventCount}건` : cellEvents[0].title}</span>
+                  </div>
+                )
+              )}
+            </div>
           </div>
         );
 
         day = addDays(day, 1);
       }
 
-      // 이 주에 걸치는 행사 바 계산
-      const rowEvents = eventSpans.filter(
-        (e) => e.startDate <= rowEndStr && e.endDate >= rowStartStr
-      );
-
-      const eventBars = rowEvents.map((event) => {
-        const barStartStr = event.startDate < rowStartStr ? rowStartStr : event.startDate;
-        const barEndStr = event.endDate > rowEndStr ? rowEndStr : event.endDate;
-
-        const barStartDate = parse(barStartStr, 'yyyy-MM-dd', new Date());
-        const barEndDate = parse(barEndStr, 'yyyy-MM-dd', new Date());
-        const startCol = Math.round((barStartDate.getTime() - rowStartDate.getTime()) / 86400000) + 1;
-        const endCol = Math.round((barEndDate.getTime() - rowStartDate.getTime()) / 86400000) + 2;
-
-        const isBarStart = event.startDate >= rowStartStr;
-        const isBarEnd = event.endDate <= rowEndStr;
-
-        return (
-          <div
-            key={`${event.id}-${rowStartStr}`}
-            className={`bg-orange-400 text-white text-[10px] font-medium truncate px-1.5 py-[2px] leading-tight flex items-center gap-0.5
-              ${isBarStart && isBarEnd ? 'rounded-lg mx-1' : ''}
-              ${isBarStart && !isBarEnd ? 'rounded-l-lg ml-1' : ''}
-              ${!isBarStart && isBarEnd ? 'rounded-r-lg mr-1' : ''}
-              ${!isBarStart && !isBarEnd ? '' : ''}
-            `}
-            style={{ gridColumn: `${startCol} / ${endCol}` }}
-          >
-            <FiStar size={9} className="shrink-0" />
-            <span className="truncate">{event.title}</span>
-          </div>
-        );
-      });
-
       rows.push(
-        <div key={`row-${rowStartStr}`}>
-          <div className="grid grid-cols-7">{dateCells}</div>
-          {eventBars.length > 0 && (
-            <div className="grid grid-cols-7 mt-[-2px] mb-1">
-              {eventBars}
-            </div>
-          )}
+        <div key={`row-${rowStartStr}`} className="grid grid-cols-7">
+          {dateCells}
         </div>
       );
     }
