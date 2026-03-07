@@ -147,10 +147,56 @@ export default function Home() {
           </div>
         </section>
 
-        {/* About Section - with stage illustration */}
+        {/* Notice Section */}
         <section className="py-24 md:py-32 px-6 bg-secondary">
           <div className="max-w-5xl mx-auto">
-            <div className="flex flex-col md:flex-row-reverse items-center gap-12 md:gap-16">
+            <div className="flex flex-col md:flex-row items-center gap-12 md:gap-16">
+              {/* Illustration */}
+              <div className="flex-1 animate-fade-in-up animation-delay-200">
+                <div className="animate-float" style={{ animationDelay: '0.5s' }}>
+                  <Image
+                    src="/notice-illustration.svg"
+                    alt="공지사항 일러스트"
+                    width={560}
+                    height={440}
+                    className="w-full max-w-lg mx-auto"
+                  />
+                </div>
+              </div>
+
+              {/* Text */}
+              <div className="flex-1 text-center md:text-left">
+                <p className="text-primary font-semibold text-sm mb-4 tracking-wide animate-fade-in-up">놓치지 마세요</p>
+                <h2 className="text-3xl md:text-[40px] font-bold text-foreground mb-6 tracking-tight leading-tight animate-fade-in-up animation-delay-100">
+                  중요한 소식,<br />한곳에서 확인해요
+                </h2>
+                <p className="text-base leading-relaxed animate-fade-in-up animation-delay-200" style={{ color: '#6b7684' }}>
+                  공연 안내, 연습 일정 변경, 회비 안내까지.<br />
+                  동호회의 모든 공지사항을<br />
+                  빠르고 간편하게 확인할 수 있어요.
+                </p>
+                {user && (
+                  <div className="mt-8 animate-fade-in-up animation-delay-300">
+                    <Link
+                      href="/notices"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary-dark transition-all"
+                    >
+                      공지사항 보러가기
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="ml-0.5">
+                        <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* About Section - with stage illustration */}
+        <section className="py-24 md:py-32 px-6">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center gap-12 md:gap-16">
               {/* Text */}
               <div className="flex-1 text-center md:text-left">
                 <p className="text-primary font-semibold text-sm mb-4 tracking-wide animate-fade-in-up">No.S를 소개해요</p>
