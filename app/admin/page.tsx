@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, startAfter, QueryDocumentSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { FiUserPlus, FiTrash2, FiShield, FiSearch, FiStar, FiArrowRight, FiX, FiAlertTriangle } from 'react-icons/fi';
+import { FiUserPlus, FiTrash2, FiShield, FiSearch, FiStar, FiArrowRight, FiX, FiAlertTriangle, FiUsers, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 interface AdminUser {
   uid: string;
@@ -15,7 +15,16 @@ interface AdminUser {
   displayName: string;
 }
 
+interface MemberUser {
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+}
+
 type ModalType = 'none' | 'transfer';
+
+const PAGE_SIZE = 10;
 
 export default function AdminPage() {
   const { user, loading: authLoading, isOwner } = useAuth();
@@ -33,6 +42,14 @@ export default function AdminPage() {
   const [transferTarget, setTransferTarget] = useState<AdminUser | null>(null);
   const [transferConfirmText, setTransferConfirmText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Members list
+  const [members, setMembers] = useState<MemberUser[]>([]);
+  const [membersLoading, setMembersLoading] = useState(true);
+  const [memberPage, setMemberPage] = useState(0);
+  const [pageSnapshots, setPageSnapshots] = useState<(QueryDocumentSnapshot | null)[]>([null]);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [totalMembers, setTotalMembers] = useState(0);
 
   useEffect(() => {
     if (!authLoading) {
@@ -52,7 +69,6 @@ export default function AdminPage() {
           const data = adminDoc.data();
           setAdmins(data.users || []);
 
-          // Owner 정보
           const ownerUid = data.ownerUid;
           if (ownerUid && user) {
             const ownerUser = (data.users || []).find((u: AdminUser) => u.uid === ownerUid);
@@ -75,6 +91,73 @@ export default function AdminPage() {
     }
   }, [isOwner, user]);
 
+  // Count total members
+  useEffect(() => {
+    const countMembers = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, 'users'));
+        setTotalMembers(snapshot.size);
+      } catch (err) {
+        console.error('회원 수 조회 실패:', err);
+      }
+    };
+
+    if (isOwner) {
+      countMembers();
+    }
+  }, [isOwner]);
+
+  // Fetch members with pagination
+  const fetchMembers = useCallback(async (pageIndex: number) => {
+    setMembersLoading(true);
+    try {
+      let q;
+      const cursor = pageSnapshots[pageIndex];
+      if (cursor) {
+        q = query(
+          collection(db, 'users'),
+          orderBy('displayName', 'asc'),
+          startAfter(cursor),
+          limit(PAGE_SIZE)
+        );
+      } else {
+        q = query(
+          collection(db, 'users'),
+          orderBy('displayName', 'asc'),
+          limit(PAGE_SIZE)
+        );
+      }
+
+      const snapshot = await getDocs(q);
+      const data: MemberUser[] = snapshot.docs.map((doc) => ({
+        uid: doc.id,
+        email: doc.data().email || '',
+        displayName: doc.data().displayName || '',
+        photoURL: doc.data().photoURL || '',
+      }));
+
+      setMembers(data);
+      setHasNextPage(snapshot.docs.length === PAGE_SIZE);
+
+      // Save last doc for next page cursor
+      if (snapshot.docs.length > 0) {
+        const newSnapshots = [...pageSnapshots];
+        newSnapshots[pageIndex + 1] = snapshot.docs[snapshot.docs.length - 1];
+        setPageSnapshots(newSnapshots);
+      }
+    } catch (err) {
+      console.error('회원 목록 조회 실패:', err);
+    } finally {
+      setMembersLoading(false);
+    }
+  }, [pageSnapshots]);
+
+  useEffect(() => {
+    if (isOwner) {
+      fetchMembers(memberPage);
+    }
+  }, [isOwner, memberPage]);
+
   const handleSearch = async () => {
     if (!searchEmail.trim()) {
       setError('이메일을 입력해주세요');
@@ -86,20 +169,21 @@ export default function AdminPage() {
     setSearchResult(null);
 
     try {
+      // users 컬렉션에서 검색
       const q = query(
-        collection(db, 'reservations'),
-        where('userEmail', '==', searchEmail.trim())
+        collection(db, 'users'),
+        where('email', '==', searchEmail.trim())
       );
       const snapshot = await getDocs(q);
 
       if (snapshot.empty) {
-        setError('해당 이메일로 예약한 기록이 없어요. 먼저 로그인 후 예약을 한 번 해야 해요.');
+        setError('해당 이메일의 회원을 찾을 수 없어요. 먼저 로그인을 한 번 해야 해요.');
       } else {
         const userData = snapshot.docs[0].data();
         setSearchResult({
-          uid: userData.userId,
-          email: userData.userEmail,
-          displayName: userData.userName,
+          uid: snapshot.docs[0].id,
+          email: userData.email,
+          displayName: userData.displayName,
         });
       }
     } catch (err) {
@@ -123,26 +207,41 @@ export default function AdminPage() {
     setAdmins(newAdmins);
   };
 
-  const handleAddAdmin = async () => {
-    if (!searchResult) return;
-
-    if (admins.some((a) => a.uid === searchResult.uid)) {
+  const addAdminByUser = async (targetUser: AdminUser) => {
+    if (admins.some((a) => a.uid === targetUser.uid)) {
       setError('이미 관리자예요.');
+      return;
+    }
+    if (targetUser.uid === user?.uid) {
+      setError('Owner는 이미 모든 권한을 가지고 있어요.');
       return;
     }
 
     try {
-      const newAdmins = [...admins, searchResult];
+      const newAdmins = [...admins, targetUser];
       await saveAdmins(newAdmins);
 
       setSearchResult(null);
       setSearchEmail('');
-      setSuccess(`${searchResult.displayName}님을 관리자로 추가했어요.`);
+      setSuccess(`${targetUser.displayName}님을 관리자로 추가했어요.`);
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('관리자 추가 실패:', err);
       setError('관리자 추가에 실패했어요.');
     }
+  };
+
+  const handleAddAdmin = async () => {
+    if (!searchResult) return;
+    await addAdminByUser(searchResult);
+  };
+
+  const handleAddAdminFromList = async (member: MemberUser) => {
+    await addAdminByUser({
+      uid: member.uid,
+      email: member.email,
+      displayName: member.displayName,
+    });
   };
 
   const handleRemoveAdmin = async (adminToRemove: AdminUser) => {
@@ -170,12 +269,10 @@ export default function AdminPage() {
 
     setIsProcessing(true);
     try {
-      // Ensure the transfer target is in the admins list
       let newAdmins = [...admins];
       if (!newAdmins.some((a) => a.uid === transferTarget.uid)) {
         newAdmins.push(transferTarget);
       }
-      // Add current owner to admins if not already there
       if (!newAdmins.some((a) => a.uid === user.uid)) {
         newAdmins.push({
           uid: user.uid,
@@ -212,6 +309,15 @@ export default function AdminPage() {
     setModalType('transfer');
   };
 
+  const isAdminUser = (uid: string) => admins.some((a) => a.uid === uid);
+  const isOwnerUser = (uid: string) => ownerInfo?.uid === uid || user?.uid === uid;
+
+  const getMemberRole = (uid: string): 'owner' | 'admin' | 'member' => {
+    if (isOwnerUser(uid)) return 'owner';
+    if (isAdminUser(uid)) return 'admin';
+    return 'member';
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -223,6 +329,7 @@ export default function AdminPage() {
   if (!isOwner) return null;
 
   const nonOwnerAdmins = admins.filter((a) => a.uid !== user?.uid);
+  const totalPages = Math.ceil(totalMembers / PAGE_SIZE);
 
   return (
     <div className="min-h-screen flex flex-col bg-secondary">
@@ -288,7 +395,7 @@ export default function AdminPage() {
           {nonOwnerAdmins.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-sm font-medium text-foreground">아직 추가된 관리자가 없어요</p>
-              <p className="text-xs mt-1" style={{ color: '#8b95a1' }}>아래에서 검색해서 추가해보세요</p>
+              <p className="text-xs mt-1" style={{ color: '#8b95a1' }}>아래에서 검색하거나 회원 목록에서 추가해보세요</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -327,11 +434,11 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* Add Admin */}
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 animate-fade-in-up animation-delay-200">
+        {/* Add Admin by Search */}
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 mb-4 animate-fade-in-up animation-delay-200">
           <h2 className="text-[15px] font-bold text-foreground mb-3 flex items-center gap-2">
-            <FiUserPlus className="text-primary" size={16} />
-            관리자 추가
+            <FiSearch className="text-primary" size={16} />
+            이메일로 검색
           </h2>
 
           <div className="flex gap-2">
@@ -376,10 +483,103 @@ export default function AdminPage() {
               </button>
             </div>
           )}
+        </div>
 
-          <p className="text-xs mt-3" style={{ color: '#b0b8c1' }}>
-            회원이 한 번 이상 로그인하고 예약을 등록해야 검색할 수 있어요
-          </p>
+        {/* Members List */}
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 animate-fade-in-up animation-delay-300">
+          <h2 className="text-[15px] font-bold text-foreground mb-3 flex items-center gap-2">
+            <FiUsers className="text-primary" size={16} />
+            전체 회원
+            <span className="text-primary text-sm font-medium">({totalMembers}명)</span>
+          </h2>
+
+          {membersLoading ? (
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center gap-3 p-3.5 bg-secondary rounded-xl">
+                  <div className="shimmer-bg w-9 h-9 rounded-full" />
+                  <div className="flex-1">
+                    <div className="shimmer-bg h-4 w-24 rounded-lg mb-1.5" />
+                    <div className="shimmer-bg h-3 w-36 rounded-lg" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : members.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-sm font-medium text-foreground">아직 가입한 회원이 없어요</p>
+              <p className="text-xs mt-1" style={{ color: '#8b95a1' }}>로그인한 회원이 여기에 표시돼요</p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-2">
+                {members.map((member, index) => {
+                  const role = getMemberRole(member.uid);
+                  return (
+                    <div
+                      key={member.uid}
+                      className="flex items-center gap-3 p-3.5 bg-secondary rounded-xl"
+                    >
+                      {member.photoURL ? (
+                        <img
+                          src={member.photoURL}
+                          alt={member.displayName}
+                          className="w-9 h-9 rounded-full"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-sm font-bold">
+                          {member.displayName ? member.displayName[0] : '?'}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-medium text-foreground truncate">{member.displayName || '(이름 없음)'}</p>
+                          {role === 'owner' && (
+                            <span className="text-[10px] bg-orange-400 text-white px-1.5 py-0.5 rounded-md font-medium shrink-0">Owner</span>
+                          )}
+                          {role === 'admin' && (
+                            <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-md font-medium shrink-0">Admin</span>
+                          )}
+                        </div>
+                        <p className="text-xs truncate" style={{ color: '#8b95a1' }}>{member.email}</p>
+                      </div>
+                      {role === 'member' && (
+                        <button
+                          onClick={() => handleAddAdminFromList(member)}
+                          className="px-3 py-1.5 text-xs font-medium text-primary bg-primary/8 hover:bg-primary/15 rounded-lg transition-colors active:scale-95 shrink-0"
+                        >
+                          관리자 추가
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-3 mt-4 pt-4 border-t border-gray-100">
+                  <button
+                    onClick={() => setMemberPage((p) => Math.max(0, p - 1))}
+                    disabled={memberPage === 0}
+                    className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <FiChevronLeft size={18} style={{ color: '#4e5968' }} />
+                  </button>
+                  <span className="text-sm font-medium" style={{ color: '#4e5968' }}>
+                    {memberPage + 1} / {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setMemberPage((p) => p + 1)}
+                    disabled={!hasNextPage}
+                    className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <FiChevronRight size={18} style={{ color: '#4e5968' }} />
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </main>
 

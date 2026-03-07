@@ -12,7 +12,7 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { User, AuthContextType } from '@/types';
 
@@ -52,6 +52,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: firebaseUser.email,
           photoURL: firebaseUser.photoURL,
         });
+
+        // users 컬렉션에 사용자 정보 저장/업데이트
+        try {
+          await setDoc(doc(db, 'users', firebaseUser.uid), {
+            uid: firebaseUser.uid,
+            displayName: firebaseUser.displayName || '',
+            email: firebaseUser.email || '',
+            photoURL: firebaseUser.photoURL || '',
+            lastLoginAt: Timestamp.now(),
+          }, { merge: true });
+        } catch (e) {
+          console.error('사용자 정보 저장 실패:', e);
+        }
 
         const roles = await checkRoles(firebaseUser.uid);
         setIsAdmin(roles.admin);
