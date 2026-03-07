@@ -3,11 +3,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, limit, startAfter, QueryDocumentSnapshot } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { FiUserPlus, FiTrash2, FiShield, FiSearch, FiStar, FiArrowRight, FiX, FiAlertTriangle, FiUsers, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiUserPlus, FiTrash2, FiShield, FiSearch, FiStar, FiArrowRight, FiX, FiAlertTriangle, FiUsers, FiChevronLeft, FiChevronRight, FiRefreshCw } from 'react-icons/fi';
 
 interface AdminUser {
   uid: string;
@@ -50,6 +51,7 @@ export default function AdminPage() {
   const [pageSnapshots, setPageSnapshots] = useState<(QueryDocumentSnapshot | null)[]>([null]);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [totalMembers, setTotalMembers] = useState(0);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     if (!authLoading) {
@@ -138,6 +140,44 @@ export default function AdminPage() {
       migrateAndCount();
     }
   }, [isOwner]);
+
+  // Sync all Firebase Auth users to Firestore users collection
+  const handleSyncUsers = async () => {
+    setSyncing(true);
+    setError(null);
+    try {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error('Not authenticated');
+
+      const idToken = await currentUser.getIdToken();
+      const res = await fetch('/api/admin/sync-users', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Sync failed');
+      }
+
+      const data = await res.json();
+      setSuccess(`${data.synced}명의 회원 정보를 동기화했어요.`);
+      setTimeout(() => setSuccess(null), 3000);
+
+      // Refresh count and list
+      const snapshot = await getDocs(collection(db, 'users'));
+      setTotalMembers(snapshot.size);
+      setMemberPage(0);
+      setPageSnapshots([null]);
+      fetchMembers(0);
+    } catch (err: any) {
+      console.error('동기화 실패:', err);
+      setError('회원 동기화에 실패했어요. 서비스 계정 키가 설정되어 있는지 확인해주세요.');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   // Fetch members with pagination
   const fetchMembers = useCallback(async (pageIndex: number) => {
@@ -519,11 +559,21 @@ export default function AdminPage() {
 
         {/* Members List */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 animate-fade-in-up animation-delay-300">
-          <h2 className="text-[15px] font-bold text-foreground mb-3 flex items-center gap-2">
-            <FiUsers className="text-primary" size={16} />
-            전체 회원
-            <span className="text-primary text-sm font-medium">({totalMembers}명)</span>
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[15px] font-bold text-foreground flex items-center gap-2">
+              <FiUsers className="text-primary" size={16} />
+              전체 회원
+              <span className="text-primary text-sm font-medium">({totalMembers}명)</span>
+            </h2>
+            <button
+              onClick={handleSyncUsers}
+              disabled={syncing}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary bg-primary/8 hover:bg-primary/15 rounded-lg transition-colors active:scale-95 disabled:opacity-50"
+            >
+              <FiRefreshCw size={12} className={syncing ? 'animate-spin' : ''} />
+              {syncing ? '동기화 중...' : '회원 동기화'}
+            </button>
+          </div>
 
           {membersLoading ? (
             <div className="space-y-2">
