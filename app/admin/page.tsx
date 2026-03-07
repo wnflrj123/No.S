@@ -91,19 +91,51 @@ export default function AdminPage() {
     }
   }, [isOwner, user]);
 
-  // Count total members
+  // Migrate existing users from reservations to users collection, then count
   useEffect(() => {
-    const countMembers = async () => {
+    const migrateAndCount = async () => {
       try {
-        const snapshot = await getDocs(collection(db, 'users'));
-        setTotalMembers(snapshot.size);
+        // 1. Get all existing users in users collection
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        const existingUids = new Set(usersSnapshot.docs.map((d) => d.id));
+
+        // 2. Get unique users from reservations
+        const resSnapshot = await getDocs(collection(db, 'reservations'));
+        const usersFromRes = new Map<string, { uid: string; email: string; displayName: string }>();
+        resSnapshot.docs.forEach((d) => {
+          const data = d.data();
+          if (data.userId && !existingUids.has(data.userId) && !usersFromRes.has(data.userId)) {
+            usersFromRes.set(data.userId, {
+              uid: data.userId,
+              email: data.userEmail || '',
+              displayName: data.userName || '',
+            });
+          }
+        });
+
+        // 3. Write missing users
+        if (usersFromRes.size > 0) {
+          const promises = Array.from(usersFromRes.values()).map((u) =>
+            setDoc(doc(db, 'users', u.uid), {
+              uid: u.uid,
+              displayName: u.displayName,
+              email: u.email,
+              photoURL: '',
+            }, { merge: true })
+          );
+          await Promise.all(promises);
+        }
+
+        // 4. Count total
+        const finalSnapshot = await getDocs(collection(db, 'users'));
+        setTotalMembers(finalSnapshot.size);
       } catch (err) {
-        console.error('회원 수 조회 실패:', err);
+        console.error('회원 마이그레이션/조회 실패:', err);
       }
     };
 
     if (isOwner) {
-      countMembers();
+      migrateAndCount();
     }
   }, [isOwner]);
 
