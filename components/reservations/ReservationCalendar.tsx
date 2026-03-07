@@ -170,20 +170,21 @@ export default function ReservationCalendar({
         const isCurrentMonth = isSameMonth(day, monthStart);
         const isSelected = isSameDay(day, selectedDate);
         const isTodayDate = isToday(day);
+        const hasBoth = data.hasEvent && data.reservationCount > 0 && isCurrentMonth;
 
         days.push(
           <div
             key={dateStr}
             onClick={() => isCurrentMonth && onDateSelect(cloneDay)}
             className={`
-              relative min-h-[64px] p-1.5 transition-all rounded-xl m-0.5
+              flex flex-col min-h-[56px] p-1 transition-all rounded-xl m-0.5
               ${!isCurrentMonth ? 'text-gray-300 cursor-default' : 'cursor-pointer hover:bg-gray-100 active:scale-95'}
               ${isSelected ? 'bg-primary/10 ring-2 ring-primary' : ''}
               ${isTodayDate && !isSelected ? 'bg-blue-50' : ''}
-              ${data.hasEvent && isCurrentMonth && !isSelected ? 'ring-2 ring-orange-300' : ''}
             `}
           >
-            <div className="flex items-center gap-1">
+            {/* 날짜 숫자 */}
+            <div className="flex items-center gap-0.5">
               <span
                 className={`
                   text-sm font-medium
@@ -198,25 +199,21 @@ export default function ReservationCalendar({
               {isTodayDate && (
                 <span className="text-[10px] text-primary font-bold">오늘</span>
               )}
-              {data.hasEvent && isCurrentMonth && (
-                <FiStar className="text-orange-400 fill-orange-400" size={10} />
-              )}
             </div>
 
-            {isCurrentMonth && (data.reservationCount > 0 || data.hasEvent) && (
-              <div className="absolute bottom-1 left-1 right-1 space-y-0.5">
-                {data.hasEvent && (
-                  <div className="bg-orange-400 text-white text-[10px] rounded-lg px-1.5 py-0.5 text-center truncate font-medium">
-                    {data.eventTitle}
-                  </div>
-                )}
-                {data.reservationCount > 0 && (
-                  <div className="bg-primary text-white text-[10px] rounded-lg px-1.5 py-0.5 text-center font-medium">
-                    {data.reservationCount}건
-                  </div>
-                )}
-              </div>
-            )}
+            {/* 뱃지 영역 */}
+            <div className="flex-1 flex flex-col justify-end gap-[2px] mt-0.5 overflow-hidden">
+              {isCurrentMonth && data.hasEvent && (
+                <div className="bg-orange-400 text-white text-[10px] rounded-lg px-1 py-[1px] text-center truncate font-medium leading-tight">
+                  {hasBoth ? <FiStar className="inline-block" size={9} /> : data.eventTitle}
+                </div>
+              )}
+              {isCurrentMonth && data.reservationCount > 0 && (
+                <div className="bg-primary text-white text-[10px] rounded-lg px-1 py-[1px] text-center font-medium leading-tight">
+                  {data.reservationCount}건
+                </div>
+              )}
+            </div>
           </div>
         );
 
