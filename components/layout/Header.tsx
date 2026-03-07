@@ -74,12 +74,20 @@ export default function Header() {
 
           <nav className="flex items-center gap-2">
             {user && (
-              <Link
-                href="/reservations"
-                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-foreground rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                예약 현황
-              </Link>
+              <>
+                <Link
+                  href="/reservations"
+                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-foreground rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  예약 현황
+                </Link>
+                <Link
+                  href="/notices"
+                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-foreground rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  공지사항
+                </Link>
+              </>
             )}
             {isOwner && (
               <Link

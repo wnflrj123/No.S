@@ -99,3 +99,22 @@ export interface ClubEventFormData {
   location?: string;
   locationUrl?: string;
 }
+
+// 공지사항 인터페이스
+export interface Notice {
+  id: string;
+  title: string;
+  content: string;
+  pinned: boolean;
+  createdBy: string;
+  createdByName: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// 공지사항 폼 데이터
+export interface NoticeFormData {
+  title: string;
+  content: string;
+  pinned: boolean;
+}

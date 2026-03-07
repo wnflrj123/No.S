@@ -1,17 +1,94 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/hooks/useAuth';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { FiChevronRight, FiBell, FiX } from 'react-icons/fi';
+
+interface PinnedNotice {
+  id: string;
+  title: string;
+  createdAt: Date;
+}
 
 export default function Home() {
   const { user } = useAuth();
+  const [pinnedNotices, setPinnedNotices] = useState<PinnedNotice[]>([]);
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+
+  // 로그인 시 고정 공지사항 가져오기
+  useEffect(() => {
+    if (!user) return;
+
+    const q = query(
+      collection(db, 'notices'),
+      where('pinned', '==', true)
+    );
+
+    const unsub = onSnapshot(
+      q,
+      (snapshot) => {
+        const data: PinnedNotice[] = snapshot.docs.map((d) => ({
+          id: d.id,
+          title: d.data().title,
+          createdAt: d.data().createdAt?.toDate() || new Date(),
+        }));
+        data.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        setPinnedNotices(data);
+      },
+      (error) => {
+        console.error('고정 공지 조회 실패:', error);
+      }
+    );
+
+    return () => unsub();
+  }, [user]);
+
+  const visiblePinned = pinnedNotices.filter((n) => !dismissedIds.has(n.id));
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Header />
+
+      {/* Pinned Notice Banner */}
+      {user && visiblePinned.length > 0 && (
+        <div className="bg-primary text-white">
+          <div className="max-w-5xl mx-auto px-6">
+            {visiblePinned.map((notice, i) => (
+              <div
+                key={notice.id}
+                className={`flex items-center gap-3 py-3 ${i > 0 ? 'border-t border-white/15' : ''}`}
+              >
+                <div className="shrink-0 w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center">
+                  <FiBell size={13} />
+                </div>
+                <Link
+                  href={`/notices?id=${notice.id}`}
+                  className="flex-1 min-w-0 flex items-center gap-2 group"
+                >
+                  <span className="text-[13px] sm:text-sm font-semibold truncate group-hover:underline">
+                    📌 {notice.title}
+                  </span>
+                  <FiChevronRight size={14} className="shrink-0 opacity-70 group-hover:opacity-100 transition-opacity" />
+                </Link>
+                <button
+                  onClick={() =>
+                    setDismissedIds((prev) => new Set([...prev, notice.id]))
+                  }
+                  className="shrink-0 w-7 h-7 flex items-center justify-center hover:bg-white/15 rounded-lg transition-colors opacity-70 hover:opacity-100"
+                >
+                  <FiX size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <main className="flex-1">
         {/* Hero Section */}
@@ -177,10 +254,10 @@ export default function Home() {
               </div>
 
               <div className="p-7 bg-white rounded-2xl animate-fade-in-up animation-delay-400 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-xl mb-5">🔒</div>
-                <h3 className="text-[15px] font-bold text-foreground mb-2">회원 전용 공간</h3>
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-xl mb-5">📢</div>
+                <h3 className="text-[15px] font-bold text-foreground mb-2">공지사항 확인</h3>
                 <p className="text-sm leading-relaxed" style={{ color: '#8b95a1' }}>
-                  Google 계정 하나로, 우리끼리만 쓰는 공간이에요
+                  동호회 소식과 안내를 놓치지 않고 확인할 수 있어요
                 </p>
               </div>
             </div>
