@@ -16,32 +16,43 @@ export default function Image() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #0f1520 0%, #191f28 50%, #121828 100%)',
+          background: '#ffffff',
           position: 'relative',
           overflow: 'hidden',
         }}
       >
-        {/* Decorative circles */}
+        {/* Decorative soft circles (like main page orbs) */}
         <div
           style={{
             position: 'absolute',
-            top: -100,
-            right: -80,
-            width: 400,
-            height: 400,
+            top: -80,
+            right: -60,
+            width: 420,
+            height: 420,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(49,130,246,0.15) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(49,130,246,0.08) 0%, transparent 70%)',
           }}
         />
         <div
           style={{
             position: 'absolute',
-            bottom: -120,
-            left: -60,
-            width: 350,
-            height: 350,
+            bottom: -100,
+            left: -80,
+            width: 380,
+            height: 380,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(49,130,246,0.06) 0%, transparent 70%)',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            top: 200,
+            left: 100,
+            width: 200,
+            height: 200,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)',
           }}
         />
 
@@ -53,7 +64,7 @@ export default function Image() {
             left: 0,
             right: 0,
             height: 4,
-            background: 'linear-gradient(90deg, #3182f6, #8b5cf6, #3182f6)',
+            background: 'linear-gradient(90deg, #3182f6, #5b9cf6, #3182f6)',
           }}
         />
 
@@ -95,7 +106,7 @@ export default function Image() {
             style={{
               fontSize: 36,
               fontWeight: 700,
-              color: '#ffffff',
+              color: '#191f28',
               letterSpacing: '-0.5px',
             }}
           >
@@ -123,14 +134,14 @@ export default function Image() {
             display: 'flex',
             alignItems: 'center',
             gap: 24,
-            color: '#6b7684',
+            color: '#8b95a1',
             fontSize: 16,
           }}
         >
           <span>🎭 뮤지컬</span>
-          <span style={{ color: '#4e5968' }}>·</span>
+          <span style={{ color: '#b0b8c1' }}>·</span>
           <span>🎵 연습실 예약</span>
-          <span style={{ color: '#4e5968' }}>·</span>
+          <span style={{ color: '#b0b8c1' }}>·</span>
           <span>📅 일정 공유</span>
         </div>
       </div>
