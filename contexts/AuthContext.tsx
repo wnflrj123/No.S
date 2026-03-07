@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useMemo } from '
 import {
   GoogleAuthProvider,
   signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User as FirebaseUser,
@@ -44,49 +45,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser) {
-        // Firestore에서 customName 읽기
-        let customName: string | null = null;
-        try {
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          if (userDoc.exists()) {
-            customName = userDoc.data().customName || null;
-          }
-        } catch (e) {
-          console.error('사용자 정보 조회 실패:', e);
+  const handleFirebaseUser = async (firebaseUser: FirebaseUser | null) => {
+    if (firebaseUser) {
+      // Firestore에서 customName 읽기
+      let customName: string | null = null;
+      try {
+        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+        if (userDoc.exists()) {
+          customName = userDoc.data().customName || null;
         }
-
-        setUser({
-          uid: firebaseUser.uid,
-          displayName: firebaseUser.displayName,
-          email: firebaseUser.email,
-          photoURL: firebaseUser.photoURL,
-          customName,
-        });
-
-        // users 컬렉션에 사용자 정보 저장/업데이트
-        try {
-          await setDoc(doc(db, 'users', firebaseUser.uid), {
-            uid: firebaseUser.uid,
-            displayName: firebaseUser.displayName || '',
-            email: firebaseUser.email || '',
-            photoURL: firebaseUser.photoURL || '',
-            lastLoginAt: Timestamp.now(),
-          }, { merge: true });
-        } catch (e) {
-          console.error('사용자 정보 저장 실패:', e);
-        }
-
-        const roles = await checkRoles(firebaseUser.uid);
-        setIsAdmin(roles.admin);
-        setIsOwner(roles.owner);
-      } else {
-        setUser(null);
-        setIsAdmin(false);
-        setIsOwner(false);
+      } catch (e) {
+        console.error('사용자 정보 조회 실패:', e);
       }
+
+      setUser({
+        uid: firebaseUser.uid,
+        displayName: firebaseUser.displayName,
+        email: firebaseUser.email,
+        photoURL: firebaseUser.photoURL,
+        customName,
+      });
+
+      // users 컬렉션에 사용자 정보 저장/업데이트
+      try {
+        await setDoc(doc(db, 'users', firebaseUser.uid), {
+          uid: firebaseUser.uid,
+          displayName: firebaseUser.displayName || '',
+          email: firebaseUser.email || '',
+          photoURL: firebaseUser.photoURL || '',
+          lastLoginAt: Timestamp.now(),
+        }, { merge: true });
+      } catch (e) {
+        console.error('사용자 정보 저장 실패:', e);
+      }
+
+      const roles = await checkRoles(firebaseUser.uid);
+      setIsAdmin(roles.admin);
+      setIsOwner(roles.owner);
+    } else {
+      setUser(null);
+      setIsAdmin(false);
+      setIsOwner(false);
+    }
+  };
+
+  useEffect(() => {
+    // signInWithRedirect 후 돌아왔을 때 결과를 처리하는 Promise
+    const redirectPromise = getRedirectResult(auth).catch((error) => {
+      console.error('리다이렉트 로그인 처리 실패:', error);
+    });
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      // 리다이렉트 결과가 처리될 때까지 대기 (첫 호출 시 null이 올 수 있음)
+      await redirectPromise;
+
+      await handleFirebaseUser(firebaseUser);
       setLoading(false);
     });
 
