@@ -10,12 +10,18 @@ export async function POST(request: NextRequest) {
     }
 
     const idToken = authHeader.split('Bearer ')[1];
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
+
+    let decodedToken;
+    try {
+      decodedToken = await adminAuth.verifyIdToken(idToken);
+    } catch (authError: any) {
+      return NextResponse.json({ error: `Token verification failed: ${authError.message}` }, { status: 401 });
+    }
 
     // Check if caller is Owner
     const adminsDoc = await adminDb.collection('settings').doc('admins').get();
     if (!adminsDoc.exists || adminsDoc.data()?.ownerUid !== decodedToken.uid) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Forbidden: Owner only' }, { status: 403 });
     }
 
     // List all Firebase Auth users
@@ -42,8 +48,11 @@ export async function POST(request: NextRequest) {
     } while (nextPageToken);
 
     return NextResponse.json({ success: true, synced });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Sync users error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({
+      error: error.message || 'Internal server error',
+      code: error.code || 'unknown',
+    }, { status: 500 });
   }
 }

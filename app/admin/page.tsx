@@ -156,12 +156,10 @@ export default function AdminPage() {
         headers: { Authorization: `Bearer ${idToken}` },
       });
 
+      const data = await res.json();
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || 'Sync failed');
       }
-
-      const data = await res.json();
       setSuccess(`${data.synced}명의 회원 정보를 동기화했어요.`);
       setTimeout(() => setSuccess(null), 3000);
 
@@ -173,7 +171,7 @@ export default function AdminPage() {
       fetchMembers(0);
     } catch (err: any) {
       console.error('동기화 실패:', err);
-      setError('회원 동기화에 실패했어요. 서비스 계정 키가 설정되어 있는지 확인해주세요.');
+      setError(`회원 동기화에 실패했어요: ${err.message}`);
     } finally {
       setSyncing(false);
     }

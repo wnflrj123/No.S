@@ -2,24 +2,27 @@ import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
-let app: App;
-
-if (!getApps().length) {
-  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-
-  if (serviceAccount) {
-    app = initializeApp({
-      credential: cert(JSON.parse(serviceAccount)),
-    });
-  } else {
-    // Fallback: use project ID only (for environments with default credentials)
-    app = initializeApp({
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    });
+function getAdminApp(): App {
+  if (getApps().length) {
+    return getApps()[0];
   }
-} else {
-  app = getApps()[0];
+
+  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+
+  if (!serviceAccountKey) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set');
+  }
+
+  try {
+    const serviceAccount = JSON.parse(serviceAccountKey);
+    return initializeApp({
+      credential: cert(serviceAccount),
+    });
+  } catch (e: any) {
+    throw new Error(`Failed to initialize Firebase Admin: ${e.message}`);
+  }
 }
 
+const app = getAdminApp();
 export const adminAuth = getAuth(app);
 export const adminDb = getFirestore(app);
