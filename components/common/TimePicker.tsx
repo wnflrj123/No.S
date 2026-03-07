@@ -1,27 +1,19 @@
 'use client';
 
-/**
- * 시간 선택 컴포넌트
- * 시간(hour)과 분(minute)을 분리하여 선택 가능
- */
-
 import { useState, useRef, useEffect } from 'react';
 import { FiClock, FiChevronLeft } from 'react-icons/fi';
 
 interface TimePickerProps {
-  value: string; // HH:mm 형식
+  value: string;
   onChange: (time: string) => void;
   placeholder?: string;
   required?: boolean;
   className?: string;
-  allowEmpty?: boolean; // 빈 값 허용 여부
-  accentColor?: 'primary' | 'orange'; // 강조 색상
+  allowEmpty?: boolean;
+  accentColor?: 'primary' | 'orange';
 }
 
-// 시간 옵션 (0-23)
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
-
-// 분 옵션 (10분 단위)
 const MINUTES = [0, 10, 20, 30, 40, 50];
 
 export default function TimePicker({
@@ -38,11 +30,9 @@ export default function TimePicker({
   const [view, setView] = useState<'hour' | 'minute'>('hour');
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 현재 값에서 시간/분 추출
   const currentHour = value ? parseInt(value.split(':')[0], 10) : null;
   const currentMinute = value ? parseInt(value.split(':')[1], 10) : null;
 
-  // 외부 클릭 감지
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -93,14 +83,10 @@ export default function TimePicker({
     primary: {
       ring: 'focus:ring-primary',
       bg: 'bg-primary',
-      bgHover: 'hover:bg-primary/10',
-      text: 'text-primary',
     },
     orange: {
       ring: 'focus:ring-orange-400',
       bg: 'bg-orange-500',
-      bgHover: 'hover:bg-orange-50',
-      text: 'text-orange-500',
     },
   };
 
@@ -108,47 +94,45 @@ export default function TimePicker({
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
-      {/* 입력 필드 */}
       <button
         type="button"
         onClick={handleOpen}
-        className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 ${colors.ring} focus:border-transparent text-left flex items-center justify-between bg-white`}
+        className={`w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 ${colors.ring} focus:border-transparent text-left flex items-center justify-between bg-white text-sm`}
       >
-        <span className={value ? 'text-gray-800' : 'text-gray-400'}>
+        <span className={value ? 'text-foreground' : ''} style={{ color: value ? undefined : '#8b95a1' }}>
           {value || placeholder}
         </span>
-        <FiClock className="text-gray-400" size={18} />
+        <FiClock size={16} style={{ color: '#b0b8c1' }} />
       </button>
 
-      {/* 드롭다운 */}
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-          {/* 헤더 */}
-          <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
+        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2.5 bg-secondary border-b border-gray-100">
             {view === 'minute' ? (
               <button
                 type="button"
                 onClick={handleBackToHour}
-                className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800"
+                className="flex items-center gap-1 text-sm font-medium"
+                style={{ color: '#4e5968' }}
               >
-                <FiChevronLeft size={16} />
+                <FiChevronLeft size={14} />
                 <span>{selectedHour?.toString().padStart(2, '0')}시</span>
               </button>
             ) : (
-              <span className="text-sm font-medium text-gray-700">시간 선택</span>
+              <span className="text-xs font-semibold" style={{ color: '#8b95a1' }}>시간 선택</span>
             )}
             {allowEmpty && (
               <button
                 type="button"
                 onClick={handleClear}
-                className="text-xs text-gray-500 hover:text-gray-700"
+                className="text-xs font-medium"
+                style={{ color: '#8b95a1' }}
               >
                 미정
               </button>
             )}
           </div>
 
-          {/* 시간 선택 */}
           {view === 'hour' && (
             <div className="p-2 max-h-48 overflow-y-auto">
               <div className="grid grid-cols-4 gap-1">
@@ -159,9 +143,10 @@ export default function TimePicker({
                     onClick={() => handleHourSelect(hour)}
                     className={`px-2 py-2 text-sm rounded-lg transition-colors ${
                       hour === currentHour
-                        ? `${colors.bg} text-white`
-                        : `hover:bg-gray-100 text-gray-700`
+                        ? `${colors.bg} text-white font-medium`
+                        : 'hover:bg-gray-100'
                     }`}
+                    style={{ color: hour !== currentHour ? '#4e5968' : undefined }}
                   >
                     {hour.toString().padStart(2, '0')}시
                   </button>
@@ -170,7 +155,6 @@ export default function TimePicker({
             </div>
           )}
 
-          {/* 분 선택 */}
           {view === 'minute' && (
             <div className="p-2">
               <div className="grid grid-cols-3 gap-1">
@@ -181,9 +165,10 @@ export default function TimePicker({
                     onClick={() => handleMinuteSelect(minute)}
                     className={`px-3 py-3 text-sm rounded-lg transition-colors ${
                       selectedHour === currentHour && minute === currentMinute
-                        ? `${colors.bg} text-white`
-                        : `hover:bg-gray-100 text-gray-700`
+                        ? `${colors.bg} text-white font-medium`
+                        : 'hover:bg-gray-100'
                     }`}
+                    style={{ color: !(selectedHour === currentHour && minute === currentMinute) ? '#4e5968' : undefined }}
                   >
                     {minute.toString().padStart(2, '0')}분
                   </button>

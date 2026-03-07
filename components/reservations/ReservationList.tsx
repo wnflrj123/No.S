@@ -1,9 +1,5 @@
 'use client';
 
-/**
- * 예약 목록 컴포넌트
- */
-
 import { useState } from 'react';
 import { deleteDoc, doc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -54,72 +50,73 @@ function DeleteModal({ reservation, onClose, onConfirm, isDeleting }: DeleteModa
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-gray-800">
-            {step === 'select' ? '반복 일정 삭제' : '삭제 확인'}
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-sm w-full p-6">
+        <div className="flex justify-between items-center mb-5">
+          <h3 className="text-lg font-bold text-foreground">
+            {step === 'select' ? '반복 일정 삭제' : '정말 삭제할까요?'}
           </h3>
           <button
             onClick={onClose}
             disabled={isDeleting}
-            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-xl transition-colors"
           >
-            <FiX size={20} />
+            <FiX size={18} style={{ color: '#8b95a1' }} />
           </button>
         </div>
 
         {step === 'select' ? (
           <>
-            <p className="text-sm text-gray-600 mb-4">
-              이 예약은 반복 일정입니다. 어떻게 삭제하시겠습니까?
+            <p className="text-sm mb-4" style={{ color: '#6b7684' }}>
+              반복 일정이에요. 어떻게 삭제할까요?
             </p>
 
             <div className="space-y-2">
               <button
                 onClick={() => handleOptionSelect('single')}
                 disabled={isDeleting}
-                className="w-full py-3 px-4 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                className="w-full py-3.5 px-4 text-left bg-secondary hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
               >
-                <p className="font-medium text-gray-800">이 일정만 삭제</p>
-                <p className="text-xs text-gray-500 mt-1">선택한 날짜의 일정만 삭제합니다</p>
+                <p className="font-medium text-foreground text-sm">이 일정만 삭제</p>
+                <p className="text-xs mt-0.5" style={{ color: '#8b95a1' }}>선택한 날짜의 일정만 삭제해요</p>
               </button>
 
               <button
                 onClick={() => handleOptionSelect('future')}
                 disabled={isDeleting}
-                className="w-full py-3 px-4 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                className="w-full py-3.5 px-4 text-left bg-secondary hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
               >
-                <p className="font-medium text-gray-800">이 일정 및 향후 일정 삭제</p>
-                <p className="text-xs text-gray-500 mt-1">이 날짜 이후의 모든 반복 일정을 삭제합니다</p>
+                <p className="font-medium text-foreground text-sm">이 일정 및 향후 일정 삭제</p>
+                <p className="text-xs mt-0.5" style={{ color: '#8b95a1' }}>이 날짜 이후의 반복 일정을 모두 삭제해요</p>
               </button>
 
               <button
                 onClick={() => handleOptionSelect('all')}
                 disabled={isDeleting}
-                className="w-full py-3 px-4 text-left bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50"
+                className="w-full py-3.5 px-4 text-left bg-red-50 hover:bg-red-100 rounded-xl transition-colors disabled:opacity-50"
               >
-                <p className="font-medium text-red-700">모든 반복 일정 삭제</p>
-                <p className="text-xs text-red-500 mt-1">이 반복 일정의 모든 예약을 삭제합니다</p>
+                <p className="font-medium text-red-600 text-sm">모든 반복 일정 삭제</p>
+                <p className="text-xs text-red-400 mt-0.5">이 반복 일정의 모든 예약을 삭제해요</p>
               </button>
             </div>
 
             <button
               onClick={onClose}
               disabled={isDeleting}
-              className="w-full mt-4 py-2 text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50"
+              className="w-full mt-3 py-2.5 text-sm font-medium rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50"
+              style={{ color: '#8b95a1' }}
             >
               취소
             </button>
           </>
         ) : (
           <>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-yellow-800">
-                <strong>{optionLabels[selectedOption!]}</strong>을(를) 삭제합니다.
+            <div className="bg-orange-50 rounded-xl p-4 mb-5">
+              <p className="text-sm text-orange-700 font-medium">
+                {optionLabels[selectedOption!]}을(를) 삭제해요.
               </p>
-              <p className="text-xs text-yellow-600 mt-1">
-                이 작업은 되돌릴 수 없습니다.
+              <p className="text-xs text-orange-500 mt-1">
+                이 작업은 되돌릴 수 없어요.
               </p>
             </div>
 
@@ -127,25 +124,25 @@ function DeleteModal({ reservation, onClose, onConfirm, isDeleting }: DeleteModa
               <button
                 onClick={handleBack}
                 disabled={isDeleting}
-                className="flex-1 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                className="flex-1 py-3 bg-secondary text-foreground font-semibold rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50 text-sm"
               >
                 뒤로
               </button>
               <button
                 onClick={handleConfirm}
                 disabled={isDeleting}
-                className="flex-1 py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+                className="flex-1 py-3 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50 text-sm"
               >
-                {isDeleting ? '삭제 중...' : '삭제'}
+                {isDeleting ? '삭제 중...' : '삭제하기'}
               </button>
             </div>
           </>
         )}
 
         {isDeleting && (
-          <div className="flex items-center justify-center mt-3">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary mr-2"></div>
-            <span className="text-sm text-gray-500">삭제 중...</span>
+          <div className="flex items-center justify-center mt-4">
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-200 border-t-primary mr-2" />
+            <span className="text-sm" style={{ color: '#8b95a1' }}>삭제하고 있어요...</span>
           </div>
         )}
       </div>
@@ -165,16 +162,14 @@ export default function ReservationList({
 
   const handleDeleteClick = (reservation: Reservation) => {
     if (reservation.repeatGroupId) {
-      // 반복 일정이면 모달 표시
       setDeleteModalReservation(reservation);
     } else {
-      // 단일 일정이면 바로 삭제 확인
       handleSingleDelete(reservation);
     }
   };
 
   const handleSingleDelete = async (reservation: Reservation) => {
-    if (!confirm('정말 이 예약 정보를 삭제하시겠습니까?')) return;
+    if (!confirm('이 예약을 삭제할까요?')) return;
 
     setDeletingId(reservation.id);
     try {
@@ -182,7 +177,7 @@ export default function ReservationList({
       onDeleted?.();
     } catch (error) {
       console.error('삭제 실패:', error);
-      alert('삭제에 실패했습니다. 다시 시도해주세요.');
+      alert('삭제에 실패했어요. 다시 시도해주세요.');
     } finally {
       setDeletingId(null);
     }
@@ -195,10 +190,8 @@ export default function ReservationList({
 
     try {
       if (option === 'single') {
-        // 이 일정만 삭제
         await deleteDoc(doc(db, 'reservations', deleteModalReservation.id));
       } else if (option === 'all') {
-        // 모든 반복 일정 삭제
         const q = query(
           collection(db, 'reservations'),
           where('repeatGroupId', '==', deleteModalReservation.repeatGroupId)
@@ -209,7 +202,6 @@ export default function ReservationList({
         );
         await Promise.all(deletePromises);
       } else if (option === 'future') {
-        // 이 일정 및 향후 일정 삭제
         const q = query(
           collection(db, 'reservations'),
           where('repeatGroupId', '==', deleteModalReservation.repeatGroupId)
@@ -228,7 +220,7 @@ export default function ReservationList({
       onDeleted?.();
     } catch (error) {
       console.error('삭제 실패:', error);
-      alert('삭제에 실패했습니다. 다시 시도해주세요.');
+      alert('삭제에 실패했어요. 다시 시도해주세요.');
     } finally {
       setDeletingId(null);
     }
@@ -243,25 +235,37 @@ export default function ReservationList({
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="space-y-3">
+        {[1, 2].map((i) => (
+          <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100">
+            <div className="shimmer-bg h-5 w-32 rounded-lg mb-3" />
+            <div className="shimmer-bg h-4 w-24 rounded-lg mb-2" />
+            <div className="shimmer-bg h-4 w-20 rounded-lg mb-3" />
+            <div className="shimmer-bg h-16 w-full rounded-xl" />
+          </div>
+        ))}
       </div>
     );
   }
 
   if (reservations.length === 0) {
     return (
-      <div className="text-center py-12 bg-gray-50 rounded-xl">
-        <p className="text-gray-500 text-lg">등록된 예약이 없습니다</p>
-        <p className="text-gray-400 text-sm mt-2">새로운 예약 정보를 등록해보세요!</p>
+      <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 animate-fade-in-up">
+        <img
+          src="/empty-calendar.svg"
+          alt=""
+          className="w-40 h-auto mx-auto mb-4 animate-float"
+        />
+        <p className="font-bold text-foreground text-[15px]">아직 등록된 예약이 없어요</p>
+        <p className="text-sm mt-1" style={{ color: '#8b95a1' }}>첫 번째 예약을 등록해볼까요?</p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="space-y-4">
-        {reservations.map((reservation) => {
+      <div className="space-y-3">
+        {reservations.map((reservation, index) => {
           const isOwner = user?.uid === reservation.userId;
           const isDeleting = deletingId === reservation.id;
           const isRepeatReservation = !!reservation.repeatGroupId;
@@ -269,67 +273,68 @@ export default function ReservationList({
           return (
             <div
               key={reservation.id}
-              className={`bg-white rounded-xl shadow-md p-5 border-l-4 ${
-                isOwner ? 'border-primary' : 'border-gray-300'
+              className={`bg-white rounded-2xl p-5 border border-gray-100 card-hover animate-fade-in-up ${
+                isOwner ? 'border-l-[3px] border-l-primary' : ''
               } ${isDeleting ? 'opacity-50' : ''}`}
+              style={{ animationDelay: `${index * 0.05}s` }}
             >
               <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  {/* 시간 */}
-                  <div className="flex items-center gap-2 text-lg font-semibold text-gray-800 mb-2">
-                    <FiClock className="text-primary" />
-                    <span>
+                <div className="flex-1 min-w-0">
+                  {/* Time */}
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <FiClock size={15} className="text-primary shrink-0" />
+                    <span className="text-[15px] font-bold text-foreground">
                       {reservation.startTime} ~ {reservation.endTime}
                     </span>
                     {isRepeatReservation && (
-                      <span className="flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                        <FiRepeat size={12} />
+                      <span className="flex items-center gap-1 text-[11px] bg-primary/8 text-primary px-2 py-0.5 rounded-lg font-medium">
+                        <FiRepeat size={10} />
                         반복
                       </span>
                     )}
                   </div>
 
-                  {/* 장소 */}
-                  <div className="flex items-center gap-2 text-gray-600 mb-2">
-                    <FiMapPin className="text-gray-400" />
-                    <span className="font-medium">{getLocationDisplay(reservation)}</span>
+                  {/* Location */}
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <FiMapPin size={14} className="shrink-0" style={{ color: '#8b95a1' }} />
+                    <span className="text-sm font-medium" style={{ color: '#4e5968' }}>{getLocationDisplay(reservation)}</span>
                   </div>
 
-                  {/* 예약자 */}
-                  <div className="flex items-center gap-2 text-gray-600 mb-2">
-                    <FiUser className="text-gray-400" />
-                    <span>{reservation.userName}</span>
+                  {/* User */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <FiUser size={14} className="shrink-0" style={{ color: '#8b95a1' }} />
+                    <span className="text-sm" style={{ color: '#6b7684' }}>{reservation.userName}</span>
                     {isOwner && (
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                        내 예약
+                      <span className="text-[11px] bg-primary/8 text-primary px-2 py-0.5 rounded-lg font-medium">
+                        나
                       </span>
                     )}
                   </div>
 
-                  {/* 사용 목적 */}
-                  <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{reservation.purpose}</p>
+                  {/* Purpose */}
+                  <div className="p-3 bg-secondary rounded-xl">
+                    <p className="text-sm whitespace-pre-wrap" style={{ color: '#4e5968' }}>{reservation.purpose}</p>
                   </div>
                 </div>
 
-                {/* 수정/삭제 버튼 (본인만) */}
+                {/* Actions */}
                 {isOwner && (
-                  <div className="flex gap-2 ml-4">
+                  <div className="flex gap-1 ml-3 shrink-0">
                     <button
                       onClick={() => onEdit?.(reservation)}
                       disabled={isDeleting}
-                      className="p-2 text-gray-500 hover:text-primary hover:bg-blue-50 rounded-lg transition-colors"
+                      className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-primary hover:bg-primary/8 rounded-xl transition-colors"
                       title="수정"
                     >
-                      <FiEdit2 size={18} />
+                      <FiEdit2 size={16} />
                     </button>
                     <button
                       onClick={() => handleDeleteClick(reservation)}
                       disabled={isDeleting}
-                      className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
                       title="삭제"
                     >
-                      <FiTrash2 size={18} />
+                      <FiTrash2 size={16} />
                     </button>
                   </div>
                 )}
@@ -339,7 +344,6 @@ export default function ReservationList({
         })}
       </div>
 
-      {/* 반복 일정 삭제 모달 */}
       {deleteModalReservation && (
         <DeleteModal
           reservation={deleteModalReservation}

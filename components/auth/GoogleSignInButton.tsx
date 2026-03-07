@@ -1,9 +1,5 @@
 'use client';
 
-/**
- * Google 로그인 버튼 컴포넌트
- */
-
 import { FcGoogle } from 'react-icons/fc';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useState } from 'react';
@@ -28,12 +24,10 @@ export default function GoogleSignInButton() {
     <button
       onClick={handleSignIn}
       disabled={isLoading}
-      className="flex items-center justify-center gap-3 px-6 py-3 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 hover:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+      className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-gray-700"
     >
-      <FcGoogle className="text-2xl" />
-      <span className="font-medium text-gray-700">
-        {isLoading ? '로그인 중...' : 'Google로 로그인'}
-      </span>
+      <FcGoogle className="text-xl" />
+      <span>{isLoading ? '로그인 중...' : 'Google로 계속하기'}</span>
     </button>
   );
 }

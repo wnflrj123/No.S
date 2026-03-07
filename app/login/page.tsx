@@ -1,9 +1,5 @@
 'use client';
 
-/**
- * 로그인 페이지
- */
-
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -22,42 +18,38 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white">
-        <div className="text-primary text-xl">로딩 중...</div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-3 border-gray-200 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12 max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <Image
-              src="/logo.svg"
-              alt="No.S 로고"
-              width={80}
-              height={80}
-              className="drop-shadow-md"
-            />
-          </div>
-          <h1 className="text-4xl font-bold text-primary mb-2">No.S</h1>
-          <p className="text-xl text-gray-600 mb-1">넘버에스</p>
-          <p className="text-sm text-gray-500">삼성전자 뮤지컬 동호회</p>
+    <div className="relative min-h-screen flex items-center justify-center bg-white px-6 overflow-hidden">
+      {/* Background orbs */}
+      <div className="orb orb-1 top-10 -right-40" />
+      <div className="orb orb-2 -bottom-20 -left-20" />
+
+      <div className="w-full max-w-sm relative z-10 animate-fade-in-up">
+        <div className="text-center mb-10">
+          <Image
+            src="/logo.svg"
+            alt="No.S 로고"
+            width={56}
+            height={56}
+            className="mx-auto mb-6"
+          />
+          <h1 className="text-2xl font-bold text-foreground mb-2 tracking-tight">돌아오셨군요!</h1>
+          <p className="text-sm text-gray-400">로그인하고 예약 현황을 확인해 보세요</p>
         </div>
 
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-gray-700 text-center mb-4">
-            동호회 예약 현황을 공유하려면
-            <br />
-            Google 계정으로 로그인하세요
-          </p>
+        <div className="flex flex-col items-center gap-6">
           <GoogleSignInButton />
         </div>
 
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <p>회원만 이용할 수 있는 서비스입니다</p>
-        </div>
+        <p className="mt-10 text-center text-xs text-gray-300">
+          No.S 회원만 이용할 수 있는 서비스예요
+        </p>
       </div>
     </div>
   );

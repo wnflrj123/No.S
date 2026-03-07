@@ -1,11 +1,6 @@
 'use client';
 
-/**
- * 동호회 행사 등록/수정 폼 컴포넌트
- * 운영진만 사용 가능
- */
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { collection, addDoc, updateDoc, doc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
@@ -31,7 +26,6 @@ export default function EventForm({
   const { user, isAdmin } = useAuth();
   const isEditing = !!editingEvent;
 
-  // 현재 장소가 기본 옵션에 있는지 확인
   const getInitialLocationType = (): LocationType => {
     if (!editingEvent?.location) return '합동연습실';
     if (LOCATIONS.includes(editingEvent.location as LocationType)) {
@@ -91,7 +85,7 @@ export default function EventForm({
       return false;
     }
     if (formData.startTime && formData.endTime && formData.startTime >= formData.endTime) {
-      setError('종료 시간은 시작 시간보다 늦어야 합니다');
+      setError('종료 시간은 시작 시간보다 늦어야 해요');
       return false;
     }
     if (selectedLocationType === '기타' && !customLocation.trim()) {
@@ -105,7 +99,7 @@ export default function EventForm({
     e.preventDefault();
 
     if (!user || !isAdmin) {
-      setError('운영진만 행사를 등록할 수 있습니다');
+      setError('운영진만 행사를 등록할 수 있어요');
       return;
     }
 
@@ -141,7 +135,7 @@ export default function EventForm({
       onSuccess?.();
     } catch (err) {
       console.error('행사 저장 실패:', err);
-      setError('행사 저장에 실패했습니다. 다시 시도해주세요.');
+      setError('저장에 실패했어요. 다시 시도해주세요.');
     } finally {
       setIsSubmitting(false);
     }
@@ -149,30 +143,29 @@ export default function EventForm({
 
   if (!isAdmin) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
-        <p className="text-yellow-800">운영진만 행사를 등록할 수 있습니다.</p>
+      <div className="bg-orange-50 rounded-2xl p-6 text-center">
+        <p className="text-orange-700 text-sm font-medium">운영진만 행사를 등록할 수 있어요</p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-400">
-      <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-        <FiCalendar className="text-orange-500" />
-        {isEditing ? '행사 정보 수정' : '동호회 행사 등록'}
+    <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 border border-gray-100 border-l-[3px] border-l-orange-400">
+      <h2 className="text-lg font-bold text-foreground mb-5 flex items-center gap-2">
+        <FiCalendar className="text-orange-500" size={18} />
+        {isEditing ? '행사 수정하기' : '새 행사 등록하기'}
       </h2>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+        <div className="mb-4 p-3.5 bg-red-50 text-red-600 rounded-xl text-sm font-medium">
           {error}
         </div>
       )}
 
       <div className="space-y-4">
-        {/* 행사 제목 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            행사 제목 <span className="text-red-500">*</span>
+          <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
+            행사 제목 <span className="text-red-400">*</span>
           </label>
           <input
             type="text"
@@ -180,30 +173,28 @@ export default function EventForm({
             value={formData.title}
             onChange={handleChange}
             placeholder="예: 정기 공연, 워크샵 등"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent text-sm"
             required
           />
         </div>
 
-        {/* 날짜 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            날짜 <span className="text-red-500">*</span>
+          <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
+            날짜 <span className="text-red-400">*</span>
           </label>
           <input
             type="date"
             name="date"
             value={formData.date}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent text-sm bg-white"
             required
           />
         </div>
 
-        {/* 시간 */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
               시작 시간
             </label>
             <TimePicker
@@ -215,7 +206,7 @@ export default function EventForm({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
               종료 시간
             </label>
             <TimePicker
@@ -228,15 +219,14 @@ export default function EventForm({
           </div>
         </div>
 
-        {/* 장소 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
             장소
           </label>
           <select
             value={selectedLocationType}
             onChange={handleLocationChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent text-sm bg-white"
           >
             {LOCATIONS.map((loc) => (
               <option key={loc} value={loc}>
@@ -246,26 +236,24 @@ export default function EventForm({
           </select>
         </div>
 
-        {/* 기타 장소 직접 입력 */}
         {selectedLocationType === '기타' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              장소 직접 입력 <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
+              장소 직접 입력 <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
               value={customLocation}
               onChange={(e) => setCustomLocation(e.target.value)}
               placeholder="장소명을 입력하세요"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent text-sm"
               required
             />
           </div>
         )}
 
-        {/* 설명 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
             행사 설명
           </label>
           <textarea
@@ -274,25 +262,24 @@ export default function EventForm({
             onChange={handleChange}
             placeholder="행사에 대한 설명을 입력하세요"
             rows={3}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-transparent resize-none"
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent resize-none text-sm"
           />
         </div>
       </div>
 
-      {/* 버튼 */}
       <div className="flex gap-3 mt-6">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 py-3 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
         >
-          {isSubmitting ? '저장 중...' : isEditing ? '수정하기' : '등록하기'}
+          {isSubmitting ? '저장하고 있어요...' : isEditing ? '수정하기' : '등록하기'}
         </button>
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-5 py-3 bg-secondary text-foreground font-semibold rounded-xl hover:bg-gray-200 transition-colors text-sm"
           >
             취소
           </button>

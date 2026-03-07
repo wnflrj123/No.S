@@ -1,0 +1,190 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 360" fill="none">
+  <defs>
+    <linearGradient id="stageGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f1520"/>
+      <stop offset="50%" style="stop-color:#191f28"/>
+      <stop offset="100%" style="stop-color:#121828"/>
+    </linearGradient>
+    <linearGradient id="floorGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" style="stop-color:#2a3140"/>
+      <stop offset="100%" style="stop-color:#14191f"/>
+    </linearGradient>
+    <linearGradient id="floorShine" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" style="stop-color:#3182f6;stop-opacity:0.1"/>
+      <stop offset="100%" style="stop-color:#3182f6;stop-opacity:0"/>
+    </linearGradient>
+    <linearGradient id="curtainL" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1a4fd0"/>
+      <stop offset="30%" style="stop-color:#2968e8"/>
+      <stop offset="50%" style="stop-color:#1a4fd0"/>
+      <stop offset="70%" style="stop-color:#2968e8"/>
+      <stop offset="100%" style="stop-color:#1a4fd0"/>
+    </linearGradient>
+    <linearGradient id="curtainR" x1="100%" y1="0%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#1a4fd0"/>
+      <stop offset="30%" style="stop-color:#2968e8"/>
+      <stop offset="50%" style="stop-color:#1a4fd0"/>
+      <stop offset="70%" style="stop-color:#2968e8"/>
+      <stop offset="100%" style="stop-color:#1a4fd0"/>
+    </linearGradient>
+    <linearGradient id="curtainFoldL" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#133da8;stop-opacity:0.6"/>
+      <stop offset="50%" style="stop-color:#3182f6;stop-opacity:0.15"/>
+      <stop offset="100%" style="stop-color:#133da8;stop-opacity:0.5"/>
+    </linearGradient>
+    <linearGradient id="spotBlue" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" style="stop-color:#3182f6;stop-opacity:0.6"/>
+      <stop offset="100%" style="stop-color:#3182f6;stop-opacity:0"/>
+    </linearGradient>
+    <linearGradient id="spotPurple" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:0.5"/>
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0"/>
+    </linearGradient>
+    <linearGradient id="spotAmber" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:0.4"/>
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:0"/>
+    </linearGradient>
+    <radialGradient id="stageAmbient" cx="50%" cy="70%" r="50%">
+      <stop offset="0%" style="stop-color:#3182f6;stop-opacity:0.06"/>
+      <stop offset="100%" style="stop-color:#3182f6;stop-opacity:0"/>
+    </radialGradient>
+    <radialGradient id="centerSpot" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:0.15"/>
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0"/>
+    </radialGradient>
+    <filter id="subtleGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="560" height="360" rx="24" fill="url(#stageGrad)"/>
+  <rect width="560" height="360" rx="24" fill="url(#stageAmbient)"/>
+
+  <!-- Stage floor -->
+  <path d="M60 255 L500 255 L540 340 L20 340 Z" fill="url(#floorGrad)"/>
+  <path d="M60 255 L500 255 L540 340 L20 340 Z" fill="url(#floorShine)"/>
+  <line x1="60" y1="255" x2="500" y2="255" stroke="#4e5968" stroke-width="1.5" opacity="0.35"/>
+  <line x1="60" y1="256" x2="500" y2="256" stroke="#3182f6" stroke-width="0.5" opacity="0.12"/>
+
+  <!-- Spotlight beams -->
+  <polygon points="190,0 155,255 225,255" fill="url(#spotBlue)" opacity="0.1"/>
+  <polygon points="280,0 230,255 330,255" fill="url(#spotPurple)" opacity="0.08"/>
+  <polygon points="375,0 345,255 405,255" fill="url(#spotAmber)" opacity="0.07"/>
+
+  <!-- Spotlight pools -->
+  <ellipse cx="190" cy="255" rx="42" ry="5" fill="#3182f6" opacity="0.12"/>
+  <ellipse cx="280" cy="255" rx="55" ry="6" fill="#8b5cf6" opacity="0.1"/>
+  <ellipse cx="375" cy="255" rx="38" ry="4" fill="#f59e0b" opacity="0.08"/>
+
+  <!-- Center glow -->
+  <ellipse cx="280" cy="230" rx="80" ry="40" fill="url(#centerSpot)"/>
+
+  <!-- Left curtain -->
+  <path d="M0 0 L0 360 L105 360 L105 28 C95 52 90 28 80 52 C75 28 65 52 55 28 C50 52 40 28 30 52 C25 28 15 48 10 28 L10 0 Z" fill="url(#curtainL)"/>
+  <path d="M10 28 C15 48 25 28 30 52 C40 28 50 52 55 28 C65 52 75 28 80 52 C90 28 95 52 105 28 L105 360 L10 360 Z" fill="url(#curtainFoldL)" opacity="0.5"/>
+  <path d="M35 52 L35 360" stroke="#5a9aff" stroke-width="0.7" opacity="0.12"/>
+  <path d="M65 52 L65 360" stroke="#5a9aff" stroke-width="0.7" opacity="0.1"/>
+
+  <!-- Right curtain -->
+  <path d="M560 0 L560 360 L455 360 L455 28 C465 52 470 28 480 52 C485 28 495 52 505 28 C510 52 520 28 530 52 C535 28 545 48 550 28 L550 0 Z" fill="url(#curtainR)"/>
+  <path d="M550 28 C545 48 535 28 530 52 C520 28 510 52 505 28 C495 52 485 28 480 52 C470 28 465 52 455 28 L455 360 L550 360 Z" fill="url(#curtainFoldL)" opacity="0.5"/>
+  <path d="M475 52 L475 360" stroke="#5a9aff" stroke-width="0.7" opacity="0.12"/>
+  <path d="M500 52 L500 360" stroke="#5a9aff" stroke-width="0.7" opacity="0.1"/>
+
+  <!-- Curtain valance -->
+  <rect x="0" y="0" width="560" height="12" fill="#1a4fd0"/>
+  <rect x="0" y="10" width="560" height="3" fill="#133da8" opacity="0.6"/>
+
+  <!-- ====== People - small, minimal silhouettes ====== -->
+
+  <!-- Person 1 (far left, small) -->
+  <g opacity="0.4">
+    <circle cx="150" cy="226" r="5" fill="#4e6a9e"/>
+    <path d="M150 231 C148 237 147 244 147 255 L153 255 C153 244 152 237 150 231 Z" fill="#4e6a9e"/>
+  </g>
+
+  <!-- Person 2 (left) -->
+  <g opacity="0.7">
+    <circle cx="195" cy="222" r="6.5" fill="#5a7eb0"/>
+    <path d="M195 229 C192 237 191 247 190 255 L200 255 C199 247 198 237 195 229 Z" fill="#5a7eb0"/>
+    <path d="M189 235 L183 228" stroke="#5a7eb0" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M201 235 L207 225" stroke="#5a7eb0" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Person 3 (center-left) -->
+  <g opacity="0.85">
+    <circle cx="245" cy="219" r="7" fill="#6e8fc0"/>
+    <path d="M245 226 C242 236 241 247 240 255 L250 255 C249 247 248 236 245 226 Z" fill="#6e8fc0"/>
+    <path d="M239 233 L230 226" stroke="#6e8fc0" stroke-width="2.8" stroke-linecap="round"/>
+    <path d="M251 232 L260 240" stroke="#6e8fc0" stroke-width="2.8" stroke-linecap="round"/>
+  </g>
+
+  <!-- Person 4 (center, main - slightly larger) -->
+  <g opacity="1">
+    <circle cx="280" cy="215" r="8.5" fill="#8ba4cc"/>
+    <path d="M280 224 C276 235 275 246 274 255 L286 255 C285 246 284 235 280 224 Z" fill="#8ba4cc"/>
+    <path d="M273 232 L262 222" stroke="#8ba4cc" stroke-width="3" stroke-linecap="round"/>
+    <path d="M287 230 L298 218" stroke="#8ba4cc" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- Person 5 (center-right) -->
+  <g opacity="0.85">
+    <circle cx="320" cy="220" r="6.5" fill="#6e8fc0"/>
+    <path d="M320 227 C318 236 317 247 316 255 L324 255 C323 247 322 236 320 227 Z" fill="#6e8fc0"/>
+    <path d="M314 233 L308 240" stroke="#6e8fc0" stroke-width="2.8" stroke-linecap="round"/>
+    <path d="M326 232 L334 224" stroke="#6e8fc0" stroke-width="2.8" stroke-linecap="round"/>
+  </g>
+
+  <!-- Person 6 (right) -->
+  <g opacity="0.7">
+    <circle cx="370" cy="223" r="6" fill="#5a7eb0"/>
+    <path d="M370 229 C368 237 367 247 366 255 L374 255 C373 247 372 237 370 229 Z" fill="#5a7eb0"/>
+    <path d="M364 235 L358 229" stroke="#5a7eb0" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M376 234 L382 226" stroke="#5a7eb0" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Person 7 (far right, small) -->
+  <g opacity="0.4">
+    <circle cx="415" cy="227" r="5" fill="#4e6a9e"/>
+    <path d="M415 232 C413 238 412 247 412 255 L418 255 C418 247 417 238 415 232 Z" fill="#4e6a9e"/>
+  </g>
+
+  <!-- Floor reflections of people (subtle) -->
+  <g opacity="0.08">
+    <ellipse cx="280" cy="260" rx="6" ry="2" fill="#8ba4cc"/>
+    <ellipse cx="245" cy="259" rx="5" ry="1.5" fill="#6e8fc0"/>
+    <ellipse cx="320" cy="259" rx="5" ry="1.5" fill="#6e8fc0"/>
+    <ellipse cx="195" cy="259" rx="4" ry="1.2" fill="#5a7eb0"/>
+    <ellipse cx="370" cy="259" rx="4" ry="1.2" fill="#5a7eb0"/>
+  </g>
+
+  <!-- Music notes -->
+  <g filter="url(#subtleGlow)">
+    <text x="155" y="105" font-family="Georgia, serif" font-size="20" fill="#3182f6" opacity="0.55">&#9834;</text>
+    <text x="395" y="90" font-family="Georgia, serif" font-size="16" fill="#8b5cf6" opacity="0.45">&#9835;</text>
+    <text x="305" y="60" font-family="Georgia, serif" font-size="14" fill="#f59e0b" opacity="0.4">&#9834;</text>
+    <text x="225" y="50" font-family="Georgia, serif" font-size="18" fill="#3182f6" opacity="0.35">&#9836;</text>
+    <text x="440" y="115" font-family="Georgia, serif" font-size="12" fill="#8b5cf6" opacity="0.3">&#9834;</text>
+  </g>
+
+  <!-- Stars / sparkles -->
+  <circle cx="160" cy="38" r="1.8" fill="white" opacity="0.55"/>
+  <circle cx="160" cy="38" r="3.5" fill="white" opacity="0.1"/>
+  <circle cx="310" cy="24" r="1.5" fill="white" opacity="0.45"/>
+  <circle cx="310" cy="24" r="3" fill="white" opacity="0.08"/>
+  <circle cx="430" cy="40" r="2" fill="white" opacity="0.4"/>
+  <circle cx="430" cy="40" r="4" fill="white" opacity="0.08"/>
+  <circle cx="240" cy="32" r="1" fill="white" opacity="0.5"/>
+  <circle cx="370" cy="28" r="1.2" fill="white" opacity="0.3"/>
+  <circle cx="195" cy="62" r="0.8" fill="#3182f6" opacity="0.45"/>
+  <circle cx="355" cy="50" r="1" fill="#8b5cf6" opacity="0.35"/>
+
+  <!-- Lens flares -->
+  <circle cx="280" cy="8" r="6" fill="#8b5cf6" opacity="0.15"/>
+  <circle cx="280" cy="8" r="2.5" fill="white" opacity="0.2"/>
+  <circle cx="190" cy="5" r="4" fill="#3182f6" opacity="0.12"/>
+  <circle cx="190" cy="5" r="1.5" fill="white" opacity="0.15"/>
+  <circle cx="375" cy="6" r="3.5" fill="#f59e0b" opacity="0.1"/>
+  <circle cx="375" cy="6" r="1.2" fill="white" opacity="0.12"/>
+</svg>
