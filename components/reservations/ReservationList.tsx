@@ -5,7 +5,7 @@ import { deleteDoc, doc, collection, query, where, getDocs } from 'firebase/fire
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Reservation } from '@/types';
-import { FiEdit2, FiTrash2, FiMapPin, FiClock, FiUser, FiRepeat, FiX } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiMapPin, FiClock, FiUser, FiRepeat, FiX, FiExternalLink } from 'react-icons/fi';
 
 interface ReservationListProps {
   reservations: Reservation[];
@@ -297,7 +297,19 @@ export default function ReservationList({
                   {/* Location */}
                   <div className="flex items-center gap-2 mb-1.5">
                     <FiMapPin size={14} className="shrink-0" style={{ color: '#8b95a1' }} />
-                    <span className="text-sm font-medium" style={{ color: '#4e5968' }}>{getLocationDisplay(reservation)}</span>
+                    {reservation.locationUrl ? (
+                      <a
+                        href={reservation.locationUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
+                      >
+                        {getLocationDisplay(reservation)}
+                        <FiExternalLink size={12} />
+                      </a>
+                    ) : (
+                      <span className="text-sm font-medium" style={{ color: '#4e5968' }}>{getLocationDisplay(reservation)}</span>
+                    )}
                   </div>
 
                   {/* User */}

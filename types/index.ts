@@ -16,6 +16,7 @@ export interface Reservation {
   endTime: string; // HH:mm 형식
   location: LocationType;
   customLocation?: string; // "기타" 선택 시만 사용
+  locationUrl?: string; // 지도 링크 ("기타" 선택 시)
   purpose: string;
   repeatGroupId?: string; // 반복 일정 그룹 ID
   createdAt: Date;
@@ -32,6 +33,7 @@ export interface ReservationDoc {
   endTime: string;
   location: LocationType;
   customLocation?: string;
+  locationUrl?: string;
   purpose: string;
   createdAt: any; // Firestore Timestamp
   updatedAt: any; // Firestore Timestamp
@@ -44,6 +46,7 @@ export interface ReservationFormData {
   endTime: string;
   location: LocationType;
   customLocation?: string;
+  locationUrl?: string;
   purpose: string;
 }
 

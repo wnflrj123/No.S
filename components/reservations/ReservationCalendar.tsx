@@ -35,12 +35,20 @@ interface DayDataMap {
   [dateStr: string]: DayData;
 }
 
+interface EventSpan {
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+}
+
 export default function ReservationCalendar({
   selectedDate,
   onDateSelect,
 }: ReservationCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [dayData, setDayData] = useState<DayDataMap>({});
+  const [eventSpans, setEventSpans] = useState<EventSpan[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -63,6 +71,7 @@ export default function ReservationCalendar({
 
     let reservationData: { [key: string]: number } = {};
     let eventData: { [key: string]: string } = {};
+    let spans: EventSpan[] = [];
     let reservationLoaded = false;
     let eventLoaded = false;
 
@@ -81,6 +90,7 @@ export default function ReservationCalendar({
       });
 
       setDayData(combined);
+      setEventSpans(spans);
       setLoading(false);
     };
 
@@ -106,6 +116,7 @@ export default function ReservationCalendar({
       eventQuery,
       (snapshot) => {
         eventData = {};
+        spans = [];
         snapshot.docs.forEach((d) => {
           const data = d.data();
           const eventStart = data.date;
@@ -114,7 +125,9 @@ export default function ReservationCalendar({
           // 이 달과 겹치지 않으면 스킵
           if (eventEnd < monthStart) return;
 
-          // 여러날 행사: 각 날짜에 타이틀 매핑
+          spans.push({ id: d.id, title: data.title, startDate: eventStart, endDate: eventEnd });
+
+          // 여러날 행사: 각 날짜에 타이틀 매핑 (hasEvent 플래그용)
           const rangeStart = eventStart < monthStart ? monthStart : eventStart;
           const rangeEnd = eventEnd > monthEnd ? monthEnd : eventEnd;
 
@@ -177,14 +190,19 @@ export default function ReservationCalendar({
   const renderCells = () => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(monthStart);
-    const startDate = startOfWeek(monthStart);
-    const endDate = endOfWeek(monthEnd);
+    const calStart = startOfWeek(monthStart);
+    const calEnd = endOfWeek(monthEnd);
 
     const rows = [];
-    let days = [];
-    let day = startDate;
+    let day = calStart;
 
-    while (day <= endDate) {
+    while (day <= calEnd) {
+      const rowStartDate = new Date(day.getTime());
+      const rowStartStr = format(rowStartDate, 'yyyy-MM-dd');
+      const rowEndStr = format(addDays(rowStartDate, 6), 'yyyy-MM-dd');
+
+      // 날짜 셀 렌더링
+      const dateCells = [];
       for (let i = 0; i < 7; i++) {
         const cloneDay = new Date(day.getTime());
         const dateStr = format(day, 'yyyy-MM-dd');
@@ -192,20 +210,18 @@ export default function ReservationCalendar({
         const isCurrentMonth = isSameMonth(day, monthStart);
         const isSelected = isSameDay(day, selectedDate);
         const isTodayDate = isToday(day);
-        const hasBoth = data.hasEvent && data.reservationCount > 0 && isCurrentMonth;
 
-        days.push(
+        dateCells.push(
           <div
             key={dateStr}
             onClick={() => isCurrentMonth && onDateSelect(cloneDay)}
             className={`
-              flex flex-col min-h-[56px] p-1 transition-all rounded-xl m-0.5
+              flex flex-col min-h-[44px] p-1 transition-all rounded-xl m-0.5
               ${!isCurrentMonth ? 'text-gray-300 cursor-default' : 'cursor-pointer hover:bg-gray-100 active:scale-95'}
               ${isSelected ? 'bg-primary/10 ring-2 ring-primary' : ''}
               ${isTodayDate && !isSelected ? 'bg-blue-50' : ''}
             `}
           >
-            {/* 날짜 숫자 */}
             <div className="flex items-center gap-0.5">
               <span
                 className={`
@@ -223,31 +239,64 @@ export default function ReservationCalendar({
               )}
             </div>
 
-            {/* 뱃지 영역 */}
-            <div className="flex-1 flex flex-col justify-end gap-[2px] mt-0.5 overflow-hidden">
-              {isCurrentMonth && data.hasEvent && (
-                <div className="bg-orange-400 text-white text-[10px] rounded-lg px-1 py-[1px] text-center truncate font-medium leading-tight">
-                  {hasBoth ? <FiStar className="inline-block" size={9} /> : data.eventTitle}
-                </div>
-              )}
-              {isCurrentMonth && data.reservationCount > 0 && (
+            {/* 예약 뱃지 */}
+            {isCurrentMonth && data.reservationCount > 0 && (
+              <div className="flex-1 flex flex-col justify-end mt-0.5">
                 <div className="bg-primary text-white text-[10px] rounded-lg px-1 py-[1px] text-center font-medium leading-tight">
                   {data.reservationCount}건
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         );
 
         day = addDays(day, 1);
       }
 
+      // 이 주에 걸치는 행사 바 계산
+      const rowEvents = eventSpans.filter(
+        (e) => e.startDate <= rowEndStr && e.endDate >= rowStartStr
+      );
+
+      const eventBars = rowEvents.map((event) => {
+        const barStartStr = event.startDate < rowStartStr ? rowStartStr : event.startDate;
+        const barEndStr = event.endDate > rowEndStr ? rowEndStr : event.endDate;
+
+        const barStartDate = parse(barStartStr, 'yyyy-MM-dd', new Date());
+        const barEndDate = parse(barEndStr, 'yyyy-MM-dd', new Date());
+        const startCol = Math.round((barStartDate.getTime() - rowStartDate.getTime()) / 86400000) + 1;
+        const endCol = Math.round((barEndDate.getTime() - rowStartDate.getTime()) / 86400000) + 2;
+
+        const isBarStart = event.startDate >= rowStartStr;
+        const isBarEnd = event.endDate <= rowEndStr;
+
+        return (
+          <div
+            key={`${event.id}-${rowStartStr}`}
+            className={`bg-orange-400 text-white text-[10px] font-medium truncate px-1.5 py-[2px] leading-tight flex items-center gap-0.5
+              ${isBarStart && isBarEnd ? 'rounded-lg mx-1' : ''}
+              ${isBarStart && !isBarEnd ? 'rounded-l-lg ml-1' : ''}
+              ${!isBarStart && isBarEnd ? 'rounded-r-lg mr-1' : ''}
+              ${!isBarStart && !isBarEnd ? '' : ''}
+            `}
+            style={{ gridColumn: `${startCol} / ${endCol}` }}
+          >
+            {isBarStart && <FiStar size={9} className="shrink-0" />}
+            {isBarStart && <span className="truncate">{event.title}</span>}
+          </div>
+        );
+      });
+
       rows.push(
-        <div key={`row-${day}`} className="grid grid-cols-7">
-          {days}
+        <div key={`row-${rowStartStr}`}>
+          <div className="grid grid-cols-7">{dateCells}</div>
+          {eventBars.length > 0 && (
+            <div className="grid grid-cols-7 mt-[-2px] mb-1">
+              {eventBars}
+            </div>
+          )}
         </div>
       );
-      days = [];
     }
 
     return rows;

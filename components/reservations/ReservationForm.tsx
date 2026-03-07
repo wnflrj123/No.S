@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import { LocationType, Reservation, ReservationFormData } from '@/types';
 import { addDays, format, parse, getDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { FiRepeat } from 'react-icons/fi';
+import { FiRepeat, FiLink } from 'react-icons/fi';
 import TimePicker from '@/components/common/TimePicker';
 
 const LOCATIONS: LocationType[] = ['합동연습실', 'ART8실', '댄스3실', '기타'];
@@ -46,6 +46,7 @@ export default function ReservationForm({
     endTime: editingReservation?.endTime || '21:00',
     location: editingReservation?.location || '합동연습실',
     customLocation: editingReservation?.customLocation || '',
+    locationUrl: editingReservation?.locationUrl || '',
     purpose: editingReservation?.purpose || '',
   });
 
@@ -168,6 +169,7 @@ export default function ReservationForm({
         endTime: formData.endTime,
         location: formData.location,
         ...(formData.location === '기타' && { customLocation: formData.customLocation }),
+        ...(formData.location === '기타' && formData.locationUrl?.trim() && { locationUrl: formData.locationUrl.trim() }),
         purpose: formData.purpose.trim(),
         updatedAt: Timestamp.now(),
       };
@@ -389,20 +391,37 @@ export default function ReservationForm({
         </div>
 
         {formData.location === '기타' && (
-          <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
-              장소 직접 입력 <span className="text-red-400">*</span>
-            </label>
-            <input
-              type="text"
-              name="customLocation"
-              value={formData.customLocation}
-              onChange={handleChange}
-              placeholder="장소명을 입력하세요"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-              required
-            />
-          </div>
+          <>
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
+                장소 직접 입력 <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                name="customLocation"
+                value={formData.customLocation}
+                onChange={handleChange}
+                placeholder="장소명을 입력하세요"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
+                <FiLink className="inline-block mr-1" size={13} />
+                지도 링크
+              </label>
+              <input
+                type="url"
+                name="locationUrl"
+                value={formData.locationUrl}
+                onChange={handleChange}
+                placeholder="네이버지도, 카카오맵 등의 링크를 붙여넣으세요"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+              />
+              <p className="text-[11px] mt-1" style={{ color: '#8b95a1' }}>지도 앱에서 공유 링크를 복사해 붙여넣으면 돼요</p>
+            </div>
+          </>
         )}
 
         {/* Purpose */}

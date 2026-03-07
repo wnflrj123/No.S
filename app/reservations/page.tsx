@@ -645,10 +645,24 @@ export default function ReservationsPage() {
                               )}
                             </div>
                             <div className="flex items-center gap-3 text-xs" style={{ color: '#8b95a1' }}>
-                              <span className="flex items-center gap-1">
-                                <FiMapPin size={11} />
-                                {getLocationDisplay(reservation)}
-                              </span>
+                              {reservation.locationUrl ? (
+                                <a
+                                  href={reservation.locationUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 text-primary hover:underline font-medium"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <FiMapPin size={11} />
+                                  {getLocationDisplay(reservation)}
+                                  <FiExternalLink size={10} />
+                                </a>
+                              ) : (
+                                <span className="flex items-center gap-1">
+                                  <FiMapPin size={11} />
+                                  {getLocationDisplay(reservation)}
+                                </span>
+                              )}
                               <span>{reservation.userName}</span>
                             </div>
                             {reservation.purpose && (

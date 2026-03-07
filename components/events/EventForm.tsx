@@ -126,7 +126,7 @@ export default function EventForm({
         ...(formData.startTime && { startTime: formData.startTime }),
         ...(formData.endTime && { endTime: formData.endTime }),
         location: finalLocation,
-        locationUrl: formData.locationUrl?.trim() || null,
+        locationUrl: selectedLocationType === '기타' ? (formData.locationUrl?.trim() || null) : null,
         updatedAt: Timestamp.now(),
       };
 
@@ -274,36 +274,37 @@ export default function EventForm({
         </div>
 
         {selectedLocationType === '기타' && (
-          <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
-              장소 직접 입력 <span className="text-red-400">*</span>
-            </label>
-            <input
-              type="text"
-              value={customLocation}
-              onChange={(e) => setCustomLocation(e.target.value)}
-              placeholder="장소명을 입력하세요"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent text-sm"
-              required
-            />
-          </div>
+          <>
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
+                장소 직접 입력 <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={customLocation}
+                onChange={(e) => setCustomLocation(e.target.value)}
+                placeholder="장소명을 입력하세요"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent text-sm"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
+                <FiLink className="inline-block mr-1" size={13} />
+                지도 링크
+              </label>
+              <input
+                type="url"
+                name="locationUrl"
+                value={formData.locationUrl}
+                onChange={handleChange}
+                placeholder="네이버지도, 카카오맵 등의 링크를 붙여넣으세요"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent text-sm"
+              />
+              <p className="text-[11px] mt-1" style={{ color: '#8b95a1' }}>지도 앱에서 공유 링크를 복사해 붙여넣으면 돼요</p>
+            </div>
+          </>
         )}
-
-        <div>
-          <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
-            <FiLink className="inline-block mr-1" size={13} />
-            지도 링크
-          </label>
-          <input
-            type="url"
-            name="locationUrl"
-            value={formData.locationUrl}
-            onChange={handleChange}
-            placeholder="네이버지도, 카카오맵 등의 링크를 붙여넣으세요"
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent text-sm"
-          />
-          <p className="text-[11px] mt-1" style={{ color: '#8b95a1' }}>지도 앱에서 공유 링크를 복사해 붙여넣으면 돼요</p>
-        </div>
 
         <div>
           <label className="block text-sm font-medium mb-1.5" style={{ color: '#4e5968' }}>
