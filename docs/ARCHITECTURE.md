@@ -38,7 +38,7 @@ No.S/
 │   ├── auth/
 │   │   └── GoogleSignInButton.tsx
 │   ├── reservations/
-│   │   ├── ReservationCalendar.tsx  # 월간 캘린더 (예약/이벤트 카운트 표시)
+│   │   ├── ReservationCalendar.tsx  # 월간 캘린더 (예약 건수 + 행사 뱃지, 여러날 행사 연결 표시)
 │   │   ├── ReservationForm.tsx      # 예약 등록/수정 폼 (반복 예약 지원)
 │   │   └── ReservationList.tsx      # 예약 목록 (삭제 모달 포함)
 │   ├── notices/
@@ -58,6 +58,9 @@ No.S/
 │       └── useAuth.ts            # AuthContext 래퍼 훅
 ├── types/
 │   └── index.ts                  # 전체 타입 정의
+├── scripts/
+│   └── generate-icons.mjs        # PWA 아이콘 생성 스크립트 (sharp)
+├── firestore.rules               # Firestore 보안 규칙
 ├── docs/                         # 프로젝트 문서
 │   ├── PLAN.md                   # 기획서
 │   └── ARCHITECTURE.md           # 이 파일
@@ -147,6 +150,19 @@ No.S/
 }
 ```
 
+## Firestore 보안 규칙
+
+| 컬렉션 | read | create | update | delete |
+|--------|------|--------|--------|--------|
+| reservations | 로그인 | 로그인 | 본인만 | 본인 + Admin/Owner |
+| events | 로그인 | 로그인 | 로그인 | 로그인 |
+| notices | 로그인 | Admin | Admin | Admin |
+| settings | 로그인 | 로그인 | 로그인 | 로그인 |
+| users | 로그인 | 본인만 | 본인만 | 본인만 |
+
+- `isAdmin()` 함수: `settings/admins` 문서의 `ownerUid` 또는 `uids` 배열에 포함 여부로 판별
+- 규칙 파일: `firestore.rules` (Firebase 콘솔에서 수동 배포)
+
 ## 인증 플로우
 
 ```
@@ -175,7 +191,7 @@ Firebase Auth 전체 사용자 → Firestore users 컬렉션 동기화.
 
 - 캘린더/리스트 모두 `onSnapshot` 리스너 사용
 - 컴포넌트 언마운트 시 unsubscribe 정리
-- 캘린더: 월 단위 쿼리, 날짜별 카운트 집계
+- 캘린더: 월 단위 쿼리, 날짜별 예약 카운트 + 행사 뱃지 집계
 - 리스트: 선택 날짜 또는 기간 범위 쿼리
 
 ## 반복 예약 시스템
