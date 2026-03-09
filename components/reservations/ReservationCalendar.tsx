@@ -306,7 +306,7 @@ export default function ReservationCalendar({
             key={dateStr}
             onClick={() => isCurrentMonth && onDateSelect(cloneDay)}
             className={`
-              flex flex-col min-h-[54px] p-1 transition-all rounded-xl m-0.5
+              flex flex-col min-h-[60px] p-1 transition-all rounded-xl m-0.5
               ${!isCurrentMonth ? 'text-gray-300 cursor-default' : 'cursor-pointer hover:bg-gray-100 active:scale-95'}
               ${isSelected ? 'bg-primary/10 ring-2 ring-primary' : ''}
               ${isTodayDate && !isSelected ? 'bg-blue-50' : ''}
@@ -330,15 +330,15 @@ export default function ReservationCalendar({
               )}
             </div>
             {isHoliday && isCurrentMonth && (
-              <span className="text-[9px] text-red-400 font-medium leading-tight truncate">
+              <span className="text-[10px] text-red-400 font-medium leading-tight truncate">
                 {holidayName}
               </span>
             )}
 
-            <div className="flex-1 flex flex-col justify-end mt-0.5 gap-0.5">
+            <div className="flex-1 flex flex-col justify-end mt-0.5 gap-[3px]">
               {/* 예약 뱃지 */}
               {isCurrentMonth && data.reservationCount > 0 && filterMode !== 'events' && filterMode !== 'schedules' && (
-                <div className="bg-primary text-white text-[10px] rounded-lg px-1 py-[1px] text-center font-medium leading-tight">
+                <div className="bg-primary text-white text-[11px] rounded-lg px-1.5 py-[2px] text-center font-medium leading-tight">
                   {data.reservationCount}건
                 </div>
               )}
@@ -348,20 +348,20 @@ export default function ReservationCalendar({
                 singleMultiDay ? (
                   // 여러날 행사 1건: 셀 간 이어지는 스타일
                   <div
-                    className={`bg-orange-400 text-white text-[10px] font-medium py-[2px] leading-tight flex items-center gap-0.5 truncate
-                      ${isEventStart ? 'rounded-l-lg pl-1 -mr-[6px]' : ''}
-                      ${isEventEnd ? 'rounded-r-lg pr-1 -ml-[6px]' : ''}
+                    className={`bg-orange-400 text-white text-[11px] font-medium py-[3px] leading-tight flex items-center gap-0.5 truncate
+                      ${isEventStart ? 'rounded-l-lg pl-1.5 -mr-[6px]' : ''}
+                      ${isEventEnd ? 'rounded-r-lg pr-1.5 -ml-[6px]' : ''}
                       ${isEventMid ? '-mx-[6px]' : ''}
                     `}
                   >
-                    {isEventStart && <FiStar size={8} className="shrink-0" />}
+                    {isEventStart && <FiStar size={9} className="shrink-0" />}
                     {isEventStart && <span className="truncate">{cellEvents[0].title}</span>}
-                    {!isEventStart && <span className="invisible text-[10px]">.</span>}
+                    {!isEventStart && <span className="invisible text-[11px]">.</span>}
                   </div>
                 ) : (
                   // 단일 행사 또는 여러 건: 셀 내 뱃지
-                  <div className="bg-orange-400 text-white text-[10px] rounded-lg px-1 py-[1px] text-center font-medium leading-tight flex items-center justify-center gap-0.5 truncate">
-                    <FiStar size={8} className="shrink-0" />
+                  <div className="bg-orange-400 text-white text-[11px] rounded-lg px-1.5 py-[2px] text-center font-medium leading-tight flex items-center justify-center gap-0.5 truncate">
+                    <FiStar size={9} className="shrink-0" />
                     <span className="truncate">{eventCount > 1 ? `${eventCount}건` : cellEvents[0].title}</span>
                   </div>
                 )
@@ -369,7 +369,7 @@ export default function ReservationCalendar({
 
               {/* 정기 일정 뱃지 */}
               {isCurrentMonth && data.scheduleCount > 0 && filterMode !== 'events' && filterMode !== 'reservations' && (
-                <div className="bg-[#4eaea9] text-white text-[10px] rounded-lg px-1 py-[1px] text-center font-medium leading-tight truncate">
+                <div className="bg-[#4eaea9] text-white text-[11px] rounded-lg px-1.5 py-[2px] text-center font-medium leading-tight truncate">
                   {data.scheduleCount === 1 ? data.scheduleTitles[0] : `정기 ${data.scheduleCount}`}
                 </div>
               )}
