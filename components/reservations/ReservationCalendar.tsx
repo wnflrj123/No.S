@@ -55,7 +55,32 @@ export default function ReservationCalendar({
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [dayData, setDayData] = useState<DayDataMap>({});
   const [eventSpans, setEventSpans] = useState<EventSpan[]>([]);
+  const [holidays, setHolidays] = useState<{ [date: string]: string }>({});
   const [loading, setLoading] = useState(true);
+
+  // 공휴일 조회
+  useEffect(() => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth() + 1;
+
+    // 이번 달 + 전후 달 (캘린더에 다른 달 날짜도 보이므로)
+    const months = [
+      { y: month === 1 ? year - 1 : year, m: month === 1 ? 12 : month - 1 },
+      { y: year, m: month },
+      { y: month === 12 ? year + 1 : year, m: month === 12 ? 1 : month + 1 },
+    ];
+
+    Promise.all(
+      months.map(({ y, m }) =>
+        fetch(`/api/holidays?year=${y}&month=${m}`)
+          .then((res) => res.json())
+          .then((data) => data.holidays || {})
+          .catch(() => ({}))
+      )
+    ).then(([prev, curr, next]) => {
+      setHolidays({ ...prev, ...curr, ...next });
+    });
+  }, [currentMonth]);
 
   useEffect(() => {
     setLoading(true);
@@ -257,6 +282,8 @@ export default function ReservationCalendar({
         const isCurrentMonth = isSameMonth(day, monthStart);
         const isSelected = isSameDay(day, selectedDate);
         const isTodayDate = isToday(day);
+        const holidayName = holidays[dateStr];
+        const isHoliday = !!holidayName;
         const cellEvents = dayEventsMap[dateStr] || [];
         const eventCount = cellEvents.length;
 
@@ -291,8 +318,8 @@ export default function ReservationCalendar({
                 className={`
                   text-sm font-medium
                   ${!isCurrentMonth ? 'text-gray-300' : ''}
-                  ${i === 0 && isCurrentMonth ? 'text-red-400' : ''}
-                  ${i === 6 && isCurrentMonth ? 'text-blue-400' : ''}
+                  ${(i === 0 || (isHoliday && isCurrentMonth)) ? 'text-red-400' : ''}
+                  ${i === 6 && isCurrentMonth && !isHoliday ? 'text-blue-400' : ''}
                   ${isTodayDate ? 'text-primary font-bold' : ''}
                 `}
               >
@@ -302,6 +329,11 @@ export default function ReservationCalendar({
                 <span className="text-[10px] text-primary font-bold">오늘</span>
               )}
             </div>
+            {isHoliday && isCurrentMonth && (
+              <span className="text-[9px] text-red-400 font-medium leading-tight truncate">
+                {holidayName}
+              </span>
+            )}
 
             <div className="flex-1 flex flex-col justify-end mt-0.5 gap-0.5">
               {/* 예약 뱃지 */}
