@@ -10,7 +10,7 @@ interface TimePickerProps {
   required?: boolean;
   className?: string;
   allowEmpty?: boolean;
-  accentColor?: 'primary' | 'orange';
+  accentColor?: 'primary' | 'orange' | 'green';
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -86,7 +86,11 @@ export default function TimePicker({
     },
     orange: {
       ring: 'focus:ring-orange-400',
-      bg: 'bg-orange-500',
+      bg: 'bg-orange-400',
+    },
+    green: {
+      ring: 'focus:ring-[#4eaea9]',
+      bg: 'bg-[#4eaea9]',
     },
   };
 

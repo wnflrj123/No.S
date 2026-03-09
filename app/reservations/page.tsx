@@ -11,7 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { Reservation, ClubEvent } from '@/types';
+import { Reservation, ClubEvent, ScheduledActivity } from '@/types';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ReservationCalendar from '@/components/reservations/ReservationCalendar';
@@ -19,11 +19,15 @@ import ReservationForm from '@/components/reservations/ReservationForm';
 import ReservationList from '@/components/reservations/ReservationList';
 import EventForm from '@/components/events/EventForm';
 import EventList from '@/components/events/EventList';
+import ScheduleForm from '@/components/schedules/ScheduleForm';
+import ScheduleList from '@/components/schedules/ScheduleList';
+import type { EditScope } from '@/components/schedules/ScheduleList';
 import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay, eachDayOfInterval, parse } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { FiPlus, FiCalendar, FiList, FiStar, FiClock, FiMapPin, FiFilter, FiEdit2, FiExternalLink } from 'react-icons/fi';
 
-type FormType = 'none' | 'reservation' | 'event';
+type FormType = 'none' | 'reservation' | 'event' | 'schedule';
+type FilterMode = 'all' | 'events' | 'schedules' | 'reservations';
 type RangePreset = '1week' | '2weeks' | '1month' | 'custom';
 
 export default function ReservationsPage() {
@@ -33,13 +37,17 @@ export default function ReservationsPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [events, setEvents] = useState<ClubEvent[]>([]);
+  const [schedules, setSchedules] = useState<ScheduledActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [eventsLoading, setEventsLoading] = useState(true);
+  const [schedulesLoading, setSchedulesLoading] = useState(true);
   const [showFormType, setShowFormType] = useState<FormType>('none');
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [editingEvent, setEditingEvent] = useState<ClubEvent | null>(null);
+  const [editingSchedule, setEditingSchedule] = useState<ScheduledActivity | null>(null);
+  const [editScheduleScope, setEditScheduleScope] = useState<EditScope | undefined>(undefined);
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
-  const [showEventsOnly, setShowEventsOnly] = useState(false);
+  const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // List view range
@@ -48,6 +56,7 @@ export default function ReservationsPage() {
   const [customEnd, setCustomEnd] = useState(format(addDays(new Date(), 6), 'yyyy-MM-dd'));
   const [listReservations, setListReservations] = useState<Reservation[]>([]);
   const [listEvents, setListEvents] = useState<ClubEvent[]>([]);
+  const [listSchedules, setListSchedules] = useState<ScheduledActivity[]>([]);
   const [listLoading, setListLoading] = useState(true);
 
   const getDateRange = (): { start: string; end: string } => {
@@ -147,6 +156,42 @@ export default function ReservationsPage() {
     return () => unsubscribe();
   }, [user, selectedDate, refreshTrigger, viewMode]);
 
+  // Calendar view: single date schedules
+  useEffect(() => {
+    if (!user || viewMode !== 'calendar') return;
+
+    setSchedulesLoading(true);
+    setSchedules([]);
+
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+
+    const q = query(
+      collection(db, 'schedules'),
+      where('date', '==', dateStr),
+      orderBy('startTime', 'asc')
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const data: ScheduledActivity[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate(),
+          updatedAt: doc.data().updatedAt?.toDate(),
+        })) as ScheduledActivity[];
+        setSchedules(data);
+        setSchedulesLoading(false);
+      },
+      (error) => {
+        console.error('정기 일정 조회 실패:', error);
+        setSchedulesLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user, selectedDate, refreshTrigger, viewMode]);
+
   // List view: date range query
   useEffect(() => {
     if (!user || viewMode !== 'list') return;
@@ -168,11 +213,20 @@ export default function ReservationsPage() {
       where('date', '<=', end)
     );
 
+    const schQuery = query(
+      collection(db, 'schedules'),
+      where('date', '>=', start),
+      where('date', '<=', end),
+      orderBy('date', 'asc'),
+      orderBy('startTime', 'asc')
+    );
+
     let resLoaded = false;
     let evtLoaded = false;
+    let schLoaded = false;
 
     const checkDone = () => {
-      if (resLoaded && evtLoaded) setListLoading(false);
+      if (resLoaded && evtLoaded && schLoaded) setListLoading(false);
     };
 
     const unsubRes = onSnapshot(resQuery, (snapshot) => {
@@ -204,45 +258,66 @@ export default function ReservationsPage() {
       checkDone();
     }, () => { evtLoaded = true; checkDone(); });
 
-    return () => { unsubRes(); unsubEvt(); };
+    const unsubSch = onSnapshot(schQuery, (snapshot) => {
+      const data: ScheduledActivity[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate(),
+        updatedAt: doc.data().updatedAt?.toDate(),
+      })) as ScheduledActivity[];
+      setListSchedules(data);
+      schLoaded = true;
+      checkDone();
+    }, () => { schLoaded = true; checkDone(); });
+
+    return () => { unsubRes(); unsubEvt(); unsubSch(); };
   }, [user, viewMode, rangePreset, customStart, customEnd, refreshTrigger]);
 
   // Group list data by date
   const groupedByDate = () => {
     const { start, end } = getDateRange();
-    const map = new Map<string, { reservations: Reservation[]; events: ClubEvent[] }>();
+    const map = new Map<string, { reservations: Reservation[]; events: ClubEvent[]; schedules: ScheduledActivity[] }>();
 
-    if (!showEventsOnly) {
+    if (filterMode === 'all' || filterMode === 'reservations') {
       listReservations.forEach((r) => {
-        if (!map.has(r.date)) map.set(r.date, { reservations: [], events: [] });
+        if (!map.has(r.date)) map.set(r.date, { reservations: [], events: [], schedules: [] });
         map.get(r.date)!.reservations.push(r);
       });
     }
 
-    listEvents.forEach((e) => {
-      // 여러날 행사: 범위 내 각 날짜에 분배
-      const eventStart = e.date < start ? start : e.date;
-      const eventEnd = (e.endDate || e.date) > end ? end : (e.endDate || e.date);
+    if (filterMode !== 'schedules' && filterMode !== 'reservations') {
+      listEvents.forEach((e) => {
+        // 여러날 행사: 범위 내 각 날짜에 분배
+        const eventStart = e.date < start ? start : e.date;
+        const eventEnd = (e.endDate || e.date) > end ? end : (e.endDate || e.date);
 
-      try {
-        const days = eachDayOfInterval({
-          start: parse(eventStart, 'yyyy-MM-dd', new Date()),
-          end: parse(eventEnd, 'yyyy-MM-dd', new Date()),
-        });
-        days.forEach((day) => {
-          const dateStr = format(day, 'yyyy-MM-dd');
-          if (!map.has(dateStr)) map.set(dateStr, { reservations: [], events: [] });
-          // 같은 행사 중복 추가 방지
-          const existing = map.get(dateStr)!.events;
-          if (!existing.find((ev) => ev.id === e.id)) {
-            existing.push(e);
-          }
-        });
-      } catch {
-        if (!map.has(e.date)) map.set(e.date, { reservations: [], events: [] });
-        map.get(e.date)!.events.push(e);
-      }
-    });
+        try {
+          const days = eachDayOfInterval({
+            start: parse(eventStart, 'yyyy-MM-dd', new Date()),
+            end: parse(eventEnd, 'yyyy-MM-dd', new Date()),
+          });
+          days.forEach((day) => {
+            const dateStr = format(day, 'yyyy-MM-dd');
+            if (!map.has(dateStr)) map.set(dateStr, { reservations: [], events: [], schedules: [] });
+            // 같은 행사 중복 추가 방지
+            const existing = map.get(dateStr)!.events;
+            if (!existing.find((ev) => ev.id === e.id)) {
+              existing.push(e);
+            }
+          });
+        } catch {
+          if (!map.has(e.date)) map.set(e.date, { reservations: [], events: [], schedules: [] });
+          map.get(e.date)!.events.push(e);
+        }
+      });
+    }
+
+    if (filterMode !== 'events' && filterMode !== 'reservations') {
+      listSchedules.forEach((s) => {
+        if (!map.has(s.date)) map.set(s.date, { reservations: [], events: [], schedules: [] });
+        map.get(s.date)!.schedules.push(s);
+      });
+    }
 
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
   };
@@ -255,6 +330,8 @@ export default function ReservationsPage() {
     setShowFormType('none');
     setEditingReservation(null);
     setEditingEvent(null);
+    setEditingSchedule(null);
+    setEditScheduleScope(undefined);
     setRefreshTrigger((prev) => prev + 1);
   };
 
@@ -268,14 +345,26 @@ export default function ReservationsPage() {
     setShowFormType('event');
   };
 
+  const handleEditSchedule = (schedule: ScheduledActivity, editScope?: EditScope) => {
+    setEditingSchedule(schedule);
+    setEditScheduleScope(editScope);
+    setShowFormType('schedule');
+  };
+
   const handleCancelForm = () => {
     setShowFormType('none');
     setEditingReservation(null);
     setEditingEvent(null);
+    setEditingSchedule(null);
+    setEditScheduleScope(undefined);
   };
 
   const getLocationDisplay = (r: Reservation) => {
     return r.location === '기타' && r.customLocation ? r.customLocation : r.location;
+  };
+
+  const getScheduleLocationDisplay = (s: ScheduledActivity) => {
+    return s.location === '기타' && s.customLocation ? s.customLocation : s.location;
   };
 
   if (authLoading) {
@@ -330,18 +419,40 @@ export default function ReservationsPage() {
             </div>
           </div>
 
-          {/* Filter Toggle */}
-          <div className="flex justify-center mb-4 animate-fade-in-up animation-delay-50">
+          {/* Filter Toggles */}
+          <div className="flex justify-center gap-2 mb-4 animate-fade-in-up animation-delay-50 flex-wrap">
             <button
-              onClick={() => setShowEventsOnly(!showEventsOnly)}
+              onClick={() => setFilterMode(filterMode === 'reservations' ? 'all' : 'reservations')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all active:scale-95 ${
-                showEventsOnly
-                  ? 'bg-orange-500 text-white shadow-sm'
+                filterMode === 'reservations'
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'bg-secondary hover:bg-gray-200 text-gray-500'
+              }`}
+            >
+              <FiCalendar size={14} />
+              이용 가능한 날
+            </button>
+            <button
+              onClick={() => setFilterMode(filterMode === 'events' ? 'all' : 'events')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all active:scale-95 ${
+                filterMode === 'events'
+                  ? 'bg-orange-400 text-white shadow-sm'
                   : 'bg-secondary hover:bg-gray-200 text-gray-500'
               }`}
             >
               <FiStar size={14} />
               행사만 보기
+            </button>
+            <button
+              onClick={() => setFilterMode(filterMode === 'schedules' ? 'all' : 'schedules')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all active:scale-95 ${
+                filterMode === 'schedules'
+                  ? 'bg-[#4eaea9] text-white shadow-sm'
+                  : 'bg-secondary hover:bg-gray-200 text-gray-500'
+              }`}
+            >
+              <FiClock size={14} />
+              정기 일정만 보기
             </button>
           </div>
 
@@ -382,6 +493,7 @@ export default function ReservationsPage() {
               <ReservationCalendar
                 selectedDate={selectedDate}
                 onDateSelect={handleDateSelect}
+                filterMode={filterMode}
               />
             </div>
 
@@ -395,13 +507,22 @@ export default function ReservationsPage() {
                   예약 등록하기
                 </button>
                 {isAdmin && (
-                  <button
-                    onClick={() => setShowFormType('event')}
-                    className="py-3.5 px-5 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-[15px]"
-                  >
-                    <FiStar size={18} />
-                    행사
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setShowFormType('event')}
+                      className="py-3.5 px-5 bg-orange-400 text-white font-semibold rounded-xl hover:bg-orange-500 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-[15px]"
+                    >
+                      <FiStar size={18} />
+                      행사
+                    </button>
+                    <button
+                      onClick={() => setShowFormType('schedule')}
+                      className="py-3.5 px-5 bg-[#4eaea9] text-white font-semibold rounded-xl hover:bg-[#3D9490] transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-[15px]"
+                    >
+                      <FiClock size={18} />
+                      정기
+                    </button>
+                  </>
                 )}
               </div>
             )}
@@ -428,10 +549,23 @@ export default function ReservationsPage() {
               </div>
             )}
 
-            {(events.length > 0 || showEventsOnly) && (
+            {showFormType === 'schedule' && (
+              <div className="mb-5 animate-slide-down">
+                <ScheduleForm
+                  onSuccess={handleFormSuccess}
+                  onCancel={handleCancelForm}
+                  editingSchedule={editingSchedule}
+                  editScope={editScheduleScope}
+                  defaultDate={format(selectedDate, 'yyyy-MM-dd')}
+                />
+              </div>
+            )}
+
+            {/* 행사 섹션 */}
+            {filterMode !== 'schedules' && filterMode !== 'reservations' && (events.length > 0 || filterMode === 'events') && (
               <div className="mb-5 animate-fade-in-up">
                 <h3 className="text-[15px] font-bold text-foreground mb-3 flex items-center gap-2">
-                  <FiStar className="text-orange-500" size={16} />
+                  <FiStar className="text-orange-400" size={16} />
                   행사
                 </h3>
                 <EventList
@@ -440,7 +574,7 @@ export default function ReservationsPage() {
                   onDeleted={() => setRefreshTrigger((prev) => prev + 1)}
                   loading={eventsLoading}
                 />
-                {!eventsLoading && events.length === 0 && showEventsOnly && (
+                {!eventsLoading && events.length === 0 && filterMode === 'events' && (
                   <div className="text-center py-8 bg-white rounded-2xl border border-gray-100">
                     <p className="text-sm font-medium text-foreground">이 날에는 행사가 없어요</p>
                     <p className="text-xs mt-1" style={{ color: '#8b95a1' }}>다른 날짜를 선택해보세요</p>
@@ -449,7 +583,31 @@ export default function ReservationsPage() {
               </div>
             )}
 
-            {!showEventsOnly && (
+            {/* 정기 일정 섹션 */}
+            {filterMode !== 'events' && filterMode !== 'reservations' && (schedules.length > 0 || filterMode === 'schedules') && (
+              <div className="mb-5 animate-fade-in-up">
+                <h3 className="text-[15px] font-bold text-foreground mb-3 flex items-center gap-2">
+                  <FiClock className="text-[#4eaea9]" size={16} />
+                  정기 일정
+                  <span className="text-[#4eaea9] text-sm font-medium">({schedules.length}건)</span>
+                </h3>
+                <ScheduleList
+                  schedules={schedules}
+                  onEdit={handleEditSchedule}
+                  onDeleted={() => setRefreshTrigger((prev) => prev + 1)}
+                  loading={schedulesLoading}
+                />
+                {!schedulesLoading && schedules.length === 0 && filterMode === 'schedules' && (
+                  <div className="text-center py-8 bg-white rounded-2xl border border-gray-100">
+                    <p className="text-sm font-medium text-foreground">이 날에는 정기 일정이 없어요</p>
+                    <p className="text-xs mt-1" style={{ color: '#8b95a1' }}>다른 날짜를 선택해보세요</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 예약 현황 섹션 */}
+            {(filterMode === 'all' || filterMode === 'reservations') && (
               <div className="animate-fade-in-up animation-delay-100">
                 <h3 className="text-[15px] font-bold text-foreground mb-3 flex items-center gap-2">
                   예약 현황
@@ -542,7 +700,7 @@ export default function ReservationsPage() {
                   className="w-40 h-auto mx-auto mb-4 animate-float"
                 />
                 <p className="font-bold text-foreground text-[15px]">
-                  {showEventsOnly ? '이 기간에는 행사가 없어요' : '이 기간에는 예약이 없어요'}
+                  {filterMode === 'events' ? '이 기간에는 행사가 없어요' : filterMode === 'schedules' ? '이 기간에는 정기 일정이 없어요' : filterMode === 'reservations' ? '이 기간에는 이용 가능한 날이 없어요' : '이 기간에는 예약이 없어요'}
                 </p>
                 <p className="text-sm mt-1" style={{ color: '#8b95a1' }}>다른 기간을 선택해보세요</p>
               </div>
@@ -551,6 +709,7 @@ export default function ReservationsPage() {
             {!listLoading && groupedByDate().map(([dateStr, data], groupIndex) => {
               const date = new Date(dateStr + 'T00:00:00');
               const isToday = isSameDay(date, new Date());
+              const totalCount = data.reservations.length + data.events.length + data.schedules.length;
 
               return (
                 <div
@@ -571,7 +730,7 @@ export default function ReservationsPage() {
                     </div>
                     <div className="flex-1 h-px bg-gray-200" />
                     <span className="text-xs font-medium" style={{ color: '#b0b8c1' }}>
-                      {data.reservations.length + data.events.length}건
+                      {totalCount}건
                     </span>
                   </div>
 
@@ -582,9 +741,9 @@ export default function ReservationsPage() {
                       className="bg-white rounded-2xl p-4 border border-gray-100 border-l-[3px] border-l-orange-400 mb-2 card-hover"
                     >
                       <div className="flex items-center gap-2 mb-1">
-                        <FiStar className="text-orange-500 shrink-0" size={13} />
+                        <FiStar className="text-orange-400 shrink-0" size={13} />
                         <span className="text-sm font-bold text-foreground">{event.title}</span>
-                        <span className="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-md font-medium">
+                        <span className="text-[10px] bg-orange-400/15 text-orange-600 px-1.5 py-0.5 rounded-md font-medium">
                           {event.endDate
                             ? `${format(new Date(event.date + 'T00:00:00'), 'M/d', { locale: ko })}~${format(new Date(event.endDate + 'T00:00:00'), 'M/d', { locale: ko })}`
                             : '행사'}
@@ -616,6 +775,47 @@ export default function ReservationsPage() {
                               {event.location}
                             </span>
                           )
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Schedules for this date */}
+                  {data.schedules.map((schedule) => (
+                    <div
+                      key={schedule.id}
+                      className="bg-white rounded-2xl p-4 border border-gray-100 border-l-[3px] border-l-[#4eaea9] mb-2 card-hover"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <FiClock className="text-[#4eaea9] shrink-0" size={13} />
+                        <span className="text-sm font-bold text-foreground">{schedule.title}</span>
+                        <span className="text-[10px] bg-[#4eaea9]/8 text-[#4eaea9] px-1.5 py-0.5 rounded-md font-medium">정기</span>
+                        {schedule.repeatGroupId && (
+                          <span className="text-[10px] bg-[#4eaea9]/8 text-[#4eaea9] px-1.5 py-0.5 rounded-md font-medium">반복</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs flex-wrap" style={{ color: '#8b95a1' }}>
+                        <span className="flex items-center gap-1">
+                          <FiClock size={11} />
+                          {schedule.startTime} ~ {schedule.endTime}
+                        </span>
+                        {schedule.locationUrl ? (
+                          <a
+                            href={schedule.locationUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-primary hover:underline font-medium"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <FiMapPin size={11} />
+                            {getScheduleLocationDisplay(schedule)}
+                            <FiExternalLink size={10} />
+                          </a>
+                        ) : (
+                          <span className="flex items-center gap-1">
+                            <FiMapPin size={11} />
+                            {getScheduleLocationDisplay(schedule)}
+                          </span>
                         )}
                       </div>
                     </div>

@@ -45,12 +45,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // http/https가 아닌 요청은 무시 (chrome-extension:// 등)
+  if (!request.url.startsWith('http')) return;
+
   // 나머지: network-first (오프라인 시 캐시 사용)
   event.respondWith(
     fetch(request)
       .then((response) => {
         const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone)).catch(() => {});
         return response;
       })
       .catch(() => caches.match(request))

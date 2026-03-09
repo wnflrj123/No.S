@@ -153,7 +153,7 @@ export default function EventForm({
   if (!isAdmin) {
     return (
       <div className="bg-orange-50 rounded-2xl p-6 text-center">
-        <p className="text-orange-700 text-sm font-medium">운영진만 행사를 등록할 수 있어요</p>
+        <p className="text-orange-600 text-sm font-medium">운영진만 행사를 등록할 수 있어요</p>
       </div>
     );
   }
@@ -161,7 +161,7 @@ export default function EventForm({
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 border border-gray-100 border-l-[3px] border-l-orange-400">
       <h2 className="text-lg font-bold text-foreground mb-5 flex items-center gap-2">
-        <FiCalendar className="text-orange-500" size={18} />
+        <FiCalendar className="text-orange-400" size={18} />
         {isEditing ? '행사 수정하기' : '새 행사 등록하기'}
       </h2>
 
@@ -197,7 +197,7 @@ export default function EventForm({
                 type="checkbox"
                 checked={isMultiDay}
                 onChange={(e) => setIsMultiDay(e.target.checked)}
-                className="w-3.5 h-3.5 text-orange-500 rounded focus:ring-orange-400"
+                className="w-3.5 h-3.5 text-orange-400 rounded focus:ring-orange-400"
               />
               <span className="text-xs font-medium" style={{ color: '#8b95a1' }}>여러 날</span>
             </label>

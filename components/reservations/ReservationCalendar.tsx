@@ -20,15 +20,20 @@ import { db } from '@/lib/firebase';
 import { eachDayOfInterval, parse } from 'date-fns';
 import { FiChevronLeft, FiChevronRight, FiStar } from 'react-icons/fi';
 
+type FilterMode = 'all' | 'events' | 'schedules' | 'reservations';
+
 interface ReservationCalendarProps {
   selectedDate: Date;
   onDateSelect: (date: Date) => void;
+  filterMode?: FilterMode;
 }
 
 interface DayData {
   reservationCount: number;
   hasEvent: boolean;
   eventTitle?: string;
+  scheduleCount: number;
+  scheduleTitles: string[];
 }
 
 interface DayDataMap {
@@ -45,6 +50,7 @@ interface EventSpan {
 export default function ReservationCalendar({
   selectedDate,
   onDateSelect,
+  filterMode = 'all',
 }: ReservationCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [dayData, setDayData] = useState<DayDataMap>({});
@@ -71,21 +77,25 @@ export default function ReservationCalendar({
 
     let reservationData: { [key: string]: number } = {};
     let eventData: { [key: string]: string } = {};
+    let scheduleData: { [key: string]: string[] } = {};
     let spans: EventSpan[] = [];
     let reservationLoaded = false;
     let eventLoaded = false;
+    let scheduleLoaded = false;
 
     const updateDayData = () => {
-      if (!reservationLoaded || !eventLoaded) return;
+      if (!reservationLoaded || !eventLoaded || !scheduleLoaded) return;
 
       const combined: DayDataMap = {};
-      const allDates = new Set([...Object.keys(reservationData), ...Object.keys(eventData)]);
+      const allDates = new Set([...Object.keys(reservationData), ...Object.keys(eventData), ...Object.keys(scheduleData)]);
 
       allDates.forEach((date) => {
         combined[date] = {
           reservationCount: reservationData[date] || 0,
           hasEvent: !!eventData[date],
           eventTitle: eventData[date],
+          scheduleCount: scheduleData[date]?.length || 0,
+          scheduleTitles: scheduleData[date] || [],
         };
       });
 
@@ -153,9 +163,36 @@ export default function ReservationCalendar({
       }
     );
 
+    const scheduleQuery = query(
+      collection(db, 'schedules'),
+      where('date', '>=', monthStart),
+      where('date', '<=', monthEnd)
+    );
+
+    const unsubSchedules = onSnapshot(
+      scheduleQuery,
+      (snapshot) => {
+        scheduleData = {};
+        snapshot.docs.forEach((doc) => {
+          const data = doc.data();
+          const date = data.date;
+          if (!scheduleData[date]) scheduleData[date] = [];
+          scheduleData[date].push(data.title);
+        });
+        scheduleLoaded = true;
+        updateDayData();
+      },
+      (error) => {
+        console.error('정기 일정 조회 실패:', error);
+        scheduleLoaded = true;
+        updateDayData();
+      }
+    );
+
     return () => {
       unsubReservations();
       unsubEvents();
+      unsubSchedules();
     };
   }, [currentMonth]);
 
@@ -216,12 +253,20 @@ export default function ReservationCalendar({
       for (let i = 0; i < 7; i++) {
         const cloneDay = new Date(day.getTime());
         const dateStr = format(day, 'yyyy-MM-dd');
-        const data = dayData[dateStr] || { reservationCount: 0, hasEvent: false };
+        const data = dayData[dateStr] || { reservationCount: 0, hasEvent: false, scheduleCount: 0, scheduleTitles: [] };
         const isCurrentMonth = isSameMonth(day, monthStart);
         const isSelected = isSameDay(day, selectedDate);
         const isTodayDate = isToday(day);
         const cellEvents = dayEventsMap[dateStr] || [];
         const eventCount = cellEvents.length;
+
+        // 필터별 해당 날짜에 데이터가 있는지 판별
+        const hasFilteredData = filterMode === 'all' ? true
+          : filterMode === 'reservations' ? data.reservationCount > 0
+          : filterMode === 'events' ? eventCount > 0
+          : filterMode === 'schedules' ? data.scheduleCount > 0
+          : true;
+        const isDimmed = filterMode !== 'all' && isCurrentMonth && !hasFilteredData;
 
         // 여러날 행사가 1건만 있을 때 이어지는 스타일
         const singleMultiDay = eventCount === 1 && cellEvents[0].startDate !== cellEvents[0].endDate;
@@ -238,6 +283,7 @@ export default function ReservationCalendar({
               ${!isCurrentMonth ? 'text-gray-300 cursor-default' : 'cursor-pointer hover:bg-gray-100 active:scale-95'}
               ${isSelected ? 'bg-primary/10 ring-2 ring-primary' : ''}
               ${isTodayDate && !isSelected ? 'bg-blue-50' : ''}
+              ${isDimmed ? 'opacity-30' : ''}
             `}
           >
             <div className="flex items-center gap-0.5">
@@ -259,14 +305,14 @@ export default function ReservationCalendar({
 
             <div className="flex-1 flex flex-col justify-end mt-0.5 gap-0.5">
               {/* 예약 뱃지 */}
-              {isCurrentMonth && data.reservationCount > 0 && (
+              {isCurrentMonth && data.reservationCount > 0 && filterMode !== 'events' && filterMode !== 'schedules' && (
                 <div className="bg-primary text-white text-[10px] rounded-lg px-1 py-[1px] text-center font-medium leading-tight">
                   {data.reservationCount}건
                 </div>
               )}
 
               {/* 행사 뱃지 */}
-              {isCurrentMonth && eventCount > 0 && (
+              {isCurrentMonth && eventCount > 0 && filterMode !== 'schedules' && filterMode !== 'reservations' && (
                 singleMultiDay ? (
                   // 여러날 행사 1건: 셀 간 이어지는 스타일
                   <div
@@ -287,6 +333,13 @@ export default function ReservationCalendar({
                     <span className="truncate">{eventCount > 1 ? `${eventCount}건` : cellEvents[0].title}</span>
                   </div>
                 )
+              )}
+
+              {/* 정기 일정 뱃지 */}
+              {isCurrentMonth && data.scheduleCount > 0 && filterMode !== 'events' && filterMode !== 'reservations' && (
+                <div className="bg-[#4eaea9] text-white text-[10px] rounded-lg px-1 py-[1px] text-center font-medium leading-tight truncate">
+                  {data.scheduleCount === 1 ? data.scheduleTitles[0] : `정기 ${data.scheduleCount}`}
+                </div>
               )}
             </div>
           </div>
@@ -379,6 +432,10 @@ export default function ReservationCalendar({
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 bg-orange-400 rounded" />
           <span>행사</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2.5 h-2.5 bg-[#4eaea9] rounded" />
+          <span>정기</span>
         </div>
       </div>
     </div>

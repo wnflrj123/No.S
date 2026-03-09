@@ -100,6 +100,36 @@ export interface ClubEventFormData {
   locationUrl?: string;
 }
 
+// 정기 일정 인터페이스
+export interface ScheduledActivity {
+  id: string;
+  title: string;
+  date: string; // YYYY-MM-DD 형식
+  startTime: string; // HH:mm 형식
+  endTime: string; // HH:mm 형식
+  location: LocationType;
+  customLocation?: string;
+  locationUrl?: string;
+  description?: string;
+  repeatGroupId?: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// 정기 일정 폼 데이터
+export interface ScheduledActivityFormData {
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  location: LocationType;
+  customLocation?: string;
+  locationUrl?: string;
+  description?: string;
+}
+
 // 공지사항 인터페이스
 export interface Notice {
   id: string;

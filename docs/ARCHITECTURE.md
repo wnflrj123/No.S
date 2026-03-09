@@ -46,6 +46,9 @@ No.S/
 │   ├── events/
 │   │   ├── EventForm.tsx         # 이벤트 등록/수정 (Admin 전용)
 │   │   └── EventList.tsx         # 이벤트 목록
+│   ├── schedules/
+│   │   ├── ScheduleForm.tsx      # 정기 일정 등록/수정 (Admin 전용, 반복 지원)
+│   │   └── ScheduleList.tsx      # 정기 일정 목록 (삭제 모달 포함)
 │   └── common/
 │       ├── TimePicker.tsx        # 커스텀 시간 선택 (시→분 2단계)
 │       └── InstallPrompt.tsx     # PWA 설치 유도 배너
@@ -109,6 +112,26 @@ No.S/
 }
 ```
 
+### `schedules` 컬렉션
+
+```typescript
+{
+  title: string            // 일정 제목 (예: 아카데미, 정극 연습)
+  date: string             // "YYYY-MM-DD"
+  startTime: string        // "HH:mm"
+  endTime: string          // "HH:mm"
+  location: LocationType   // '합동연습실' | 'ART8실' | '댄스3실' | '기타'
+  customLocation?: string  // location이 '기타'일 때 직접 입력값
+  locationUrl?: string     // 지도 링크
+  description?: string     // 일정 설명
+  repeatGroupId?: string   // 반복 일정 그룹 ID
+  createdBy: string        // userId
+  createdByName: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+```
+
 ### `users` 컬렉션
 
 ```typescript
@@ -156,6 +179,7 @@ No.S/
 |--------|------|--------|--------|--------|
 | reservations | 로그인 | 로그인 | 본인만 | 본인 + Admin/Owner |
 | events | 로그인 | 로그인 | 로그인 | 로그인 |
+| schedules | 로그인 | Admin | Admin | Admin |
 | notices | 로그인 | Admin | Admin | Admin |
 | settings | 로그인 | 로그인 | 로그인 | 로그인 |
 | users | 로그인 | 본인만 | 본인만 | 본인만 |
@@ -191,7 +215,7 @@ Firebase Auth 전체 사용자 → Firestore users 컬렉션 동기화.
 
 - 캘린더/리스트 모두 `onSnapshot` 리스너 사용
 - 컴포넌트 언마운트 시 unsubscribe 정리
-- 캘린더: 월 단위 쿼리, 날짜별 예약 카운트 + 행사 뱃지 집계
+- 캘린더: 월 단위 쿼리, 날짜별 예약 카운트 + 행사 뱃지(오렌지) + 정기 일정 뱃지(#4eaea9) 집계
 - 리스트: 선택 날짜 또는 기간 범위 쿼리
 
 ## 반복 예약 시스템
@@ -199,6 +223,7 @@ Firebase Auth 전체 사용자 → Firestore users 컬렉션 동기화.
 - `repeatGroupId`: `crypto.randomUUID()` + 타임스탬프로 생성
 - 선택한 요일 패턴에 따라 날짜 생성 → 최대 100건 일괄 addDoc
 - 삭제 시 3가지 옵션: 단일 / 이후 전부(date >=) / 전체 그룹
+- 정기 일정 수정 시 3가지 옵션: 단일 / 이후 전부 / 전체 + 종료일 변경 (단축/연장)
 
 ## 배포 파이프라인
 
@@ -225,4 +250,4 @@ GitHub main push → GitHub Actions
 - 클라이언트 컴포넌트: 파일 상단에 `'use client'` 명시
 - Firestore 타입: 런타임(Date)과 문서(Timestamp) 분리 (Reservation vs ReservationDoc)
 - 시간 형식: 24시간제 "HH:mm", 날짜 형식: "YYYY-MM-DD"
-- 색상 체계: 블루(primary) = 일반 기능, 오렌지 = 관리자/이벤트
+- 색상 체계: 블루(primary) = 일반 기능, 오렌지(orange) = 관리자/이벤트, 민트(#4eaea9) = 정기 일정

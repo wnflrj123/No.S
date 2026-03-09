@@ -43,7 +43,7 @@ export default function EventList({
   if (loading) {
     return (
       <div className="flex justify-center items-center py-16">
-        <div className="animate-spin rounded-full h-7 w-7 border-2 border-gray-200 border-t-orange-500" />
+        <div className="animate-spin rounded-full h-7 w-7 border-2 border-gray-200 border-t-orange-400" />
       </div>
     );
   }
@@ -69,7 +69,7 @@ export default function EventList({
               <div className="flex-1 min-w-0">
                 {/* Title */}
                 <div className="flex items-center gap-2 mb-2.5">
-                  <FiCalendar className="text-orange-500 shrink-0" size={15} />
+                  <FiCalendar className="text-orange-400 shrink-0" size={15} />
                   <h4 className="text-[15px] font-bold text-foreground">{event.title}</h4>
                   <span className="text-[11px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-lg font-medium">
                     {event.endDate ? `${format(new Date(event.date + 'T00:00:00'), 'M/d', { locale: ko })}~${format(new Date(event.endDate + 'T00:00:00'), 'M/d', { locale: ko })}` : '행사'}
@@ -120,7 +120,7 @@ export default function EventList({
                   <button
                     onClick={() => onEdit?.(event)}
                     disabled={isDeleting}
-                    className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-xl transition-colors"
+                    className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-orange-400 hover:bg-orange-50 rounded-xl transition-colors"
                     title="수정"
                   >
                     <FiEdit2 size={16} />
