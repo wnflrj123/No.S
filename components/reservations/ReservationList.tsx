@@ -274,7 +274,7 @@ export default function ReservationList({
             <div
               key={reservation.id}
               className={`bg-white rounded-2xl p-5 border border-gray-100 card-hover animate-fade-in-up ${
-                isMine ? 'border-l-[3px] border-l-primary' : ''
+                'border-l-[3px] border-l-primary'
               } ${isDeleting ? 'opacity-50' : ''}`}
               style={{ animationDelay: `${index * 0.05}s` }}
             >

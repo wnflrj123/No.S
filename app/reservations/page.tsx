@@ -828,7 +828,7 @@ export default function ReservationsPage() {
                       <div
                         key={reservation.id}
                         className={`bg-white rounded-2xl p-4 border border-gray-100 mb-2 card-hover ${
-                          isMine ? 'border-l-[3px] border-l-primary' : ''
+                          'border-l-[3px] border-l-primary'
                         }`}
                       >
                         <div className="flex items-start justify-between">
