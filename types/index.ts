@@ -148,3 +148,48 @@ export interface NoticeFormData {
   content: string;
   pinned: boolean;
 }
+
+// 작품 정보 - Character
+export interface MusicalCharacter {
+  id: number;
+  name: string;
+  abbr?: string; // 축약어 (붙여넣기 매핑용)
+  description: string;
+}
+
+// 작품 정보 - Number (장면 내 넘버)
+export interface MusicalNumber {
+  id: number;
+  index: number;
+  title: string;
+  characters: number[]; // MusicalCharacter.id 배열 (Musical.characters에서 참조)
+}
+
+// 작품 정보 - Scene (막/장)
+export interface MusicalScene {
+  id: number;
+  index: number;
+  title: string;
+  numbers: MusicalNumber[];
+}
+
+// 작품 정보 - Musical
+export interface Musical {
+  id: string; // Firestore document ID
+  name: string;
+  imageUrl?: string;
+  characters: MusicalCharacter[]; // 작품 전체 캐릭터 목록 (단일 정의)
+  scenes: MusicalScene[];
+  createdBy: string;
+  createdByName: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// 작품 등록 폼 데이터
+export interface MusicalFormData {
+  name: string;
+  imageUrl: string;
+  characters: MusicalCharacter[];
+  scenes: MusicalScene[];
+}

@@ -87,6 +87,12 @@ export default function Header() {
                 >
                   공지사항
                 </Link>
+                <Link
+                  href="/musicals"
+                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-foreground rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  작품 정보
+                </Link>
               </>
             )}
             {isOwner && (
