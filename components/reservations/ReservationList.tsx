@@ -1,11 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { deleteDoc, doc, collection, query, where, getDocs, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
+import { deleteDoc, doc, collection, query, where, getDocs, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { Reservation } from '@/types';
+import { Reservation, ReservationParticipant, Production, Musical } from '@/types';
 import { FiEdit2, FiTrash2, FiMapPin, FiClock, FiUser, FiRepeat, FiX, FiExternalLink, FiUsers, FiUserPlus, FiUserMinus } from 'react-icons/fi';
+import { format } from 'date-fns';
+
+interface SceneChip {
+  type: 'scene' | 'number';
+  label: string;
+  sortKey: string;
+  secondary?: boolean;
+}
 
 interface ReservationListProps {
   reservations: Reservation[];
@@ -150,6 +158,91 @@ function DeleteModal({ reservation, onClose, onConfirm, isDeleting }: DeleteModa
   );
 }
 
+function collectChips(
+  musicalId: string,
+  charIds: Set<number>,
+  musicals: Record<string, Musical>,
+  seen: Set<string>,
+  secondary: boolean
+): SceneChip[] {
+  const musical = musicals[musicalId];
+  if (!musical) return [];
+
+  const chips: SceneChip[] = [];
+  for (const scene of [...musical.scenes].sort((a, b) => a.index - b.index)) {
+    let sceneMatched = false;
+    for (const number of [...scene.numbers].sort((a, b) => a.index - b.index)) {
+      if (number.characters.some((cid) => charIds.has(cid))) {
+        sceneMatched = true;
+        const label = `M${number.index} ${number.title}`;
+        if (!seen.has(label)) {
+          seen.add(label);
+          chips.push({ type: 'number', label, secondary, sortKey: `1_${String(scene.index).padStart(4, '0')}_${String(number.index).padStart(4, '0')}` });
+        }
+      }
+    }
+    if (sceneMatched) {
+      const label = `#${scene.index} ${scene.title}`;
+      if (!seen.has(label)) {
+        seen.add(label);
+        chips.push({ type: 'scene', label, secondary, sortKey: `0_${String(scene.index).padStart(4, '0')}_0000` });
+      }
+    }
+  }
+  return chips;
+}
+
+function getSceneChips(
+  participants: ReservationParticipant[],
+  productions: Production[],
+  musicals: Record<string, Musical>
+): SceneChip[] {
+  if (participants.length === 0) return [];
+
+  const participantIds = new Set(participants.map((p) => p.userId));
+
+  // 프로덕션별 참여자 캐릭터 수집 (캐스팅 안 된 참여자는 자동 제외)
+  type ProdData = { musicalId: string; charIds: Set<number>; castCount: number };
+  const prodDataList: ProdData[] = [];
+  const castParticipantIdsGlobal = new Set<string>();
+
+  for (const production of productions) {
+    const charIds = new Set<number>();
+    const castParticipants = new Set<string>();
+    for (const perf of production.performances) {
+      for (const casting of perf.castings) {
+        if (participantIds.has(casting.userId)) {
+          charIds.add(casting.characterId);
+          castParticipants.add(casting.userId);
+          castParticipantIdsGlobal.add(casting.userId);
+        }
+      }
+    }
+    if (charIds.size === 0) continue;
+    prodDataList.push({ musicalId: production.musicalId, charIds, castCount: castParticipants.size });
+  }
+
+  // 캐스팅된 참여자가 1명이면 전체 primary, 2명 이상이면 같은 프로덕션 공유 여부로 구분
+  const totalCast = castParticipantIdsGlobal.size;
+  const primaryList = totalCast <= 1
+    ? prodDataList
+    : prodDataList.filter((p) => p.castCount >= 2);
+  const secondaryList = totalCast <= 1
+    ? []
+    : prodDataList.filter((p) => p.castCount < 2);
+
+  const seen = new Set<string>();
+  const primaryChips = primaryList
+    .flatMap((p) => collectChips(p.musicalId, p.charIds, musicals, seen, false))
+    .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+
+  const secondaryChips = secondaryList
+    .flatMap((p) => collectChips(p.musicalId, p.charIds, musicals, seen, true))
+    .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+
+  return [...primaryChips, ...secondaryChips];
+}
+
 export default function ReservationList({
   reservations,
   onEdit,
@@ -160,6 +253,25 @@ export default function ReservationList({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [joiningId, setJoiningId] = useState<string | null>(null);
   const [deleteModalReservation, setDeleteModalReservation] = useState<Reservation | null>(null);
+  const [productions, setProductions] = useState<Production[]>([]);
+  const [musicals, setMusicals] = useState<Record<string, Musical>>({});
+
+  useEffect(() => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const q = query(collection(db, 'productions'), where('endDate', '>=', today));
+    getDocs(q).then(async (snap) => {
+      const prods = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Production[];
+      setProductions(prods);
+
+      const musicalIds = [...new Set(prods.map((p) => p.musicalId))];
+      const musicalDocs = await Promise.all(musicalIds.map((id) => getDoc(doc(db, 'musicals', id))));
+      const map: Record<string, Musical> = {};
+      musicalDocs.forEach((d) => {
+        if (d.exists()) map[d.id] = { id: d.id, ...d.data() } as Musical;
+      });
+      setMusicals(map);
+    });
+  }, []);
 
   const handleDeleteClick = (reservation: Reservation) => {
     if (reservation.repeatGroupId) {
@@ -305,6 +417,7 @@ export default function ReservationList({
           const isRepeatReservation = !!reservation.repeatGroupId;
           const participants = reservation.participants ?? [];
           const isParticipating = user ? participants.some((p) => p.userId === user.uid) : false;
+          const sceneChips = getSceneChips(participants, productions, musicals);
 
           return (
             <div
@@ -435,6 +548,26 @@ export default function ReservationList({
                   </button>
                 )}
               </div>
+
+              {/* 추천 씬 칩 */}
+              {sceneChips.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {sceneChips.map((chip) => (
+                    <span
+                      key={chip.label}
+                      className={`text-xs px-2.5 py-1 rounded-lg font-medium ${
+                        chip.secondary
+                          ? 'bg-gray-50 text-gray-400 border border-gray-200'
+                          : chip.type === 'scene'
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-gray-100 text-gray-500'
+                      }`}
+                    >
+                      {chip.label}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
