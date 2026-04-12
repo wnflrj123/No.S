@@ -94,6 +94,14 @@ export default function Header() {
 
             {/* 데스크탑 네비게이션 */}
             <nav className="hidden md:flex items-center gap-2">
+              {user && (
+                <Link
+                  href="/reservations"
+                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-foreground rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  예약 현황
+                </Link>
+              )}
               {navLinks.map(({ href, label }) => (
                 <Link
                   key={href}
@@ -103,16 +111,6 @@ export default function Header() {
                   {label}
                 </Link>
               ))}
-
-              {user && (
-                <Link
-                  href="/reservations"
-                  className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-foreground"
-                  aria-label="예약 현황"
-                >
-                  <FiCalendar size={18} />
-                </Link>
-              )}
 
               {user ? (
                 <div className="relative ml-2" ref={profileRef}>
