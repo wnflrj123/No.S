@@ -48,6 +48,12 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // 프로덕션 컬렉션
+    match /productions/{productionId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if isAdmin();
+    }
+
     // 사용자 컬렉션
     match /users/{userId} {
       allow read: if request.auth != null;

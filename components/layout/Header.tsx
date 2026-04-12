@@ -93,6 +93,12 @@ export default function Header() {
                 >
                   작품 정보
                 </Link>
+                <Link
+                  href="/productions"
+                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-foreground rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  프로덕션
+                </Link>
               </>
             )}
             {isOwner && (

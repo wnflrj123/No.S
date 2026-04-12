@@ -193,3 +193,62 @@ export interface MusicalFormData {
   characters: MusicalCharacter[];
   scenes: MusicalScene[];
 }
+
+// 프로덕션 - 스태프 역할
+export type StaffRole = 'DIRECTOR' | 'MUSIC_DIRECTOR' | 'CHOREOGRAPHER' | 'STAGE_MANAGER';
+
+export const STAFF_ROLE_LABELS: Record<StaffRole, string> = {
+  DIRECTOR: '연출',
+  MUSIC_DIRECTOR: '음악감독',
+  CHOREOGRAPHER: '안무',
+  STAGE_MANAGER: '무대감독',
+};
+
+// 프로덕션 - 스태프
+export interface ProductionStaff {
+  userId: string;
+  role: StaffRole;
+}
+
+// 프로덕션 - 캐스팅 (캐릭터 ↔ 배우 매핑)
+export interface ProductionCasting {
+  characterId: number; // MusicalCharacter.id
+  userId: string;
+}
+
+// 프로덕션 - 공연 회차
+export interface ProductionPerformance {
+  id: string;
+  dateTime: string; // YYYY-MM-DDTHH:mm
+  location?: string;
+  castings: ProductionCasting[];
+}
+
+// 프로덕션
+export interface Production {
+  id: string;
+  name: string;
+  description?: string;
+  musicalId: string;
+  locations: string[];   // 공연 장소 목록
+  staffs: ProductionStaff[];
+  performances: ProductionPerformance[];
+  startDate: string; // YYYY-MM-DD
+  endDate: string;   // YYYY-MM-DD
+  createdBy: string;
+  createdByName: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// 프로덕션 폼 데이터
+export interface ProductionFormData {
+  name: string;
+  description: string;
+  musicalId: string;
+  locations: string[];
+  staffs: ProductionStaff[];
+  performances: ProductionPerformance[];
+  startDate: string;
+  endDate: string;
+}
