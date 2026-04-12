@@ -88,7 +88,7 @@ export default function EventList({
 
                 {/* Location */}
                 {event.location && (
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2">
                     <FiMapPin size={14} className="shrink-0" style={{ color: '#8b95a1' }} />
                     {event.locationUrl ? (
                       <a
@@ -103,13 +103,6 @@ export default function EventList({
                     ) : (
                       <span className="text-sm" style={{ color: '#4e5968' }}>{event.location}</span>
                     )}
-                  </div>
-                )}
-
-                {/* Description */}
-                {event.description && (
-                  <div className="p-3 bg-orange-50 rounded-xl">
-                    <p className="text-sm whitespace-pre-wrap" style={{ color: '#4e5968' }}>{event.description}</p>
                   </div>
                 )}
               </div>
@@ -136,6 +129,13 @@ export default function EventList({
                 </div>
               )}
             </div>
+
+            {/* Description — full width */}
+            {event.description && (
+              <div className="mt-3 p-3 bg-orange-50 rounded-xl">
+                <p className="text-sm whitespace-pre-wrap" style={{ color: '#4e5968' }}>{event.description}</p>
+              </div>
+            )}
           </div>
         );
       })}

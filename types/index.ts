@@ -5,6 +5,12 @@
 // 예약 장소 타입
 export type LocationType = '합동연습실' | 'ART8실' | '댄스3실' | '기타';
 
+// 예약 참여자
+export interface ReservationParticipant {
+  userId: string;
+  userName: string;
+}
+
 // 예약 정보 인터페이스
 export interface Reservation {
   id: string;
@@ -18,6 +24,7 @@ export interface Reservation {
   customLocation?: string; // "기타" 선택 시만 사용
   locationUrl?: string; // 지도 링크 ("기타" 선택 시)
   purpose: string;
+  participants?: ReservationParticipant[]; // 함께 참여하는 멤버 목록
   repeatGroupId?: string; // 반복 일정 그룹 ID
   createdAt: Date;
   updatedAt: Date;

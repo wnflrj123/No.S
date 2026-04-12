@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { deleteDoc, doc, collection, query, where, getDocs } from 'firebase/firestore';
+import { deleteDoc, doc, collection, query, where, getDocs, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Reservation } from '@/types';
-import { FiEdit2, FiTrash2, FiMapPin, FiClock, FiUser, FiRepeat, FiX, FiExternalLink } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiMapPin, FiClock, FiUser, FiRepeat, FiX, FiExternalLink, FiUsers, FiUserPlus, FiUserMinus } from 'react-icons/fi';
 
 interface ReservationListProps {
   reservations: Reservation[];
@@ -156,8 +156,9 @@ export default function ReservationList({
   onDeleted,
   loading = false,
 }: ReservationListProps) {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, effectiveName } = useAuth();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [joiningId, setJoiningId] = useState<string | null>(null);
   const [deleteModalReservation, setDeleteModalReservation] = useState<Reservation | null>(null);
 
   const handleDeleteClick = (reservation: Reservation) => {
@@ -226,6 +227,38 @@ export default function ReservationList({
     }
   };
 
+  const handleJoin = async (reservation: Reservation) => {
+    if (!user) return;
+
+    const isParticipating = reservation.participants?.some((p) => p.userId === user.uid);
+    setJoiningId(reservation.id);
+
+    try {
+      const participantEntry = {
+        userId: user.uid,
+        userName: effectiveName || user.displayName || '멤버',
+      };
+
+      if (isParticipating) {
+        const existing = reservation.participants?.find((p) => p.userId === user.uid);
+        if (existing) {
+          await updateDoc(doc(db, 'reservations', reservation.id), {
+            participants: arrayRemove(existing),
+          });
+        }
+      } else {
+        await updateDoc(doc(db, 'reservations', reservation.id), {
+          participants: arrayUnion(participantEntry),
+        });
+      }
+    } catch (error) {
+      console.error('참여 변경 실패:', error);
+      alert('처리에 실패했어요. 다시 시도해주세요.');
+    } finally {
+      setJoiningId(null);
+    }
+  };
+
   const getLocationDisplay = (reservation: Reservation) => {
     if (reservation.location === '기타' && reservation.customLocation) {
       return reservation.customLocation;
@@ -268,7 +301,10 @@ export default function ReservationList({
         {reservations.map((reservation, index) => {
           const isMine = user?.uid === reservation.userId;
           const isDeleting = deletingId === reservation.id;
+          const isJoining = joiningId === reservation.id;
           const isRepeatReservation = !!reservation.repeatGroupId;
+          const participants = reservation.participants ?? [];
+          const isParticipating = user ? participants.some((p) => p.userId === user.uid) : false;
 
           return (
             <div
@@ -312,9 +348,9 @@ export default function ReservationList({
                     )}
                   </div>
 
-                  {/* User */}
+                  {/* 예약자 */}
                   <div className="flex items-center gap-2 mb-3">
-                    <FiUser size={14} className="shrink-0" style={{ color: '#8b95a1' }} />
+                    <FiUser size={13} className="shrink-0" style={{ color: '#8b95a1' }} />
                     <span className="text-sm" style={{ color: '#6b7684' }}>{reservation.userName}</span>
                     {isMine && (
                       <span className="text-[11px] bg-primary/8 text-primary px-2 py-0.5 rounded-lg font-medium">
@@ -323,10 +359,6 @@ export default function ReservationList({
                     )}
                   </div>
 
-                  {/* Purpose */}
-                  <div className="p-3 bg-secondary rounded-xl">
-                    <p className="text-sm whitespace-pre-wrap" style={{ color: '#4e5968' }}>{reservation.purpose}</p>
-                  </div>
                 </div>
 
                 {/* Actions */}
@@ -351,6 +383,56 @@ export default function ReservationList({
                       <FiTrash2 size={16} />
                     </button>
                   </div>
+                )}
+              </div>
+
+              {/* Purpose — full width */}
+              <div className="p-3 bg-secondary rounded-xl">
+                <p className="text-sm whitespace-pre-wrap" style={{ color: '#4e5968' }}>{reservation.purpose}</p>
+              </div>
+
+              {/* Divider — full width */}
+              <hr className="mt-3 mb-3 border-gray-100" />
+
+              {/* 참여자 리스트 + 참여하기 버튼 */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <FiUsers size={14} className="shrink-0" style={{ color: '#8b95a1' }} />
+                  {participants.length > 0 ? (
+                    <span className="text-sm" style={{ color: '#4e5968' }}>
+                      {participants.map((p, i) => (
+                        <span key={p.userId}>
+                          {i > 0 && <span style={{ color: '#c4c9d0' }}> · </span>}
+                          <span className={user && p.userId === user.uid ? 'text-primary font-medium' : ''}>
+                            {p.userName}
+                          </span>
+                        </span>
+                      ))}
+                    </span>
+                  ) : (
+                    <span className="text-sm" style={{ color: '#8b95a1' }}>아직 참여자가 없어요</span>
+                  )}
+                </div>
+
+                {user && (
+                  <button
+                    onClick={() => handleJoin(reservation)}
+                    disabled={isJoining || isDeleting}
+                    className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                      isParticipating
+                        ? 'bg-primary/8 text-primary hover:bg-primary/15'
+                        : 'bg-primary text-white hover:bg-primary/90'
+                    }`}
+                  >
+                    {isJoining ? (
+                      <div className="w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                    ) : isParticipating ? (
+                      <FiUserMinus size={14} />
+                    ) : (
+                      <FiUserPlus size={14} />
+                    )}
+                    {isJoining ? '처리 중...' : isParticipating ? '참여 취소' : '참여하기'}
+                  </button>
                 )}
               </div>
             </div>

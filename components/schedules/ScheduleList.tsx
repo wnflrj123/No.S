@@ -366,7 +366,7 @@ export default function ScheduleList({
                   </div>
 
                   {/* Location */}
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2">
                     <FiMapPin size={14} className="shrink-0" style={{ color: '#8b95a1' }} />
                     {schedule.locationUrl ? (
                       <a
@@ -382,13 +382,6 @@ export default function ScheduleList({
                       <span className="text-sm" style={{ color: '#4e5968' }}>{getLocationDisplay(schedule)}</span>
                     )}
                   </div>
-
-                  {/* Description */}
-                  {schedule.description && (
-                    <div className="p-3 bg-[#4eaea9]/8 rounded-xl">
-                      <p className="text-sm whitespace-pre-wrap" style={{ color: '#4e5968' }}>{schedule.description}</p>
-                    </div>
-                  )}
                 </div>
 
                 {/* Actions */}
@@ -413,6 +406,13 @@ export default function ScheduleList({
                   </div>
                 )}
               </div>
+
+              {/* Description — full width */}
+              {schedule.description && (
+                <div className="mt-3 p-3 bg-[#4eaea9]/8 rounded-xl">
+                  <p className="text-sm whitespace-pre-wrap" style={{ color: '#4e5968' }}>{schedule.description}</p>
+                </div>
+              )}
             </div>
           );
         })}
