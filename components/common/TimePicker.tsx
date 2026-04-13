@@ -11,6 +11,7 @@ interface TimePickerProps {
   className?: string;
   allowEmpty?: boolean;
   accentColor?: 'primary' | 'orange' | 'green';
+  disabled?: boolean;
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -24,6 +25,7 @@ export default function TimePicker({
   className = '',
   allowEmpty = false,
   accentColor = 'primary',
+  disabled = false,
 }: TimePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
@@ -100,13 +102,14 @@ export default function TimePicker({
     <div ref={containerRef} className={`relative ${className}`}>
       <button
         type="button"
-        onClick={handleOpen}
-        className={`w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 ${colors.ring} focus:border-transparent text-left flex items-center justify-between bg-white text-sm`}
+        onClick={disabled ? undefined : handleOpen}
+        disabled={disabled}
+        className={`w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 ${colors.ring} focus:border-transparent text-left flex items-center justify-between text-sm ${disabled ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-white'}`}
       >
-        <span className={value ? 'text-foreground' : ''} style={{ color: value ? undefined : '#8b95a1' }}>
+        <span style={{ color: disabled ? '#d1d5db' : value ? undefined : '#8b95a1' }}>
           {value || placeholder}
         </span>
-        <FiClock size={16} style={{ color: '#b0b8c1' }} />
+        <FiClock size={16} style={{ color: disabled ? '#d1d5db' : '#b0b8c1' }} />
       </button>
 
       {isOpen && (
