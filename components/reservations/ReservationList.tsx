@@ -170,22 +170,44 @@ function collectChips(
 
   const chips: SceneChip[] = [];
   for (const scene of [...musical.scenes].sort((a, b) => a.index - b.index)) {
-    let sceneMatched = false;
-    for (const number of [...scene.numbers].sort((a, b) => a.index - b.index)) {
-      if (number.characters.some((cid) => charIds.has(cid))) {
-        sceneMatched = true;
-        const label = `M${number.index} ${number.title}`;
-        if (!seen.has(label)) {
-          seen.add(label);
-          chips.push({ type: 'number', label, secondary, sortKey: `1_${String(scene.index).padStart(4, '0')}_${String(number.index).padStart(4, '0')}` });
+    const coverableNumbers = [...scene.numbers]
+      .sort((a, b) => a.index - b.index)
+      .filter((n) => n.characters.length > 0 && n.characters.every((cid) => charIds.has(cid)));
+
+    if (coverableNumbers.length === 0) continue;
+
+    const sceneLabel = `#${scene.index} ${scene.title}`;
+
+    if (!secondary) {
+      const allCovered = coverableNumbers.length === scene.numbers.length;
+      if (allCovered) {
+        // 씬 전체 커버 → 씬 칩만, 넘버 칩 없음
+        if (!seen.has(sceneLabel)) {
+          seen.add(sceneLabel);
+          chips.push({ type: 'scene', label: sceneLabel, secondary: false, sortKey: `0_${String(scene.index).padStart(4, '0')}_0000` });
+        }
+      } else {
+        // 부분 커버 → 커버 가능한 넘버 칩만 표시
+        for (const number of coverableNumbers) {
+          const numLabel = `M${number.index} ${number.title}`;
+          if (!seen.has(numLabel)) {
+            seen.add(numLabel);
+            chips.push({ type: 'number', label: numLabel, secondary: false, sortKey: `1_${String(scene.index).padStart(4, '0')}_${String(number.index).padStart(4, '0')}` });
+          }
         }
       }
-    }
-    if (sceneMatched) {
-      const label = `#${scene.index} ${scene.title}`;
-      if (!seen.has(label)) {
-        seen.add(label);
-        chips.push({ type: 'scene', label, secondary, sortKey: `0_${String(scene.index).padStart(4, '0')}_0000` });
+    } else {
+      // 다른 캐스팅: 넘버 칩 + 씬 칩 모두 secondary
+      for (const number of coverableNumbers) {
+        const numLabel = `M${number.index} ${number.title}`;
+        if (!seen.has(numLabel)) {
+          seen.add(numLabel);
+          chips.push({ type: 'number', label: numLabel, secondary: true, sortKey: `1_${String(scene.index).padStart(4, '0')}_${String(number.index).padStart(4, '0')}` });
+        }
+      }
+      if (!seen.has(sceneLabel)) {
+        seen.add(sceneLabel);
+        chips.push({ type: 'scene', label: sceneLabel, secondary: true, sortKey: `0_${String(scene.index).padStart(4, '0')}_0000` });
       }
     }
   }
@@ -201,15 +223,15 @@ function getSceneChips(
 
   const participantIds = new Set(participants.map((p) => p.userId));
 
-  // 프로덕션별 참여자 캐릭터 수집 (캐스팅 안 된 참여자는 자동 제외)
-  type ProdData = { musicalId: string; charIds: Set<number>; castCount: number };
-  const prodDataList: ProdData[] = [];
+  // 퍼포먼스(팀) 단위로 참여자 캐릭터 수집 — 같은 프로덕션이라도 팀이 다르면 분리
+  type PerfData = { musicalId: string; charIds: Set<number>; castCount: number };
+  const perfDataList: PerfData[] = [];
   const castParticipantIdsGlobal = new Set<string>();
 
   for (const production of productions) {
-    const charIds = new Set<number>();
-    const castParticipants = new Set<string>();
     for (const perf of production.performances) {
+      const charIds = new Set<number>();
+      const castParticipants = new Set<string>();
       for (const casting of perf.castings) {
         if (participantIds.has(casting.userId)) {
           charIds.add(casting.characterId);
@@ -217,27 +239,32 @@ function getSceneChips(
           castParticipantIdsGlobal.add(casting.userId);
         }
       }
+      if (charIds.size === 0) continue;
+      perfDataList.push({ musicalId: production.musicalId, charIds, castCount: castParticipants.size });
     }
-    if (charIds.size === 0) continue;
-    prodDataList.push({ musicalId: production.musicalId, charIds, castCount: castParticipants.size });
   }
 
-  // 캐스팅된 참여자가 1명이면 전체 primary, 2명 이상이면 같은 프로덕션 공유 여부로 구분
   const totalCast = castParticipantIdsGlobal.size;
-  const primaryList = totalCast <= 1
-    ? prodDataList
-    : prodDataList.filter((p) => p.castCount >= 2);
-  const secondaryList = totalCast <= 1
-    ? []
-    : prodDataList.filter((p) => p.castCount < 2);
 
-  const seen = new Set<string>();
+  // primary: 같은 팀(퍼포먼스)에 2명 이상 캐스팅
+  const primaryList = totalCast <= 1 ? perfDataList : perfDataList.filter((p) => p.castCount >= 2);
+  const secondaryList = totalCast <= 1 ? [] : perfDataList.filter((p) => p.castCount < 2);
+
+  const primarySeen = new Set<string>();
   const primaryChips = primaryList
-    .flatMap((p) => collectChips(p.musicalId, p.charIds, musicals, seen, false))
+    .flatMap((p) => collectChips(p.musicalId, p.charIds, musicals, primarySeen, false))
     .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 
-  const secondaryChips = secondaryList
-    .flatMap((p) => collectChips(p.musicalId, p.charIds, musicals, seen, true))
+  // secondary: 다른 팀 캐릭터들을 뮤지컬별로 합산해서 커버 가능한 씬 계산
+  const musicalSecondaryChars: Record<string, Set<number>> = {};
+  for (const p of secondaryList) {
+    if (!musicalSecondaryChars[p.musicalId]) musicalSecondaryChars[p.musicalId] = new Set();
+    p.charIds.forEach((id) => musicalSecondaryChars[p.musicalId].add(id));
+  }
+
+  const secondarySeen = new Set(primarySeen);
+  const secondaryChips = Object.entries(musicalSecondaryChars)
+    .flatMap(([musicalId, charIds]) => collectChips(musicalId, charIds, musicals, secondarySeen, true))
     .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 
   return [...primaryChips, ...secondaryChips];
