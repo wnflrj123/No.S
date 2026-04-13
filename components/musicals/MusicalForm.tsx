@@ -123,14 +123,20 @@ function tableToScenes(rows: string[][], allCharacters: MusicalCharacter[]): Mus
   return scenes;
 }
 
-/** 한 줄(탭 구분 O마커 또는 쉼표 구분 이름/축약어)을 캐릭터 이름 CSV로 변환 */
-function resolveCharLine(line: string, allCharacters: MusicalCharacter[]): string {
+/** 한 줄(탭 구분 O마커 또는 쉼표 구분 이름/축약어)을 캐릭터 이름 CSV로 변환
+ *  orderedChars: 헤더 파싱으로 결정된 열→캐릭터 매핑 (없으면 allCharacters 순서 가정) */
+function resolveCharLine(
+  line: string,
+  allCharacters: MusicalCharacter[],
+  orderedChars?: (MusicalCharacter | undefined)[]
+): string {
   if (line.includes('\t')) {
-    // 타입 1: 열 위치 = allCharacters 순서, O/o인 경우만 선택
+    // 타입 1: O마커, 열 위치 = orderedChars(헤더 기반) 또는 allCharacters 순서
     const cols = line.split('\t');
-    return allCharacters
-      .filter((_, i) => cols[i]?.trim().toLowerCase() === 'o')
-      .map((c) => c.name)
+    const charList = orderedChars ?? allCharacters;
+    return charList
+      .filter((c, i) => c && cols[i]?.trim().toLowerCase() === 'o')
+      .map((c) => c!.name)
       .join(',');
   }
   // 타입 2: 쉼표 구분 이름/축약어
@@ -498,12 +504,26 @@ function Step2({ structRows, allCharacters, onStructRowsChange }: Step2Props) {
                 allCharacters={allCharacters}
                 onChange={onCellChange}
                 onMultiRowPaste={(lines) => {
-                  const dataLines = lines.slice(1); // 첫 번째 행(헤더) 무시
+                  // 첫 행이 캐릭터 헤더인지 판별: 이름/축약어로 매핑 시도
+                  const tokenToChar = new Map<string, MusicalCharacter>();
+                  for (const c of allCharacters) {
+                    tokenToChar.set(c.name.trim().toLowerCase(), c);
+                    if (c.abbr) tokenToChar.set(c.abbr.trim().toLowerCase(), c);
+                  }
+                  const headerCols = lines[0].split('\t');
+                  const orderedChars = headerCols.map((h) => tokenToChar.get(h.trim().toLowerCase()));
+                  const isHeader = orderedChars.some((c) => c !== undefined);
+
+                  const dataLines = isHeader ? lines.slice(1) : lines;
                   const next = structRows.map((row) => [...row]);
                   for (let i = 0; i < dataLines.length; i++) {
                     const targetRow = r + i;
                     while (next.length <= targetRow) next.push(['', '', '', '', '']);
-                    next[targetRow][4] = resolveCharLine(dataLines[i], allCharacters);
+                    next[targetRow][4] = resolveCharLine(
+                      dataLines[i],
+                      allCharacters,
+                      isHeader ? orderedChars : undefined
+                    );
                   }
                   handleStructChange(next);
                 }}
