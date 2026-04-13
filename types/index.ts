@@ -226,7 +226,8 @@ export interface ProductionCasting {
 // 프로덕션 - 공연 회차
 export interface ProductionPerformance {
   id: string;
-  dateTime: string; // YYYY-MM-DDTHH:mm
+  dateTime: string; // YYYY-MM-DDTHH:mm (dateUndecided=true 이면 빈 문자열 가능)
+  dateUndecided?: boolean;
   location?: string;
   castings: ProductionCasting[];
 }

@@ -50,6 +50,7 @@ function newPerformance(): ProductionPerformance {
   return {
     id: crypto.randomUUID(),
     dateTime: '',
+    dateUndecided: true,
     castings: [],
   };
 }
@@ -227,7 +228,7 @@ export default function ProductionForm({
         musicalId: form.musicalId,
         locations: form.locations,
         staffs: form.staffs.filter((s) => s.userId),
-        performances: form.performances.filter((p) => p.dateTime),
+        performances: form.performances.filter((p) => p.dateTime || p.dateUndecided),
         startDate: form.startDate,
         endDate: form.endDate,
         updatedAt: serverTimestamp(),
@@ -471,19 +472,40 @@ export default function ProductionForm({
                       {idx + 1}
                     </span>
                     <div className="flex-1 min-w-0 space-y-2">
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="flex items-center gap-2">
                         <input
                           type="date"
                           value={perfDate}
+                          disabled={!!perf.dateUndecided}
                           onChange={(e) => updatePerformanceDate(perf.id, e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
+                          className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-transparent bg-white disabled:bg-gray-50 disabled:text-gray-300 disabled:cursor-not-allowed"
                         />
                         <TimePicker
                           value={perfTime}
                           onChange={(t) => updatePerformanceTime(perf.id, t)}
                           placeholder="시간 선택"
                           allowEmpty
+                          disabled={!!perf.dateUndecided}
+                          className="flex-1"
                         />
+                        <label className="flex items-center gap-1 cursor-pointer flex-none">
+                          <input
+                            type="checkbox"
+                            checked={!!perf.dateUndecided}
+                            onChange={(e) =>
+                              setForm((prev) => ({
+                                ...prev,
+                                performances: prev.performances.map((p) =>
+                                  p.id === perf.id
+                                    ? { ...p, dateUndecided: e.target.checked, dateTime: e.target.checked ? '' : p.dateTime }
+                                    : p
+                                ),
+                              }))
+                            }
+                            className="w-3.5 h-3.5 accent-primary"
+                          />
+                          <span className="text-xs" style={{ color: '#b0b8c1' }}>미정</span>
+                        </label>
                       </div>
                       {form.locations.length > 0 ? (
                         <select
