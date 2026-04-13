@@ -5,6 +5,12 @@
 // 예약 장소 타입
 export type LocationType = '합동연습실' | 'ART8실' | '댄스3실' | '기타';
 
+// 예약 참여자
+export interface ReservationParticipant {
+  userId: string;
+  userName: string;
+}
+
 // 예약 정보 인터페이스
 export interface Reservation {
   id: string;
@@ -18,6 +24,7 @@ export interface Reservation {
   customLocation?: string; // "기타" 선택 시만 사용
   locationUrl?: string; // 지도 링크 ("기타" 선택 시)
   purpose: string;
+  participants?: ReservationParticipant[]; // 함께 참여하는 멤버 목록
   repeatGroupId?: string; // 반복 일정 그룹 ID
   createdAt: Date;
   updatedAt: Date;
@@ -147,4 +154,108 @@ export interface NoticeFormData {
   title: string;
   content: string;
   pinned: boolean;
+}
+
+// 작품 정보 - Character
+export interface MusicalCharacter {
+  id: number;
+  name: string;
+  abbr?: string; // 축약어 (붙여넣기 매핑용)
+  description: string;
+}
+
+// 작품 정보 - Number (장면 내 넘버)
+export interface MusicalNumber {
+  id: number;
+  index: number;
+  title: string;
+  characters: number[]; // MusicalCharacter.id 배열 (Musical.characters에서 참조)
+}
+
+// 작품 정보 - Scene (막/장)
+export interface MusicalScene {
+  id: number;
+  index: number;
+  title: string;
+  numbers: MusicalNumber[];
+}
+
+// 작품 정보 - Musical
+export interface Musical {
+  id: string; // Firestore document ID
+  name: string;
+  imageUrl?: string;
+  characters: MusicalCharacter[]; // 작품 전체 캐릭터 목록 (단일 정의)
+  scenes: MusicalScene[];
+  createdBy: string;
+  createdByName: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// 작품 등록 폼 데이터
+export interface MusicalFormData {
+  name: string;
+  imageUrl: string;
+  characters: MusicalCharacter[];
+  scenes: MusicalScene[];
+}
+
+// 프로덕션 - 스태프 역할
+export type StaffRole = 'DIRECTOR' | 'MUSIC_DIRECTOR' | 'CHOREOGRAPHER' | 'STAGE_MANAGER';
+
+export const STAFF_ROLE_LABELS: Record<StaffRole, string> = {
+  DIRECTOR: '연출',
+  MUSIC_DIRECTOR: '음악감독',
+  CHOREOGRAPHER: '안무',
+  STAGE_MANAGER: '무대감독',
+};
+
+// 프로덕션 - 스태프
+export interface ProductionStaff {
+  userId: string;
+  role: StaffRole;
+}
+
+// 프로덕션 - 캐스팅 (캐릭터 ↔ 배우 매핑)
+export interface ProductionCasting {
+  characterId: number; // MusicalCharacter.id
+  userId: string;
+}
+
+// 프로덕션 - 공연 회차
+export interface ProductionPerformance {
+  id: string;
+  dateTime: string; // YYYY-MM-DDTHH:mm
+  location?: string;
+  castings: ProductionCasting[];
+}
+
+// 프로덕션
+export interface Production {
+  id: string;
+  name: string;
+  description?: string;
+  musicalId: string;
+  locations: string[];   // 공연 장소 목록
+  staffs: ProductionStaff[];
+  performances: ProductionPerformance[];
+  startDate: string; // YYYY-MM-DD
+  endDate: string;   // YYYY-MM-DD
+  createdBy: string;
+  createdByName: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// 프로덕션 폼 데이터
+export interface ProductionFormData {
+  name: string;
+  description: string;
+  musicalId: string;
+  locations: string[];
+  staffs: ProductionStaff[];
+  performances: ProductionPerformance[];
+  startDate: string;
+  endDate: string;
 }

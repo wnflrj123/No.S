@@ -28,9 +28,14 @@ No.S/
 │   ├── login/page.tsx            # 로그인 (인앱 브라우저 감지 포함)
 │   ├── reservations/page.tsx     # 예약 현황 (캘린더/리스트 뷰)
 │   ├── notices/page.tsx           # 공지사항 (목록/상세/작성/수정)
+│   ├── musicals/page.tsx         # 작품 정보 (캐러셀+상세+등록/수정)
+│   ├── productions/page.tsx      # 프로덕션 (캐스팅 보드, 공연 회차)
 │   ├── admin/page.tsx            # 관리 페이지 (Owner 전용)
-│   └── api/admin/sync-users/     # 회원 동기화 API (서버 라우트)
-│       └── route.ts
+│   └── api/
+│       ├── admin/sync-users/     # 회원 동기화 API (서버 라우트)
+│       │   └── route.ts
+│       └── holidays/             # 공휴일 조회 API (공공데이터포털)
+│           └── route.ts
 ├── components/
 │   ├── layout/
 │   │   ├── Header.tsx            # 네비게이션 + 프로필 드롭다운 + 닉네임 수정
@@ -41,11 +46,21 @@ No.S/
 │   │   ├── ReservationCalendar.tsx  # 월간 캘린더 (예약 건수 + 행사 뱃지, 여러날 행사 연결 표시)
 │   │   ├── ReservationForm.tsx      # 예약 등록/수정 폼 (반복 예약 지원)
 │   │   └── ReservationList.tsx      # 예약 목록 (삭제 모달 포함)
+│   ├── musicals/
+│   │   ├── MusicalCard.tsx       # 작품 카드 (캐러셀 아이템)
+│   │   ├── MusicalCarousel.tsx   # 작품 캐러셀 (large/mini 두 가지 변형)
+│   │   ├── MusicalDetail.tsx     # 작품 상세 (씬·넘버 아코디언, 캐릭터 목록)
+│   │   ├── MusicalForm.tsx       # 작품 등록/수정 폼 (캐릭터 테이블, 씬·넘버 편집)
+│   │   └── SceneAccordion.tsx    # 씬·넘버 아코디언 컴포넌트
 │   ├── notices/
 │   │   └── RichTextEditor.tsx    # TipTap 리치 텍스트 에디터
 │   ├── events/
 │   │   ├── EventForm.tsx         # 이벤트 등록/수정 (Admin 전용)
 │   │   └── EventList.tsx         # 이벤트 목록
+│   ├── productions/
+│   │   ├── ProductionCard.tsx    # 프로덕션 카드 (캐스팅·스태프·회차 표시)
+│   │   ├── ProductionDetail.tsx  # 프로덕션 상세 (회차별 캐스팅 보드)
+│   │   └── ProductionForm.tsx    # 프로덕션 등록/수정 폼 (Admin 전용)
 │   ├── schedules/
 │   │   ├── ScheduleForm.tsx      # 정기 일정 등록/수정 (Admin 전용, 반복 지원)
 │   │   └── ScheduleList.tsx      # 정기 일정 목록 (삭제 모달 포함)
@@ -85,7 +100,9 @@ No.S/
   endTime: string          // "HH:mm"
   location: LocationType   // '합동연습실' | 'ART8실' | '댄스3실' | '기타'
   customLocation?: string  // location이 '기타'일 때 직접 입력값
+  locationUrl?: string     // 지도 링크 ('기타' 장소 선택 시)
   purpose: string
+  participants?: Array<{ userId: string; userName: string }>  // 함께 참여하는 멤버 목록
   repeatGroupId?: string   // 반복 예약 그룹 UUID
   createdAt: Timestamp
   updatedAt: Timestamp
@@ -159,6 +176,66 @@ No.S/
 }
 ```
 
+### `musicals` 컬렉션
+
+```typescript
+{
+  name: string
+  imageUrl?: string
+  characters: Array<{
+    id: number
+    name: string
+    abbr?: string       // 붙여넣기 매핑용 축약어
+    description: string
+  }>
+  scenes: Array<{
+    id: number
+    index: number
+    title: string
+    numbers: Array<{
+      id: number
+      index: number
+      title: string
+      characters: number[]  // MusicalCharacter.id 배열
+    }>
+  }>
+  createdBy: string
+  createdByName: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+```
+
+### `productions` 컬렉션
+
+```typescript
+{
+  name: string
+  description?: string
+  musicalId: string         // musicals 컬렉션 문서 ID
+  startDate: string         // "YYYY-MM-DD"
+  endDate: string           // "YYYY-MM-DD"
+  locations: string[]       // 공연 장소 목록
+  staffs: Array<{
+    userId: string
+    role: 'DIRECTOR' | 'MUSIC_DIRECTOR' | 'CHOREOGRAPHER' | 'STAGE_MANAGER'
+  }>
+  performances: Array<{
+    id: string
+    dateTime: string        // "YYYY-MM-DDTHH:mm"
+    location?: string
+    castings: Array<{
+      characterId: number   // MusicalCharacter.id
+      userId: string
+    }>
+  }>
+  createdBy: string
+  createdByName: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+```
+
 ### `settings/admins` 문서
 
 ```typescript
@@ -181,6 +258,8 @@ No.S/
 | events | 로그인 | 로그인 | 로그인 | 로그인 |
 | schedules | 로그인 | Admin | Admin | Admin |
 | notices | 로그인 | Admin | Admin | Admin |
+| musicals | 로그인 | Admin | Admin | Admin |
+| productions | 로그인 | Admin | Admin | Admin |
 | settings | 로그인 | 로그인 | 로그인 | 로그인 |
 | users | 로그인 | 본인만 | 본인만 | 본인만 |
 
@@ -211,6 +290,15 @@ Firebase Auth 전체 사용자 → Firestore users 컬렉션 동기화.
 - **처리**: listUsers() 페이지네이션 → batch write
 - **응답**: `{ synced: number }`
 
+### `GET /api/holidays?year=YYYY&month=M`
+
+공공데이터포털 특일 정보 API를 프록시하여 공휴일 정보 반환.
+
+- **인증**: 없음 (클라이언트에서 직접 호출)
+- **캐싱**: `next: { revalidate: 86400 }` + `Cache-Control: public, max-age=86400`
+- **응답**: `{ holidays: { "YYYY-MM-DD": "공휴일명", ... } }`
+- **환경변수**: `HOLIDAY_API_KEY` (공공데이터포털 서비스 키)
+
 ## 실시간 데이터 패턴
 
 - 캘린더/리스트 모두 `onSnapshot` 리스너 사용
@@ -240,6 +328,7 @@ GitHub main push → GitHub Actions
 |------|------|------|
 | NEXT_PUBLIC_FIREBASE_* | .env.local | 클라이언트 Firebase 설정 (6개) |
 | FIREBASE_SERVICE_ACCOUNT_KEY | .env.local | 서버 Admin SDK (JSON) |
+| HOLIDAY_API_KEY | .env.local | 공공데이터포털 특일 정보 API 서비스 키 |
 
 ## 코딩 컨벤션
 
