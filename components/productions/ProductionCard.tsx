@@ -20,6 +20,7 @@ function formatDate(dateStr: string) {
 }
 
 function formatDateTime(dt: string) {
+  if (!dt) return '일정 미정';
   const [date, time] = dt.split('T');
   const [y, m, d] = date.split('-');
   return `${y}년 ${parseInt(m)}월 ${parseInt(d)}일${time ? ` ${time}` : ''}`;
@@ -32,7 +33,8 @@ function getUserName(users: User[], uid: string) {
 
 function getPerformancePeriod(performances: Production['performances']): string | null {
   if (performances.length === 0) return null;
-  const dates = performances.map((p) => p.dateTime.split('T')[0]).sort();
+  const dates = performances.map((p) => p.dateTime.split('T')[0]).filter(Boolean).sort();
+  if (dates.length === 0) return '일정 미정';
   const first = formatDate(dates[0]);
   const last = formatDate(dates[dates.length - 1]);
   return first === last ? first : `${first} ~ ${last}`;

@@ -19,6 +19,7 @@ function getUserName(users: User[], uid: string) {
 }
 
 function formatDateTime(dt: string) {
+  if (!dt) return '일정 미정';
   const [date, time] = dt.split('T');
   const [y, m, d] = date.split('-');
   return `${y}년 ${parseInt(m)}월 ${parseInt(d)}일${time ? ` ${time}` : ''}`;
