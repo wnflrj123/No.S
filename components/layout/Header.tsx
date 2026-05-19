@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { FiEdit2, FiCheck, FiX, FiMenu, FiX as FiClose, FiCalendar } from 'react-icons/fi';
 
 export default function Header() {
-  const { user, isOwner, effectiveName, signOut, updateCustomName } = useAuth();
+  const { user, isAdmin, isOwner, effectiveName, signOut, updateCustomName } = useAuth();
   const router = useRouter();
   const [showProfile, setShowProfile] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -74,6 +74,7 @@ export default function Header() {
       { href: '/musicals', label: '작품 정보' },
       { href: '/productions', label: '프로덕션' },
     ] : []),
+    ...((isAdmin || isOwner) ? [{ href: '/admin/invites', label: '초청 신청' }] : []),
     ...(isOwner ? [{ href: '/admin', label: '관리' }] : []),
   ];
 

@@ -30,6 +30,27 @@
 
 /* No.S uses a bright theme - no dark mode */
 
+/* 초청 신청 관리 폼의 공용 입력 스타일 */
+.input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  background: #ffffff;
+  color: #111827;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #0066B3;
+}
+.input:disabled {
+  background: #f9fafb;
+  color: #9ca3af;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
