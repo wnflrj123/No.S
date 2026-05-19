@@ -79,11 +79,9 @@ No.S/
 ├── scripts/
 │   └── generate-icons.mjs        # PWA 아이콘 생성 스크립트 (sharp)
 ├── firestore.rules               # Firestore 보안 규칙
-├── docs/                         # 프로젝트 문서
-│   ├── PLAN.md                   # 기획서
-│   └── ARCHITECTURE.md           # 이 파일
-└── .github/workflows/
-    └── deploy.yml                # GitHub Actions 자동 배포
+└── docs/                         # 프로젝트 문서
+    ├── PLAN.md                   # 기획서
+    └── ARCHITECTURE.md           # 이 파일
 ```
 
 ## Firestore 스키마
@@ -316,11 +314,15 @@ Firebase Auth 전체 사용자 → Firestore users 컬렉션 동기화.
 ## 배포 파이프라인
 
 ```
-GitHub main push → GitHub Actions
-  → SSH 접속 (자체 서버)
-  → git pull → npm install → npm run build
-  → pm2 restart (port 3333)
+GitHub main push → Vercel (GitHub 연동)
+  → 자동 빌드 → Edge Network 배포
+  → https://www.samsung-musical.com
 ```
+
+- **호스팅**: Vercel Hobby 플랜
+- **자동 배포**: main 브랜치 푸시 시 Production 자동 배포, PR 생성 시 Preview 자동 배포
+- **도메인**: 가비아 등록, DNS는 A(`@` → Vercel IP) + CNAME(`www` → Vercel CNAME)로 연결, SSL은 Vercel이 자동 발급
+- **환경 변수**: Vercel 대시보드(Settings → Environment Variables)에서 관리
 
 ## 환경 변수
 
