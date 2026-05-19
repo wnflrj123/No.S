@@ -606,6 +606,7 @@ export default function AdminPage() {
                         <img
                           src={member.photoURL}
                           alt={member.displayName}
+                          referrerPolicy="no-referrer"
                           className="w-9 h-9 rounded-full"
                         />
                       ) : (

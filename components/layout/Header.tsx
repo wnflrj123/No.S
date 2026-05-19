@@ -122,6 +122,7 @@ export default function Header() {
                       <img
                         src={user.photoURL}
                         alt={effectiveName}
+                        referrerPolicy="no-referrer"
                         className="w-7 h-7 rounded-full ring-2 ring-gray-100"
                       />
                     )}
@@ -138,6 +139,7 @@ export default function Header() {
                           <img
                             src={user.photoURL}
                             alt={effectiveName}
+                            referrerPolicy="no-referrer"
                             className="w-11 h-11 rounded-full"
                           />
                         )}
@@ -231,6 +233,7 @@ export default function Header() {
                       <img
                         src={user.photoURL}
                         alt={effectiveName}
+                        referrerPolicy="no-referrer"
                         className="w-7 h-7 rounded-full ring-2 ring-gray-100"
                       />
                     )}
@@ -243,6 +246,7 @@ export default function Header() {
                           <img
                             src={user.photoURL}
                             alt={effectiveName}
+                            referrerPolicy="no-referrer"
                             className="w-11 h-11 rounded-full"
                           />
                         )}
