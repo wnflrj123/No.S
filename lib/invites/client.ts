@@ -18,10 +18,11 @@ import {
   setDoc,
   Timestamp,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { INVITES_COLLECTION } from './constants';
-import type { Invite, InviteRound, InviteStats } from './types';
+import { INVITES_COLLECTION, REGISTRATIONS_COLLECTION } from './constants';
+import type { Invite, InviteRegistration, InviteRound, InviteStats } from './types';
 
 export interface InviteWriteInput {
   year: number;
@@ -124,4 +125,20 @@ export async function togglePublished(id: string, isPublished: boolean): Promise
 
 export async function deleteInvite(id: string): Promise<void> {
   await deleteDoc(doc(db, INVITES_COLLECTION, id));
+}
+
+/**
+ * 특정 invite의 신청자 목록 조회. 관리자만 접근 가능 (Firestore Rules에서 차단됨).
+ *
+ * 복합 인덱스 필요: inviteId ASC + createdAt DESC.
+ * 첫 쿼리 시 Firebase 콘솔이 자동으로 인덱스 생성 링크를 제공한다.
+ */
+export async function listRegistrations(inviteId: string): Promise<InviteRegistration[]> {
+  const q = query(
+    collection(db, REGISTRATIONS_COLLECTION),
+    where('inviteId', '==', inviteId),
+    orderBy('createdAt', 'desc'),
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<InviteRegistration, 'id'>) }));
 }
