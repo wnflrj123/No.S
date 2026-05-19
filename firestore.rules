@@ -59,5 +59,19 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
+
+    // 정기공연 신청 페이지 - 공연 정보 (공개 read 허용, isPublished=true일 때만)
+    // isPublished 필드가 누락된 레거시 문서도 안전하게 거절되도록 .get() default 사용.
+    match /invites/{inviteId} {
+      allow read: if isAdmin()
+                  || (resource != null && resource.data.get('isPublished', false) == true);
+      allow create, update, delete: if isAdmin();
+    }
+
+    // 정기공연 신청자 (클라이언트 직접 쓰기 금지 - API route 경유, firebase-admin이 Rules 우회)
+    match /inviteRegistrations/{registrationId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
+    }
   }
 }
