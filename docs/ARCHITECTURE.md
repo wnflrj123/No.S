@@ -31,11 +31,23 @@ No.S/
 │   ├── musicals/page.tsx         # 작품 정보 (캐러셀+상세+등록/수정)
 │   ├── productions/page.tsx      # 프로덕션 (캐스팅 보드, 공연 회차)
 │   ├── admin/page.tsx            # 관리 페이지 (Owner 전용)
+│   ├── admin/invites/            # 정기공연 신청 관리 (Admin 전용)
+│   │   ├── page.tsx              # 공연 목록 + 공개 토글
+│   │   ├── new/page.tsx          # 새 공연 생성
+│   │   ├── [year]/[round]/page.tsx       # 신청자 통계·항목별 답변·후원자
+│   │   └── [year]/[round]/edit/page.tsx  # 공연 정보 수정
+│   ├── invite/[year]/[round]/    # 외부 관객용 (비로그인)
+│   │   ├── page.tsx              # 공연 정보 (포스터/안내/시간/장소/캐스팅)
+│   │   ├── apply/page.tsx        # 신청 폼
+│   │   └── thanks/[token]/page.tsx       # 감사 + 후원 계좌 + 후원 토글
 │   └── api/
 │       ├── admin/sync-users/     # 회원 동기화 API (서버 라우트)
 │       │   └── route.ts
-│       └── holidays/             # 공휴일 조회 API (공공데이터포털)
-│           └── route.ts
+│       ├── holidays/             # 공휴일 조회 API (공공데이터포털)
+│       │   └── route.ts
+│       └── invites/[year]/[round]/
+│           ├── register/route.ts # 신청 등록 + 토큰 발급 (POST)
+│           └── sponsor/route.ts  # 후원 토글 (POST, 토큰 검증)
 ├── components/
 │   ├── layout/
 │   │   ├── Header.tsx            # 네비게이션 + 프로필 드롭다운 + 닉네임 수정
@@ -72,6 +84,11 @@ No.S/
 ├── lib/
 │   ├── firebase.ts               # 클라이언트 Firebase 초기화 (auth, db)
 │   ├── firebase-admin.ts         # 서버 Firebase Admin 초기화 (adminAuth, adminDb)
+│   ├── invites/                  # 정기공연 신청 관련 (Phase별 점진 추가)
+│   │   ├── types.ts              # Invite, InviteRegistration 등 인터페이스
+│   │   ├── constants.ts          # 정규식·토큰 길이 상수
+│   │   ├── server.ts             # 서버 헬퍼 (firebase-admin 사용)
+│   │   └── client.ts             # 클라이언트 헬퍼 (firebase 클라이언트 SDK)
 │   └── hooks/
 │       └── useAuth.ts            # AuthContext 래퍼 훅
 ├── types/
@@ -79,6 +96,10 @@ No.S/
 ├── scripts/
 │   └── generate-icons.mjs        # PWA 아이콘 생성 스크립트 (sharp)
 ├── firestore.rules               # Firestore 보안 규칙
+├── public/
+│   └── invites/{year}-{round}/   # 정기공연 정적 자산 (Vercel CDN)
+│       ├── poster.jpg
+│       └── cast/                 # 배우 프로필 사진
 └── docs/                         # 프로젝트 문서
     ├── PLAN.md                   # 기획서
     └── ARCHITECTURE.md           # 이 파일
@@ -234,6 +255,77 @@ No.S/
 }
 ```
 
+### `invites` 컬렉션
+
+정기공연 관객 신청용 공개 공연 정보. documentId는 `{year}-{round}` (예: "2026-1").
+
+```typescript
+{
+  year: number               // 연도 (예: 2026)
+  round: number              // 회차 번호 (예: 1)
+  title: string              // 공연명 (예: "제1회 정기공연")
+  subtitle?: string
+  description: string        // HTML (TipTap)
+  posterImageUrl: string     // 정적 경로 또는 외부 URL
+  venue: {
+    name: string
+    address: string
+    directions: string       // 오시는 길 (자유 텍스트)
+    mapLinks: { naver?: string; kakao?: string; google?: string }
+  }
+  rounds: Array<{
+    roundNo: number
+    startAt: Timestamp       // 회차 시작 시각 (이 시각이 지나면 자동 마감)
+    teamName: string         // 예: "블루팀"
+    casting: Array<{
+      role: string
+      description: string
+      photoFile?: string     // 정적 파일명. 경로: /invites/{year}-{round}/cast/{photoFile}
+    }>
+  }>
+  sponsorAccount: {
+    bankName: string
+    accountNumber: string
+    accountHolder: string
+  }
+  thanksMessage?: string
+  isPublished: boolean       // false면 공개 페이지에서 404
+  stats: {                   // 통계 캐시 (트랜잭션으로 갱신)
+    totalRegistrations: number
+    totalHeadcount: number
+    totalSponsors: number
+  }
+  createdAt: Timestamp
+  updatedAt: Timestamp
+  createdBy: string
+}
+```
+
+### `inviteRegistrations` 컬렉션
+
+정기공연 신청자. 클라이언트는 직접 쓸 수 없고 반드시 API route(`/api/invites/.../register`, `/api/invites/.../sponsor`)를 경유.
+
+```typescript
+{
+  inviteId: string           // "{year}-{round}"
+  name: string
+  phone: string              // "010-XXXX-XXXX"
+  roundSelections: Array<{
+    roundNo: number
+    headcount: number        // 1~20
+  }>
+  companions?: string        // 동반인 이름 (자유 텍스트)
+  supportingActors?: string  // 응원하는 배우
+  seatRequests?: string      // 좌석 요청사항
+  cheerMessage?: string      // 응원 메시지
+  privacyConsent: true       // 개인정보 동의 (필수)
+  accessToken: string        // 32자 (crypto.randomUUID, 하이픈 제거)
+  isSponsor: boolean         // 후원 체크 (기본 false)
+  sponsorCheckedAt?: Timestamp
+  createdAt: Timestamp
+}
+```
+
 ### `settings/admins` 문서
 
 ```typescript
@@ -260,6 +352,8 @@ No.S/
 | productions | 로그인 | Admin | Admin | Admin |
 | settings | 로그인 | 로그인 | 로그인 | 로그인 |
 | users | 로그인 | 본인만 | 본인만 | 본인만 |
+| invites | `isPublished=true` 또는 Admin | Admin | Admin | Admin |
+| inviteRegistrations | Admin | ❌ (API only) | ❌ (API only) | ❌ (API only) |
 
 - `isAdmin()` 함수: `settings/admins` 문서의 `ownerUid` 또는 `uids` 배열에 포함 여부로 판별
 - 규칙 파일: `firestore.rules` (Firebase 콘솔에서 수동 배포)
@@ -296,6 +390,23 @@ Firebase Auth 전체 사용자 → Firestore users 컬렉션 동기화.
 - **캐싱**: `next: { revalidate: 86400 }` + `Cache-Control: public, max-age=86400`
 - **응답**: `{ holidays: { "YYYY-MM-DD": "공휴일명", ... } }`
 - **환경변수**: `HOLIDAY_API_KEY` (공공데이터포털 서비스 키)
+
+### `POST /api/invites/[year]/[round]/register`
+
+정기공연 신청 등록. 비로그인 호출 가능.
+
+- **인증**: 없음
+- **검증**: 이름·휴대폰 형식·회차별 인원·개인정보 동의 · `invites/{id}.isPublished=true` · 각 회차 `startAt > now`
+- **처리**: 32자 `accessToken` 생성 → `inviteRegistrations` 문서 create → `invites/{id}.stats` 트랜잭션 increment
+- **응답**: 성공 시 `{ token: string }` (201), 검증 실패 시 `{ message, errors[] }` (400), 비공개·미존재 시 (404)
+
+### `POST /api/invites/[year]/[round]/sponsor`
+
+신청자의 후원 체크 토글. 토큰 검증 필수.
+
+- **인증**: URL 토큰 + body의 `{ token }` 매칭
+- **처리**: 토큰으로 registration 조회 → `inviteId` 매치 확인 → `isSponsor=true`, `sponsorCheckedAt=now` 저장 → `invites/{id}.stats.totalSponsors` increment (멱등)
+- **응답**: 성공 `{ ok: true }`, 무효 토큰 (404), 잘못된 요청 (400)
 
 ## 실시간 데이터 패턴
 
