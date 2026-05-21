@@ -112,7 +112,15 @@ export default function ApplyForm({ invite }: { invite: FormInvite }) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
-      const { token } = await res.json();
+      const { token, thanksData } = await res.json();
+      // thanks 페이지가 Firestore 재조회 없이 즉시 렌더하도록 데이터 캐시
+      if (typeof window !== 'undefined' && thanksData) {
+        try {
+          sessionStorage.setItem(`invite-thanks:${token}`, JSON.stringify(thanksData));
+        } catch {
+          // sessionStorage 미지원/용량 초과 — fallback으로 thanks 페이지가 API 조회
+        }
+      }
       router.replace(`/invite/${invite.year}/${invite.round}/thanks/${token}`);
     } catch {
       setErrors(['네트워크 오류가 발생했습니다. 다시 시도해주세요.']);

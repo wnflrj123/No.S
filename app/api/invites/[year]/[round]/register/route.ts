@@ -74,7 +74,22 @@ export async function POST(req: Request, { params }: RouteParams) {
       }
     });
 
-    return NextResponse.json({ token }, { status: 201 });
+    // thanks 페이지 즉시 렌더에 필요한 데이터를 응답에 함께 전달
+    // (클라이언트가 sessionStorage 캐시 후 thanks 페이지에서 Firestore 재조회 없이 즉시 화면)
+    const thanksData = {
+      year: invite.year,
+      round: invite.round,
+      token,
+      isSponsor: false,
+      thanksMessage: invite.thanksMessage,
+      sponsorAccount: invite.sponsorAccount,
+      registrant: {
+        name: typed.name.trim(),
+        roundSelections: typed.roundSelections,
+      },
+    };
+
+    return NextResponse.json({ token, thanksData }, { status: 201 });
   } catch (err) {
     console.error('register failure', err);
     return NextResponse.json({ message: '신청 저장에 실패했습니다.' }, { status: 500 });
