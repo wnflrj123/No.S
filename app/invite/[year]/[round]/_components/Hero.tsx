@@ -21,8 +21,8 @@ export default function Hero({ invite }: { invite: Invite }) {
         )}
       </div>
 
-      {/* 포스터 — 텍스트 아래로 세로 배치, 모바일·데스크탑 모두 전체 보이게 */}
-      <div className="mt-8 md:mt-12 mx-auto w-full max-w-sm md:max-w-md lg:max-w-lg">
+      {/* 포스터 — 본문 가로 폭(max-w-3xl)에 맞춰 정렬 */}
+      <div className="mt-8 md:mt-12 mx-auto w-full max-w-3xl">
         <div className="aspect-[3/4] relative overflow-hidden rounded-2xl bg-gray-100 shadow-2xl">
           <Image
             src={invite.posterImageUrl}
@@ -30,7 +30,7 @@ export default function Hero({ invite }: { invite: Invite }) {
             fill
             priority
             className="object-cover"
-            sizes="(min-width: 1024px) 512px, (min-width: 768px) 448px, 384px"
+            sizes="(min-width: 768px) 768px, 100vw"
           />
         </div>
       </div>
