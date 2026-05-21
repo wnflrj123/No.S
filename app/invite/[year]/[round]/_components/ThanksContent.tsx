@@ -49,11 +49,11 @@ export default function ThanksContent(p: ThanksContentProps) {
     return (
       <main className="min-h-dvh bg-gradient-to-b from-[#0066B3] via-[#1b7fc4] to-[#3a8fd6] text-white px-5 py-20 flex flex-col items-center justify-center">
         <div className="text-7xl mb-5 animate-pulse">🌟</div>
-        <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-center">정말 고맙습니다!</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-center">정말, 정말, 정말 고맙습니다 🌟</h1>
         <p className="text-white/90 text-center max-w-md leading-relaxed">
-          {p.registrant.name}님의 응원과 후원이 무대를 더욱 빛나게 합니다.
+          {p.registrant.name}님의 응원 한 톨 한 톨이 저희에게 큰 힘이 됩니다.
           <br />
-          공연 당일 따뜻한 박수로 맞이하겠습니다.
+          공연날, 가장 빛나는 무대로 인사드릴게요!
         </p>
         <Link
           href={`/invite/${p.year}/${p.round}`}
@@ -69,9 +69,11 @@ export default function ThanksContent(p: ThanksContentProps) {
     <main className="mx-auto max-w-xl px-5 py-10 pb-20">
       <div className="text-center">
         <div className="text-5xl">💌</div>
-        <h1 className="text-2xl font-bold mt-3 text-gray-900">신청이 완료되었습니다</h1>
+        <h1 className="text-2xl font-bold mt-3 text-gray-900">신청, 잘 받았어요! 🎉</h1>
         <p className="text-gray-600 mt-2">
-          <strong>{p.registrant.name}</strong>님, 신청해주셔서 감사합니다.
+          <strong>{p.registrant.name}</strong>님, 신청해주셔서 정말 감사합니다.
+          <br />
+          두근두근 기다리고 있을게요!
         </p>
       </div>
 
@@ -95,7 +97,9 @@ export default function ThanksContent(p: ThanksContentProps) {
       <section className="mt-8">
         <h2 className="text-lg font-bold text-gray-900">후원 안내</h2>
         <p className="text-sm text-gray-600 mt-1">
-          작은 후원도 큰 힘이 됩니다. 자율적으로 참여해주세요.
+          응원하는 마음을 담아 아래 계좌로 살포시 보내주실 수도 있답니다.
+          <br />
+          부담은 NO, 마음만 받습니다 💛
         </p>
         <div className="mt-3">
           <SponsorAccountCard account={p.sponsorAccount} />
@@ -106,7 +110,7 @@ export default function ThanksContent(p: ThanksContentProps) {
           disabled={loading}
           className="mt-4 w-full py-4 bg-[#0066B3] text-white rounded-xl font-semibold text-base disabled:bg-gray-300"
         >
-          {loading ? '처리 중…' : '후원했어요 💛'}
+          {loading ? '처리 중…' : '방금 후원하고 왔어요 💛'}
         </button>
         {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
       </section>
