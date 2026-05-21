@@ -85,21 +85,29 @@ export default function SupporterWall(p: Props) {
       where('inviteId', '==', p.inviteId),
       where('isSponsor', '==', true),
     );
-    const unsub = onSnapshot(q, snap => {
-      const list: SupporterEntry[] = [];
-      for (const d of snap.docs) {
-        const data = d.data() as Omit<InviteRegistration, 'id'>;
-        const status = data.status ?? 'active';
-        if (status !== 'active') continue;
-        list.push({
-          id: `r:${d.id}`,
-          name: data.name,
-          source: 'registration',
-          createdAtMs: data.sponsorCheckedAt?.toMillis?.() ?? data.createdAt.toMillis(),
-        });
-      }
-      setRegistrationSponsors(list);
-    });
+    const unsub = onSnapshot(
+      q,
+      snap => {
+        const list: SupporterEntry[] = [];
+        for (const d of snap.docs) {
+          const data = d.data() as Omit<InviteRegistration, 'id'>;
+          const status = data.status ?? 'active';
+          if (status !== 'active') continue;
+          list.push({
+            id: `r:${d.id}`,
+            name: data.name,
+            source: 'registration',
+            createdAtMs: data.sponsorCheckedAt?.toMillis?.() ?? data.createdAt.toMillis(),
+          });
+        }
+        setRegistrationSponsors(list);
+      },
+      err => {
+        // 일반 회원이 wall에 접근하면 inviteRegistrations read는 admin only라 차단됨.
+        // wall은 누구나 볼 수 있어야 하므로, 이 에러는 expected이고 console에만 기록.
+        console.warn('[wall] registration sponsors subscribe failed (expected for non-admin):', err.code);
+      },
+    );
     return () => unsub();
   }, [p.inviteId]);
 
@@ -109,18 +117,28 @@ export default function SupporterWall(p: Props) {
       collection(db, SUPPORTERS_COLLECTION),
       where('inviteId', '==', p.inviteId),
     );
-    const unsub = onSnapshot(q, snap => {
-      const list: SupporterEntry[] = snap.docs.map(d => {
-        const data = d.data() as Omit<InviteSupporter, 'id'>;
-        return {
-          id: `s:${d.id}`,
-          name: data.name,
-          source: 'wall' as const,
-          createdAtMs: data.createdAt?.toMillis?.() ?? 0,
-        };
-      });
-      setWallSupporters(list);
-    });
+    const unsub = onSnapshot(
+      q,
+      snap => {
+        const list: SupporterEntry[] = snap.docs.map(d => {
+          const data = d.data() as Omit<InviteSupporter, 'id'>;
+          return {
+            id: `s:${d.id}`,
+            name: data.name,
+            source: 'wall' as const,
+            createdAtMs: data.createdAt?.toMillis?.() ?? 0,
+          };
+        });
+        setWallSupporters(list);
+      },
+      err => {
+        console.error(
+          '[wall] supporters subscribe failed. Firestore Rules 미배포일 수 있습니다:',
+          err.code,
+          err.message,
+        );
+      },
+    );
     return () => unsub();
   }, [p.inviteId]);
 
