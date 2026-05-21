@@ -22,3 +22,4 @@ export const MAX_ROUND_SELECTIONS = 10;
 // Firestore 컬렉션 이름
 export const INVITES_COLLECTION = 'invites';
 export const REGISTRATIONS_COLLECTION = 'inviteRegistrations';
+export const SUPPORTERS_COLLECTION = 'inviteSupporters';

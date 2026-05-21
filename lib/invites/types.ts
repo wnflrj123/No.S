@@ -78,6 +78,18 @@ export interface InviteStats {
  */
 export type OptionalFieldKey = 'companions' | 'supportingActors' | 'seatRequests' | 'cheerMessage';
 
+/**
+ * 후원자 wall에 표시되는 외부 응원자.
+ * 신청은 안 했지만 응원 꽃다발을 보낸 사람들 (이름만 수집).
+ * 신청자 중 isSponsor=true 인 사람과 합쳐서 wall에 표시.
+ */
+export interface InviteSupporter {
+  id: string;
+  inviteId: string;
+  name: string;
+  createdAt: Timestamp;
+}
+
 export const OPTIONAL_FIELD_LABELS: Record<OptionalFieldKey, string> = {
   companions: '동반인 이름',
   supportingActors: '응원하는 배우',

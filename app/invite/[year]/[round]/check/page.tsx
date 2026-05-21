@@ -16,14 +16,20 @@ export default async function CheckPage({ params }: PageParams) {
 
   return (
     <main className="mx-auto max-w-2xl px-4 sm:px-6 py-6 pb-16">
-      <header className="flex items-center justify-between mb-6">
-        <div>
+      <header className="flex items-start justify-between gap-3 mb-6">
+        <div className="min-w-0">
+          {invite.overline?.trim() && (
+            <div className="text-xs font-semibold text-[#0066B3] mb-1">{invite.overline}</div>
+          )}
           <div className="text-xs text-gray-500">{invite.year}년 {invite.round}회</div>
-          <h1 className="text-xl font-bold text-gray-900">{invite.title} 신청 확인</h1>
+          <h1 className="text-xl font-bold text-gray-900 mt-0.5">{invite.title} 신청 확인</h1>
+          {invite.subtitle && (
+            <p className="text-sm text-gray-600 mt-0.5">{invite.subtitle}</p>
+          )}
         </div>
         <Link
           href={`/invite/${year}/${round}`}
-          className="text-sm text-gray-500 hover:text-gray-700"
+          className="text-sm text-gray-500 hover:text-gray-700 shrink-0 mt-1"
         >
           ← 공연 정보
         </Link>

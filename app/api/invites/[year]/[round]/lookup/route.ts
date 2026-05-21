@@ -40,7 +40,8 @@ export async function POST(req: Request, { params }: RouteParams) {
     return NextResponse.json({ found: false });
   }
 
-  // 토큰은 민감 정보이므로 노출하지 않고, 표시용 요약만 전달
+  // 토큰은 민감 정보이므로 노출하지 않고, 표시용 요약만 전달.
+  // 회차별 시간을 함께 보내 신청 내역 카드에서 일시도 표시할 수 있도록.
   return NextResponse.json({
     found: true,
     registration: {
@@ -51,5 +52,10 @@ export async function POST(req: Request, { params }: RouteParams) {
       isSponsor: reg.isSponsor,
       createdAt: reg.createdAt.toMillis(),
     },
+    rounds: invite.rounds.map(r => ({
+      roundNo: r.roundNo,
+      teamName: r.teamName,
+      startAtMs: r.startAt.toDate().getTime(),
+    })),
   });
 }

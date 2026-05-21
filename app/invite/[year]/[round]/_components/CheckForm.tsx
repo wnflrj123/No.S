@@ -17,6 +17,7 @@ interface LookupResult {
     isSponsor: boolean;
     createdAt: number;
   };
+  rounds?: { roundNo: number; teamName: string; startAtMs: number }[];
   message?: string;
 }
 
@@ -126,11 +127,23 @@ export default function CheckForm({ year, round }: { year: number; round: number
             </div>
             <div className="flex justify-between items-start gap-3">
               <span className="text-gray-500 shrink-0">신청 회차</span>
-              <span className="text-gray-900 text-right">
-                {result.registration.roundSelections
-                  .map(s => `${s.roundNo}회 (${s.headcount}명)`)
-                  .join(', ')}
-              </span>
+              <div className="text-gray-900 text-right space-y-1">
+                {result.registration.roundSelections.map(s => {
+                  const r = result.rounds?.find(x => x.roundNo === s.roundNo);
+                  return (
+                    <div key={s.roundNo}>
+                      <div className="font-medium">
+                        {s.roundNo}회차{r?.teamName ? ` · ${r.teamName}` : ''} — {s.headcount}명
+                      </div>
+                      {r && (
+                        <div className="text-xs text-gray-500">
+                          {formatInTimeZone(new Date(r.startAtMs), KST, 'M월 d일(EEE) HH:mm', { locale: ko })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">총 인원</span>

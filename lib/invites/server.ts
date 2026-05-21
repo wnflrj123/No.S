@@ -19,6 +19,7 @@ import {
   MIN_HEADCOUNT,
   PHONE_REGEX,
   REGISTRATIONS_COLLECTION,
+  SUPPORTERS_COLLECTION,
 } from './constants';
 
 export function inviteIdFrom(year: number | string, round: number | string): string {
@@ -278,6 +279,22 @@ export async function lookupActiveRegistration(
   phone: string,
 ): Promise<InviteRegistration | null> {
   return findActiveDuplicate(inviteId, name, phone);
+}
+
+/**
+ * 후원자 wall용 외부 supporter를 추가한다. (이름만 기록)
+ */
+export async function addSupporter(inviteId: string, name: string): Promise<{ id: string }> {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error('NAME_REQUIRED');
+  if (trimmed.length > MAX_NAME_LENGTH) throw new Error('NAME_TOO_LONG');
+
+  const ref = await adminDb.collection(SUPPORTERS_COLLECTION).add({
+    inviteId,
+    name: trimmed,
+    createdAt: Timestamp.now(),
+  });
+  return { id: ref.id };
 }
 
 export async function findRegistrationByToken(token: string): Promise<InviteRegistration | null> {

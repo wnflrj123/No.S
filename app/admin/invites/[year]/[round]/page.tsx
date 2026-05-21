@@ -86,14 +86,23 @@ export default function InviteAdminDetailPage() {
     <>
       <Header />
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-        <header className="mb-6 flex items-center justify-between">
+        <header className="mb-6 flex items-center justify-between gap-3 flex-wrap">
           <div>
             <div className="text-xs text-gray-500">{params.year}년 {params.round}회</div>
             <h1 className="text-2xl font-bold text-gray-900">{invite?.title ?? '신청자 관리'}</h1>
           </div>
-          <Link href="/admin/invites" className="text-sm text-gray-500 hover:text-gray-700">
-            ← 목록으로
-          </Link>
+          <div className="flex items-center gap-3 text-sm">
+            <Link
+              href={`/invite/${params.year}/${params.round}/wall`}
+              target="_blank"
+              className="px-3 py-1.5 bg-[#0066B3] text-white rounded-lg font-medium hover:bg-[#0055a0]"
+            >
+              💐 후원자 Wall 열기
+            </Link>
+            <Link href="/admin/invites" className="text-gray-500 hover:text-gray-700">
+              ← 목록으로
+            </Link>
+          </div>
         </header>
 
         {error && (
