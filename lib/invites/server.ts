@@ -244,6 +244,36 @@ export async function createRegistration(
 }
 
 /**
+ * Admin이 신청의 후원 여부를 토글한다. 운영자가 실제 입금 내역과 맞춰 수동 보정.
+ * active 신청만 stats(totalSponsors)에 반영, superseded는 데이터만 변경.
+ * 동시성 안전: runTransaction.
+ */
+export async function adminSetSponsor(regId: string, isSponsor: boolean): Promise<boolean> {
+  return adminDb.runTransaction(async tx => {
+    const ref = adminDb.collection(REGISTRATIONS_COLLECTION).doc(regId);
+    const snap = await tx.get(ref);
+    if (!snap.exists) return false;
+    const data = snap.data() as Omit<InviteRegistration, 'id'>;
+    if ((data.isSponsor === true) === isSponsor) return true; // 멱등
+
+    const status = data.status ?? 'active';
+    const now = Timestamp.now();
+    const update: Record<string, unknown> = { isSponsor };
+    if (isSponsor) update.sponsorCheckedAt = now;
+    else update.sponsorCheckedAt = FieldValue.delete();
+    tx.update(ref, update);
+
+    if (status === 'active') {
+      tx.update(adminDb.collection(INVITES_COLLECTION).doc(data.inviteId), {
+        'stats.totalSponsors': FieldValue.increment(isSponsor ? 1 : -1),
+        updatedAt: now,
+      });
+    }
+    return true;
+  });
+}
+
+/**
  * Admin이 신청 하나를 hard delete. stats도 active였던 경우에만 차감.
  * 반환: 삭제 성공 여부.
  */

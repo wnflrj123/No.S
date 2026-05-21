@@ -11,13 +11,55 @@ interface Props {
   year: number;
   round: number;
   onDeleted?: (regId: string) => void;
+  onSponsorChanged?: (regId: string, isSponsor: boolean) => void;
 }
 
-export default function RegistrationsTable({ registrations, year, round, onDeleted }: Props) {
+export default function RegistrationsTable({
+  registrations,
+  year,
+  round,
+  onDeleted,
+  onSponsorChanged,
+}: Props) {
   const [search, setSearch] = useState('');
   const [pendingDelete, setPendingDelete] = useState<InviteRegistration | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const handleToggleSponsor = async (reg: InviteRegistration) => {
+    const next = !reg.isSponsor;
+    setError(null);
+    setTogglingId(reg.id);
+    // 낙관적 업데이트 — 부모 콜백으로 즉시 반영
+    onSponsorChanged?.(reg.id, next);
+    try {
+      const idToken = await getAuth().currentUser?.getIdToken();
+      if (!idToken) {
+        setError('로그인 정보를 다시 확인해주세요.');
+        onSponsorChanged?.(reg.id, !next); // 롤백
+        return;
+      }
+      const res = await fetch(
+        `/api/invites/${year}/${round}/registrations/${reg.id}`,
+        {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isSponsor: next }),
+        },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data?.message ?? '변경에 실패했습니다.');
+        onSponsorChanged?.(reg.id, !next); // 롤백
+      }
+    } catch {
+      setError('네트워크 오류가 발생했습니다.');
+      onSponsorChanged?.(reg.id, !next); // 롤백
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -112,7 +154,21 @@ export default function RegistrationsTable({ registrations, year, round, onDelet
                     {r.roundSelections.map(s => `${s.roundNo}회(${s.headcount})`).join(', ')}
                   </td>
                   <td className={superseded ? 'px-3 py-2' : 'px-3 py-2 text-gray-700'}>{totalHc}명</td>
-                  <td className="px-3 py-2">{r.isSponsor ? '💛' : ''}</td>
+                  <td className="px-3 py-2">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSponsor(r)}
+                      disabled={togglingId === r.id}
+                      title={r.isSponsor ? '후원 해제' : '후원 표시'}
+                      className={`text-xs px-2 py-1 rounded-full font-medium transition-colors disabled:opacity-50 ${
+                        r.isSponsor
+                          ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                      }`}
+                    >
+                      {r.isSponsor ? '💛 후원' : '미후원'}
+                    </button>
+                  </td>
                   <td className="px-3 py-2 text-xs">
                     {format(createdAt, 'M/d HH:mm')}
                   </td>

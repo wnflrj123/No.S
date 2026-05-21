@@ -145,6 +145,9 @@ export default function InviteAdminDetailPage() {
                   year={Number(params.year)}
                   round={Number(params.round)}
                   onDeleted={regId => setRegs(prev => prev.filter(r => r.id !== regId))}
+                  onSponsorChanged={(regId, isSponsor) =>
+                    setRegs(prev => prev.map(r => (r.id === regId ? { ...r, isSponsor } : r)))
+                  }
                 />
               )}
               {tab === 'answers' && <AnswersDigest registrations={regs} />}
