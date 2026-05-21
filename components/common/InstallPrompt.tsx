@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { FiX, FiDownload, FiShare } from 'react-icons/fi';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -12,11 +13,17 @@ const DISMISS_KEY = 'nos-install-dismissed';
 const DISMISS_DAYS = 7;
 
 export default function InstallPrompt() {
+  const pathname = usePathname();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIOSGuide, setShowIOSGuide] = useState(false);
   const [visible, setVisible] = useState(false);
 
+  // 외부 관객용 invite 경로에서는 PWA 설치 안내를 띄우지 않는다
+  const isInviteRoute = pathname?.startsWith('/invite/') ?? false;
+
   useEffect(() => {
+    if (isInviteRoute) return;
+
     // 이미 설치된 경우 표시하지 않음
     if (window.matchMedia('(display-mode: standalone)').matches) return;
 
@@ -43,12 +50,13 @@ export default function InstallPrompt() {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown as { MSStream?: unknown }).MSStream;
     const isSafari = /Safari/.test(navigator.userAgent) && !/CriOS|FxiOS|Chrome/.test(navigator.userAgent);
     if (isIOS && isSafari) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- iOS Safari 감지는 client mount 이후에만 가능
       setShowIOSGuide(true);
       setTimeout(() => setVisible(true), 3000);
     }
 
     return () => window.removeEventListener('beforeinstallprompt', handlePrompt);
-  }, []);
+  }, [isInviteRoute]);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
@@ -65,6 +73,7 @@ export default function InstallPrompt() {
     localStorage.setItem(DISMISS_KEY, Date.now().toString());
   };
 
+  if (isInviteRoute) return null;
   if (!visible) return null;
 
   return (
