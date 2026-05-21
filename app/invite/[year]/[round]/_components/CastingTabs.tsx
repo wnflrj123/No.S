@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 export interface ResolvedCasting {
   roleName: string;
@@ -13,6 +15,7 @@ export interface ResolvedCasting {
 export interface RoundCasting {
   roundNo: number;
   teamName: string;
+  startAtMs: number; // 회차 시작 시각 (밀리초)
   castings: ResolvedCasting[];
 }
 
@@ -53,11 +56,15 @@ export default function CastingTabs({ data, inviteId }: Props) {
         </nav>
       )}
 
-      {data.length === 1 && (
-        <div className="text-sm font-bold text-[#0066B3] mb-3">
+      {/* 활성 회차 정보 — 일시 노출 */}
+      <div className="mb-4 flex items-baseline gap-2 flex-wrap">
+        <span className="text-sm font-bold text-[#0066B3]">
           {active.roundNo}회차 · {active.teamName}
-        </div>
-      )}
+        </span>
+        <span className="text-xs text-gray-600">
+          {format(new Date(active.startAtMs), 'M월 d일(EEE) HH:mm', { locale: ko })}
+        </span>
+      </div>
 
       <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {active.castings.map((c, i) => (
@@ -83,7 +90,7 @@ export default function CastingTabs({ data, inviteId }: Props) {
             <div className="p-3">
               <div className="text-sm font-semibold text-gray-900">{c.roleName}</div>
               {c.actorName && (
-                <div className="text-xs text-[#0066B3] font-medium mt-0.5">{c.actorName} 분</div>
+                <div className="text-xs text-[#0066B3] font-medium mt-0.5">{c.actorName}</div>
               )}
               {c.description && (
                 <p className="text-xs text-gray-600 mt-1 line-clamp-3 whitespace-pre-line">

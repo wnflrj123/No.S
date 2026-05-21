@@ -37,6 +37,7 @@ export default function CastingSection({ rounds, roles, inviteId }: Props) {
     .map(r => ({
       roundNo: r.roundNo,
       teamName: r.teamName,
+      startAtMs: r.startAt.toDate().getTime(),
       castings: resolveCasting(r, roles),
     }));
 
