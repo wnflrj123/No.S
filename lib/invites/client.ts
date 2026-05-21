@@ -33,6 +33,7 @@ export interface InviteWriteInput {
   description: string;
   posterImageUrl: string;
   venue: Invite['venue'];
+  roles: Invite['roles'];
   rounds: Array<Omit<InviteRound, 'startAt'> & { startAtMs: number }>;
   sponsorAccount: Invite['sponsorAccount'];
   thanksMessage?: string;
@@ -71,6 +72,12 @@ export async function upsertInvite(
 
   const rounds: InviteRound[] = input.rounds.map(({ startAtMs, ...rest }) => ({
     ...rest,
+    // 새 형식으로 저장: 레거시 role/description 필드는 제거
+    casting: rest.casting.map(c => ({
+      roleId: c.roleId,
+      actorName: c.actorName,
+      ...(c.photoFile ? { photoFile: c.photoFile } : {}),
+    })),
     startAt: Timestamp.fromMillis(startAtMs),
   }));
 
@@ -89,6 +96,7 @@ export async function upsertInvite(
       description: input.description,
       posterImageUrl: input.posterImageUrl,
       venue: input.venue,
+      roles: input.roles,
       rounds,
       sponsorAccount: input.sponsorAccount,
       thanksMessage: input.thanksMessage || '',
@@ -108,6 +116,7 @@ export async function upsertInvite(
       description: input.description,
       posterImageUrl: input.posterImageUrl,
       venue: input.venue,
+      roles: input.roles,
       rounds,
       sponsorAccount: input.sponsorAccount,
       thanksMessage: input.thanksMessage || '',

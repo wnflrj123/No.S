@@ -2,7 +2,7 @@
 
 import { FiPlus, FiTrash2 } from 'react-icons/fi';
 import CastingEditor from './CastingEditor';
-import type { CastingEntry } from '@/lib/invites/types';
+import type { CastingEntry, InviteRole } from '@/lib/invites/types';
 
 export interface RoundFormValue {
   roundNo: number;
@@ -14,10 +14,11 @@ export interface RoundFormValue {
 interface Props {
   value: RoundFormValue[];
   onChange: (next: RoundFormValue[]) => void;
+  roles: InviteRole[];
   inviteId: string;
 }
 
-export default function RoundEditor({ value, onChange, inviteId }: Props) {
+export default function RoundEditor({ value, onChange, roles, inviteId }: Props) {
   const update = (index: number, patch: Partial<RoundFormValue>) => {
     onChange(value.map((r, i) => (i === index ? { ...r, ...patch } : r)));
   };
@@ -90,10 +91,11 @@ export default function RoundEditor({ value, onChange, inviteId }: Props) {
           </div>
 
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-1">캐스팅</p>
+            <p className="text-sm font-medium text-gray-700 mb-1">캐스팅 (배역별 배우·사진)</p>
             <CastingEditor
               value={r.casting}
               onChange={next => update(i, { casting: next })}
+              roles={roles}
               inviteId={inviteId}
             />
           </div>

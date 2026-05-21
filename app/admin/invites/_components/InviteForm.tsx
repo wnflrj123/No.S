@@ -4,9 +4,10 @@ import { useMemo, useState } from 'react';
 import RichTextEditor from '@/components/notices/RichTextEditor';
 import VenueEditor from './VenueEditor';
 import RoundEditor, { type RoundFormValue } from './RoundEditor';
+import RolesEditor from './RolesEditor';
 import SponsorAccountEditor from './SponsorAccountEditor';
 import { upsertInvite, type InviteWriteInput } from '@/lib/invites/client';
-import type { Invite } from '@/lib/invites/types';
+import type { CastingEntry, Invite, InviteRole } from '@/lib/invites/types';
 
 interface Props {
   initial: Invite | null; // null이면 신규 생성
@@ -23,6 +24,7 @@ const DEFAULT_INVITE: Omit<InviteWriteInput, 'rounds'> & { rounds: RoundFormValu
   description: '',
   posterImageUrl: '',
   venue: { name: '', address: '', directions: '', mapLinks: {} },
+  roles: [],
   rounds: [],
   sponsorAccount: { bankName: '', accountNumber: '', accountHolder: '' },
   thanksMessage: '',
@@ -52,8 +54,14 @@ export default function InviteForm({ initial, createdBy, onSaved }: Props) {
     if (!form.venue.name.trim() || !form.venue.address.trim()) return setError('장소 정보(공연장명·주소)를 입력해주세요.');
     if (form.rounds.length === 0) return setError('회차를 1개 이상 추가해주세요.');
     if (form.rounds.some(r => !r.teamName.trim() || !r.startAtMs)) return setError('모든 회차에 팀명과 시작 시각을 입력해주세요.');
-    if (form.rounds.some(r => r.casting.some(c => !c.role.trim()))) {
-      return setError('캐스팅의 배역을 모두 입력해주세요. (불필요한 행은 삭제)');
+    if (form.rounds.some(r => r.casting.some(c => !c.roleId))) {
+      return setError('캐스팅의 배역을 모두 선택해주세요. (불필요한 행은 삭제)');
+    }
+    if (form.rounds.some(r => r.casting.some(c => !c.actorName.trim()))) {
+      return setError('캐스팅의 배우 이름을 모두 입력해주세요. (불필요한 행은 삭제)');
+    }
+    if (form.roles.some(r => !r.name.trim())) {
+      return setError('배역 이름을 모두 입력해주세요. (불필요한 행은 삭제)');
     }
     const roundNos = form.rounds.map(r => r.roundNo);
     if (new Set(roundNos).size !== roundNos.length) return setError('회차 번호가 중복됩니다.');
@@ -190,10 +198,15 @@ export default function InviteForm({ initial, createdBy, onSaved }: Props) {
         <VenueEditor value={form.venue} onChange={v => update('venue', v)} />
       </Section>
 
+      <Section title="배역 (공연 전체 공통)">
+        <RolesEditor value={form.roles} onChange={v => update('roles', v)} />
+      </Section>
+
       <Section title="회차">
         <RoundEditor
           value={form.rounds}
           onChange={v => update('rounds', v)}
+          roles={form.roles}
           inviteId={inviteIdPreview}
         />
       </Section>
@@ -261,6 +274,9 @@ function FieldRow({
 
 function toForm(invite: Invite | null): typeof DEFAULT_INVITE {
   if (!invite) return DEFAULT_INVITE;
+
+  const { roles, rounds } = migrateRolesAndCasting(invite);
+
   return {
     year: invite.year,
     round: invite.round,
@@ -270,14 +286,79 @@ function toForm(invite: Invite | null): typeof DEFAULT_INVITE {
     description: invite.description,
     posterImageUrl: invite.posterImageUrl,
     venue: invite.venue,
-    rounds: invite.rounds.map(r => ({
-      roundNo: r.roundNo,
-      startAtMs: r.startAt.toDate().getTime(),
-      teamName: r.teamName,
-      casting: r.casting,
-    })),
+    roles,
+    rounds,
     sponsorAccount: invite.sponsorAccount,
     thanksMessage: invite.thanksMessage ?? '',
     isPublished: invite.isPublished,
   };
+}
+
+/**
+ * 폼 로드 시 레거시 데이터(invite.roles 없음 + casting에 role/description 직접 입력)를
+ * 새 형식(roles 마스터 + casting.roleId 참조)으로 자동 변환한다.
+ *
+ * 변환 규칙:
+ * - 모든 회차의 casting에서 unique한 role 이름을 추출해 InviteRole 생성
+ * - casting의 role 필드를 roleId로 매핑
+ * - actorName은 빈 문자열로 (사용자가 다시 입력해야 함)
+ */
+function migrateRolesAndCasting(invite: Invite): {
+  roles: InviteRole[];
+  rounds: RoundFormValue[];
+} {
+  const hasLegacy =
+    (!invite.roles || invite.roles.length === 0) &&
+    invite.rounds.some(r => r.casting.some(c => c.role && !c.roleId));
+
+  if (!hasLegacy) {
+    return {
+      roles: invite.roles ?? [],
+      rounds: invite.rounds.map(r => ({
+        roundNo: r.roundNo,
+        startAtMs: r.startAt.toDate().getTime(),
+        teamName: r.teamName,
+        casting: r.casting.map(c => ({
+          roleId: c.roleId ?? '',
+          actorName: c.actorName ?? '',
+          photoFile: c.photoFile,
+        })),
+      })),
+    };
+  }
+
+  // 레거시 데이터 마이그레이션
+  const roleInfoByName = new Map<string, { description: string; order: number }>();
+  let order = 0;
+  for (const round of invite.rounds) {
+    for (const c of round.casting) {
+      const name = c.role?.trim();
+      if (!name) continue;
+      if (!roleInfoByName.has(name)) {
+        roleInfoByName.set(name, { description: c.description ?? '', order: order++ });
+      }
+    }
+  }
+
+  const roles: InviteRole[] = Array.from(roleInfoByName.entries()).map(([name, info]) => ({
+    id: crypto.randomUUID(),
+    name,
+    description: info.description,
+    order: info.order,
+  }));
+
+  const nameToId = new Map(roles.map(r => [r.name, r.id]));
+
+  const rounds: RoundFormValue[] = invite.rounds.map(r => ({
+    roundNo: r.roundNo,
+    startAtMs: r.startAt.toDate().getTime(),
+    teamName: r.teamName,
+    casting: r.casting.map((c): CastingEntry => ({
+      roleId: c.role ? nameToId.get(c.role) ?? '' : c.roleId ?? '',
+      actorName: c.actorName ?? '', // 레거시 데이터에는 배우 이름이 없음 → 사용자가 다시 입력
+      photoFile: c.photoFile,
+    })),
+  }));
+
+  return { roles, rounds };
 }

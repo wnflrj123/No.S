@@ -30,10 +30,33 @@ export interface Venue {
   mapEmbedUrl?: string; // 지도 임베드 iframe src URL (구글/네이버/카카오 지도 "공유 → 퍼가기"에서 복사)
 }
 
-export interface CastingEntry {
-  role: string; // 배역 이름
+/**
+ * 배역 마스터. 공연 전체에 공통이며 회차에 관계없이 동일.
+ * (예: "장발장", "팡틴" 같은 배역 + 설명)
+ */
+export interface InviteRole {
+  id: string; // 안정적 식별자 (crypto.randomUUID)
+  name: string; // 배역명
   description: string; // 배역 설명
+  order?: number; // 표시 순서 (선택)
+}
+
+/**
+ * 회차별 캐스팅. 배역(roleId)을 참조하고, 그 배역에 누가 캐스팅됐는지 + 사진을 보관.
+ *
+ * 레거시 호환: 과거에는 { role, description, photoFile }로 회차마다 직접 입력했다.
+ * 폼 로드 시 자동으로 InviteRole + 신규 CastingEntry로 변환된다.
+ */
+export interface CastingEntry {
+  roleId: string; // InviteRole.id 참조
+  actorName: string; // 회차별 배우 이름
   photoFile?: string; // 정적 파일명 (예: "kim.jpg"). 경로: /invites/{year}-{round}/cast/{photoFile}
+
+  // ─── 레거시 필드 (마이그레이션용, 새로 저장하지 않음) ───
+  /** @deprecated InviteRole로 이전됨. 폼 로드 시 자동 변환. */
+  role?: string;
+  /** @deprecated InviteRole로 이전됨. 폼 로드 시 자동 변환. */
+  description?: string;
 }
 
 export interface InviteRound {
@@ -61,6 +84,7 @@ export interface Invite {
   description: string; // HTML (TipTap)
   posterImageUrl: string; // 정적 경로 또는 외부 URL
   venue: Venue;
+  roles: InviteRole[]; // 배역 마스터 (공연 전체 공통). 레거시 데이터는 폼 저장 시 자동 채워짐
   rounds: InviteRound[];
   sponsorAccount: SponsorAccount;
   thanksMessage?: string;
