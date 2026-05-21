@@ -43,8 +43,16 @@ export default function BulkSmsPanel({ invite, registrations }: Props) {
   const previewText = useMemo(() => {
     const sample = targetRegs[0];
     if (!sample) return messageTemplate;
-    return renderTemplate(messageTemplate, buildVars(sample, invite));
-  }, [messageTemplate, targetRegs, invite]);
+    // 서버와 동일 규칙: 특정 회차 발송이면 그 회차만 본문에 노출되도록 reg를 필터링
+    const scopedSample =
+      targetType === 'round'
+        ? {
+            ...sample,
+            roundSelections: sample.roundSelections.filter(s => s.roundNo === roundNo),
+          }
+        : sample;
+    return renderTemplate(messageTemplate, buildVars(scopedSample, invite));
+  }, [messageTemplate, targetRegs, invite, targetType, roundNo]);
 
   const estimatedCost = targetRegs.length * COST_PER_LMS;
 

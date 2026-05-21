@@ -71,10 +71,24 @@ export async function POST(req: Request, { params }: RouteParams) {
   }
 
   // 4. 순차 발송. 부분 실패를 개별 추적해 클라이언트에 보고한다.
+  //
+  // 특정 회차로 좁힌 발송이면, 같은 신청자가 여러 회차를 골랐어도 본문의
+  // {회차별 일시}·{총인원}·{신청회차}는 선택된 회차만 반영되도록 reg를 필터링한다.
+  // (전체/후원자 발송에서는 신청자의 모든 회차를 그대로 표시)
+  const filterByRound =
+    body.targetType === 'round' && typeof body.roundNo === 'number' ? body.roundNo : null;
+
   type Result = { regId: string; name: string; phone: string; ok: boolean; error?: string };
   const results: Result[] = [];
   for (const reg of regs) {
-    const text = renderTemplate(body.messageTemplate, buildVars(reg, invite));
+    const scopedReg =
+      filterByRound != null
+        ? {
+            ...reg,
+            roundSelections: reg.roundSelections.filter(s => s.roundNo === filterByRound),
+          }
+        : reg;
+    const text = renderTemplate(body.messageTemplate, buildVars(scopedReg, invite));
     const result = await sendLms({ to: reg.phone, text, subject: body.subject });
     results.push({ regId: reg.id, name: reg.name, phone: reg.phone, ...result });
   }
