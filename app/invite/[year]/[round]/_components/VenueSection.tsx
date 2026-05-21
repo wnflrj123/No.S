@@ -36,7 +36,7 @@ export default function VenueSection({ venue }: { venue: Venue }) {
         </p>
       )}
       {showEmbed && (
-        <div className="mt-4 mx-auto max-w-xl rounded-xl overflow-hidden border border-gray-200 aspect-[16/9] bg-gray-100">
+        <div className="mt-4 max-w-xl rounded-xl overflow-hidden border border-gray-200 aspect-[16/9] bg-gray-100">
           <iframe
             src={venue.mapEmbedUrl}
             title={`${venue.name} 지도`}
@@ -48,7 +48,7 @@ export default function VenueSection({ venue }: { venue: Venue }) {
         </div>
       )}
       {hasMap && (
-        <div className="flex flex-wrap justify-center gap-2 mt-4">
+        <div className="flex flex-wrap gap-2 mt-4">
           {mapLinks.naver && <MapButton href={mapLinks.naver} label="네이버지도" color="#03C75A" />}
           {mapLinks.kakao && (
             <MapButton href={mapLinks.kakao} label="카카오맵" color="#FEE500" textColor="#191919" />
