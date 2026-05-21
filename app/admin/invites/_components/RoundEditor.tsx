@@ -20,7 +20,26 @@ interface Props {
 
 export default function RoundEditor({ value, onChange, roles, inviteId }: Props) {
   const update = (index: number, patch: Partial<RoundFormValue>) => {
-    onChange(value.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+    const next = value.map((r, i) => (i === index ? { ...r, ...patch } : r));
+
+    // 팀명이 변경되었고 현재 회차의 캐스팅이 비어있을 때만,
+    // 동일 팀명을 가진 다른 회차에서 캐스팅을 자동 복사한다.
+    // (이미 캐스팅 입력 중인 경우 덮어쓰지 않음)
+    if (patch.teamName !== undefined) {
+      const current = next[index];
+      const newTeam = current.teamName.trim();
+      if (newTeam && current.casting.length === 0) {
+        const sibling = next.find((r, i) => i !== index && r.teamName.trim() === newTeam);
+        if (sibling && sibling.casting.length > 0) {
+          next[index] = {
+            ...current,
+            casting: sibling.casting.map(c => ({ ...c })),
+          };
+        }
+      }
+    }
+
+    onChange(next);
   };
   const remove = (index: number) => onChange(value.filter((_, i) => i !== index));
   const add = () => {
@@ -38,6 +57,9 @@ export default function RoundEditor({ value, onChange, roles, inviteId }: Props)
 
   return (
     <div className="space-y-3">
+      <p className="text-xs text-gray-500">
+        💡 회차 추가 후 <strong>이전 회차와 같은 팀명</strong>을 입력하면 그 회차의 캐스팅이 자동으로 복사됩니다.
+      </p>
       {value.length === 0 && (
         <p className="text-sm text-gray-500 text-center py-4 bg-gray-50 rounded-lg">
           회차가 없습니다. 아래 버튼을 눌러 추가하세요.

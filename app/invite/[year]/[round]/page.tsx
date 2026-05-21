@@ -47,9 +47,9 @@ export default async function InvitePage({ params }: PageParams) {
       <Hero invite={invite} />
       <div className="md:max-w-3xl md:mx-auto">
         <DescriptionSection html={invite.description} />
+        <CastingSection rounds={invite.rounds} roles={invite.roles ?? []} inviteId={invite.id} />
         <RoundsSection rounds={invite.rounds} nowMs={nowMs} />
         <VenueSection venue={invite.venue} />
-        <CastingSection rounds={invite.rounds} roles={invite.roles ?? []} inviteId={invite.id} />
       </div>
       <ApplyCTA year={invite.year} round={invite.round} disabled={allClosed} />
     </main>
