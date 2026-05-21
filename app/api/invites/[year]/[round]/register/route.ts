@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import {
   createRegistration,
   getInvite,
@@ -44,16 +44,20 @@ export async function POST(req: Request, { params }: RouteParams) {
     const typed = payload as RegisterPayload;
     const { id, token } = await createRegistration(invite, typed);
 
-    // 신청 완료 자동 LMS 발송. fire-and-forget — SMS 실패해도 신청 성공으로 응답한다.
-    // SMS 발송에 필요한 최소 필드만 갖는 registration 객체를 합성한다.
+    // 신청 완료 자동 LMS 발송. after()로 응답 후 background에서 안전하게 처리.
+    // Vercel serverless 환경에서 응답 직후 컨테이너 동결로 fire-and-forget이 끊기는 문제를 회피.
     const regForSms = {
       id,
       name: typed.name.trim(),
       phone: typed.phone,
       roundSelections: typed.roundSelections,
     } as InviteRegistration;
-    sendConfirmationSms({ invite, registration: regForSms }).catch(err => {
-      console.error('[SMS] confirmation send failed', err);
+    after(async () => {
+      try {
+        await sendConfirmationSms({ invite, registration: regForSms });
+      } catch (err) {
+        console.error('[SMS] confirmation send failed', err);
+      }
     });
 
     return NextResponse.json({ token }, { status: 201 });

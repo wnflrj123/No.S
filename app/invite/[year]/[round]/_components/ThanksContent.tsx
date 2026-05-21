@@ -1,9 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import confetti from 'canvas-confetti';
 import SponsorAccountCard from './SponsorAccountCard';
 import type { SponsorAccount } from '@/lib/invites/types';
+
+const CONFETTI_COLORS = ['#0066B3', '#3a8fd6', '#ffd700', '#ff6b6b', '#ff85a2', '#a8e6cf', '#fff'];
+
+function fireConfetti() {
+  // 가운데에서 빵! + 좌우에서 추가 발사로 전 화면 덮기
+  const burst = (opts: confetti.Options) =>
+    confetti({ colors: CONFETTI_COLORS, ...opts });
+
+  burst({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+  setTimeout(() => burst({ particleCount: 80, angle: 60, spread: 70, origin: { x: 0, y: 0.7 } }), 200);
+  setTimeout(() => burst({ particleCount: 80, angle: 120, spread: 70, origin: { x: 1, y: 0.7 } }), 200);
+  setTimeout(() => burst({ particleCount: 60, spread: 100, startVelocity: 50, origin: { y: 0.4 } }), 500);
+  setTimeout(() => burst({ particleCount: 40, spread: 120, scalar: 1.4, origin: { y: 0.3 } }), 900);
+}
 
 export interface ThanksContentProps {
   year: number;
@@ -22,6 +37,14 @@ export default function ThanksContent(p: ThanksContentProps) {
   const [thanked, setThanked] = useState(p.isSponsor);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // thanked가 되는 순간 꽃가루 발사. 새로고침 후 이미 thanked였어도 한 번 발사.
+  useEffect(() => {
+    if (!thanked) return;
+    fireConfetti();
+    const t = setTimeout(() => fireConfetti(), 2500);
+    return () => clearTimeout(t);
+  }, [thanked]);
 
   const handleSponsor = async () => {
     setLoading(true);
@@ -47,20 +70,35 @@ export default function ThanksContent(p: ThanksContentProps) {
 
   if (thanked) {
     return (
-      <main className="min-h-dvh bg-gradient-to-b from-[#0066B3] via-[#1b7fc4] to-[#3a8fd6] text-white px-5 py-20 flex flex-col items-center justify-center">
-        <div className="text-7xl mb-5 animate-pulse">🌟</div>
-        <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-center">정말, 정말, 정말 고맙습니다 🌟</h1>
-        <p className="text-white/90 text-center max-w-md leading-relaxed">
-          {p.registrant.name}님의 응원 한 톨 한 톨이 저희에게 큰 힘이 됩니다.
-          <br />
-          공연날, 가장 빛나는 무대로 인사드릴게요!
-        </p>
-        <Link
-          href={`/invite/${p.year}/${p.round}`}
-          className="mt-12 text-sm underline text-white/80 hover:text-white"
-        >
-          공연 정보 다시 보기
-        </Link>
+      <main className="relative min-h-dvh overflow-hidden bg-gradient-to-b from-[#0066B3] via-[#1b7fc4] to-[#3a8fd6] text-white px-5 py-20 flex flex-col items-center justify-center">
+        {/* 떠다니는 배경 장식 이모지 */}
+        <FloatingEmoji emoji="✨" left="8%" delay={0} />
+        <FloatingEmoji emoji="🎉" left="22%" delay={1.4} />
+        <FloatingEmoji emoji="💛" left="78%" delay={0.7} />
+        <FloatingEmoji emoji="🌟" left="90%" delay={2.1} />
+        <FloatingEmoji emoji="💫" left="44%" delay={2.8} />
+        <FloatingEmoji emoji="🎭" left="62%" delay={1.0} />
+
+        {/* 핵심 메시지 */}
+        <div className="relative z-10 flex flex-col items-center text-center">
+          <div className="text-8xl mb-6 drop-shadow-2xl thanks-bounce">🌟</div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-5 drop-shadow-lg tracking-tight">
+            정말, 정말, 정말<br className="sm:hidden" /> 고맙습니다!
+          </h1>
+          <p className="text-base sm:text-lg text-white/95 max-w-md leading-relaxed drop-shadow">
+            <strong className="text-yellow-200">{p.registrant.name}</strong>님의 응원 한 톨 한 톨이<br />
+            저희에게 정말 큰 힘이 됩니다 💛
+          </p>
+          <p className="text-sm sm:text-base text-white/85 mt-4 max-w-md leading-relaxed">
+            공연날, 가장 빛나는 무대로 인사드릴게요!
+          </p>
+          <Link
+            href={`/invite/${p.year}/${p.round}`}
+            className="mt-12 text-sm underline text-white/80 hover:text-white"
+          >
+            공연 정보 다시 보기
+          </Link>
+        </div>
       </main>
     );
   }
@@ -122,5 +160,20 @@ export default function ThanksContent(p: ThanksContentProps) {
         공연 정보로 돌아가기
       </Link>
     </main>
+  );
+}
+
+/**
+ * 배경에서 위로 둥둥 떠다니는 이모지. left·delay만 지정해 다양한 위치/타이밍으로 배치.
+ */
+function FloatingEmoji({ emoji, left, delay }: { emoji: string; left: string; delay: number }) {
+  return (
+    <span
+      aria-hidden
+      className="absolute bottom-0 text-4xl sm:text-5xl opacity-70 thanks-float pointer-events-none"
+      style={{ left, animationDelay: `${delay}s` }}
+    >
+      {emoji}
+    </span>
   );
 }
