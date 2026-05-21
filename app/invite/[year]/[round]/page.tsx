@@ -45,10 +45,12 @@ export default async function InvitePage({ params }: PageParams) {
   return (
     <main className="bg-white text-gray-900 pb-28">
       <Hero invite={invite} />
-      <DescriptionSection html={invite.description} />
-      <RoundsSection rounds={invite.rounds} nowMs={nowMs} />
-      <VenueSection venue={invite.venue} />
-      <CastingSection rounds={invite.rounds} inviteId={invite.id} />
+      <div className="md:max-w-3xl md:mx-auto">
+        <DescriptionSection html={invite.description} />
+        <RoundsSection rounds={invite.rounds} nowMs={nowMs} />
+        <VenueSection venue={invite.venue} />
+        <CastingSection rounds={invite.rounds} inviteId={invite.id} />
+      </div>
       <ApplyCTA year={invite.year} round={invite.round} disabled={allClosed} />
     </main>
   );
