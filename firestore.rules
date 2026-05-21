@@ -73,5 +73,11 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow create, update, delete: if false;
     }
+
+    // SMS 일괄 발송 이력 (감사 추적). 서버(firebase-admin)만 쓰고, Admin은 읽기만.
+    match /smsLogs/{logId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
+    }
   }
 }

@@ -12,6 +12,7 @@ import StatsCards from '../../_components/StatsCards';
 import RegistrationsTable from '../../_components/RegistrationsTable';
 import AnswersDigest from '../../_components/AnswersDigest';
 import SponsorsTab from '../../_components/SponsorsTab';
+import BulkSmsPanel from '../../_components/BulkSmsPanel';
 
 type Tab = 'all' | 'answers' | 'sponsors';
 
@@ -103,6 +104,10 @@ export default function InviteAdminDetailPage() {
         ) : (
           <>
             <StatsCards invite={invite} registrations={regs} />
+
+            <div className="mt-6">
+              <BulkSmsPanel invite={invite} registrations={regs} />
+            </div>
 
             <nav className="mt-8 border-b border-gray-200 flex">
               <TabButton active={tab === 'all'} onClick={() => setTab('all')}>

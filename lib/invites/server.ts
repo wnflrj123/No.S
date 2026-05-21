@@ -8,7 +8,7 @@
 // 서버 전용. firebase-admin을 import하므로 클라이언트 컴포넌트에서 이 파일을 import하면
 // Next.js 빌드 단계에서 자연스럽게 차단된다.
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
-import { adminDb } from '@/lib/firebase-admin';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import type { Invite, InviteRegistration, RegisterPayload, RoundSelection } from './types';
 import {
   INVITES_COLLECTION,
@@ -193,6 +193,61 @@ export async function findRegistrationByToken(token: string): Promise<InviteRegi
   if (q.empty) return null;
   const doc = q.docs[0];
   return { id: doc.id, ...(doc.data() as Omit<InviteRegistration, 'id'>) };
+}
+
+export type BulkSmsTarget = 'all' | 'round' | 'sponsors';
+
+/**
+ * 특정 invite의 신청자를 필터 조건에 맞춰 조회한다.
+ * - 'all': 전체 신청자
+ * - 'round': roundNo가 지정된 회차에 포함된 신청자만
+ * - 'sponsors': isSponsor=true인 신청자만
+ */
+export async function listRegistrationsServer(
+  inviteId: string,
+  target: BulkSmsTarget,
+  roundNo?: number,
+): Promise<InviteRegistration[]> {
+  let snap;
+  if (target === 'sponsors') {
+    snap = await adminDb
+      .collection(REGISTRATIONS_COLLECTION)
+      .where('inviteId', '==', inviteId)
+      .where('isSponsor', '==', true)
+      .get();
+  } else {
+    snap = await adminDb
+      .collection(REGISTRATIONS_COLLECTION)
+      .where('inviteId', '==', inviteId)
+      .get();
+  }
+  const all = snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<InviteRegistration, 'id'>) }));
+  if (target === 'round' && typeof roundNo === 'number') {
+    return all.filter(r => r.roundSelections.some(s => s.roundNo === roundNo));
+  }
+  return all;
+}
+
+/**
+ * Firebase ID 토큰을 검증하고 Admin/Owner 여부를 확인한다.
+ * settings/admins 문서의 ownerUid 또는 uids 배열에 포함된 사용자만 통과.
+ * 반환: 인증된 admin의 uid (실패 시 null).
+ */
+export async function verifyAdminToken(authHeader: string | null): Promise<string | null> {
+  if (!authHeader?.startsWith('Bearer ')) return null;
+  const token = authHeader.slice('Bearer '.length).trim();
+  if (!token) return null;
+  try {
+    const decoded = await adminAuth.verifyIdToken(token);
+    const settingsSnap = await adminDb.collection('settings').doc('admins').get();
+    if (!settingsSnap.exists) return null;
+    const data = settingsSnap.data() as { ownerUid?: string; uids?: string[] };
+    if (data.ownerUid === decoded.uid) return decoded.uid;
+    if (Array.isArray(data.uids) && data.uids.includes(decoded.uid)) return decoded.uid;
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 /**
