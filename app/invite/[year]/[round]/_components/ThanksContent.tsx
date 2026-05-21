@@ -6,18 +6,84 @@ import confetti from 'canvas-confetti';
 import SponsorAccountCard from './SponsorAccountCard';
 import type { SponsorAccount } from '@/lib/invites/types';
 
-const CONFETTI_COLORS = ['#0066B3', '#3a8fd6', '#ffd700', '#ff6b6b', '#ff85a2', '#a8e6cf', '#fff'];
+const CONFETTI_COLORS = [
+  '#0066B3', '#3a8fd6', '#ffd700', '#ff6b6b', '#ff85a2',
+  '#a8e6cf', '#fff', '#ffb347', '#c084fc', '#34d399',
+];
 
-function fireConfetti() {
-  // 가운데에서 빵! + 좌우에서 추가 발사로 전 화면 덮기
+/**
+ * 후원 클릭 시 발사되는 화려한 효과.
+ *  1. 즉시 중앙 큰 burst
+ *  2. 좌우 사이드 burst
+ *  3. 꽃다발(💐) emoji confetti 큰 입자
+ *  4. 6초간 화면 곳곳에서 반복 폭죽
+ */
+function fireConfetti(): () => void {
   const burst = (opts: confetti.Options) =>
-    confetti({ colors: CONFETTI_COLORS, ...opts });
+    confetti({ colors: CONFETTI_COLORS, ...opts, zIndex: 50 });
 
-  burst({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
-  setTimeout(() => burst({ particleCount: 80, angle: 60, spread: 70, origin: { x: 0, y: 0.7 } }), 200);
-  setTimeout(() => burst({ particleCount: 80, angle: 120, spread: 70, origin: { x: 1, y: 0.7 } }), 200);
-  setTimeout(() => burst({ particleCount: 60, spread: 100, startVelocity: 50, origin: { y: 0.4 } }), 500);
-  setTimeout(() => burst({ particleCount: 40, spread: 120, scalar: 1.4, origin: { y: 0.3 } }), 900);
+  // 1) 중앙·좌·우 큰 burst
+  burst({ particleCount: 150, spread: 80, origin: { y: 0.55 }, startVelocity: 55 });
+  setTimeout(() => burst({ particleCount: 100, angle: 60, spread: 80, origin: { x: 0, y: 0.7 }, startVelocity: 60 }), 150);
+  setTimeout(() => burst({ particleCount: 100, angle: 120, spread: 80, origin: { x: 1, y: 0.7 }, startVelocity: 60 }), 150);
+  setTimeout(() => burst({ particleCount: 80, spread: 120, startVelocity: 50, origin: { y: 0.4 }, scalar: 1.2 }), 400);
+
+  // 2) 꽃다발 emoji confetti — 큰 입자, 천천히 떨어짐
+  try {
+    const bouquet = confetti.shapeFromText({ text: '💐', scalar: 3 });
+    const flower = confetti.shapeFromText({ text: '🌸', scalar: 2 });
+    setTimeout(() => {
+      confetti({
+        shapes: [bouquet, flower],
+        scalar: 3,
+        particleCount: 25,
+        spread: 100,
+        startVelocity: 35,
+        gravity: 0.6,
+        ticks: 300,
+        origin: { y: 0.3 },
+        zIndex: 50,
+      });
+    }, 300);
+    setTimeout(() => {
+      confetti({
+        shapes: [bouquet],
+        scalar: 4,
+        particleCount: 12,
+        spread: 140,
+        startVelocity: 30,
+        gravity: 0.5,
+        ticks: 400,
+        origin: { y: 0.2 },
+        zIndex: 50,
+      });
+    }, 800);
+  } catch {
+    // shapeFromText는 modern 브라우저 한정. 실패해도 다른 효과는 계속 동작.
+  }
+
+  // 3) 6초간 화면 곳곳에서 반복 폭죽
+  const duration = 6000;
+  const animationEnd = Date.now() + duration;
+  const interval = setInterval(() => {
+    if (Date.now() > animationEnd) {
+      clearInterval(interval);
+      return;
+    }
+    const particleCount = 40 + Math.floor(Math.random() * 30);
+    burst({
+      startVelocity: 25 + Math.random() * 15,
+      spread: 360,
+      ticks: 60,
+      particleCount,
+      origin: {
+        x: Math.random(),
+        y: Math.random() * 0.6,
+      },
+    });
+  }, 350);
+
+  return () => clearInterval(interval);
 }
 
 export interface ThanksContentProps {
@@ -38,12 +104,15 @@ export default function ThanksContent(p: ThanksContentProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // thanked가 되는 순간 꽃가루 발사. 새로고침 후 이미 thanked였어도 한 번 발사.
+  // thanked가 되는 순간 화려한 효과 발사. 6초 폭죽 + 3초 후 한 번 더.
   useEffect(() => {
     if (!thanked) return;
-    fireConfetti();
-    const t = setTimeout(() => fireConfetti(), 2500);
-    return () => clearTimeout(t);
+    const stop1 = fireConfetti();
+    const tid = setTimeout(() => fireConfetti(), 3000);
+    return () => {
+      stop1();
+      clearTimeout(tid);
+    };
   }, [thanked]);
 
   const handleSponsor = async () => {
@@ -70,31 +139,22 @@ export default function ThanksContent(p: ThanksContentProps) {
 
   if (thanked) {
     return (
-      <main className="relative min-h-dvh overflow-hidden bg-gradient-to-b from-[#0066B3] via-[#1b7fc4] to-[#3a8fd6] text-white px-5 py-20 flex flex-col items-center justify-center">
-        {/* 떠다니는 배경 장식 이모지 */}
-        <FloatingEmoji emoji="✨" left="8%" delay={0} />
-        <FloatingEmoji emoji="🎉" left="22%" delay={1.4} />
-        <FloatingEmoji emoji="💛" left="78%" delay={0.7} />
-        <FloatingEmoji emoji="🌟" left="90%" delay={2.1} />
-        <FloatingEmoji emoji="💫" left="44%" delay={2.8} />
-        <FloatingEmoji emoji="🎭" left="62%" delay={1.0} />
-
-        {/* 핵심 메시지 */}
+      <main className="relative min-h-dvh overflow-hidden text-white px-5 py-20 flex flex-col items-center justify-center thanks-bg">
+        {/* 메시지 */}
         <div className="relative z-10 flex flex-col items-center text-center">
-          <div className="text-8xl mb-6 drop-shadow-2xl thanks-bounce">🌟</div>
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-5 drop-shadow-lg tracking-tight">
+          <h1 className="text-5xl sm:text-6xl font-extrabold mb-6 drop-shadow-2xl tracking-tight thanks-headline">
             정말, 정말, 정말<br className="sm:hidden" /> 고맙습니다!
           </h1>
-          <p className="text-base sm:text-lg text-white/95 max-w-md leading-relaxed drop-shadow">
-            <strong className="text-yellow-200">{p.registrant.name}</strong>님의 응원 한 톨 한 톨이<br />
-            저희에게 정말 큰 힘이 됩니다 💛
+          <p className="text-lg sm:text-xl text-white/95 max-w-md leading-relaxed drop-shadow-lg">
+            <strong className="text-yellow-200">{p.registrant.name}</strong>님의 응원이<br />
+            저희에게 정말 큰 힘이 됩니다.
           </p>
-          <p className="text-sm sm:text-base text-white/85 mt-4 max-w-md leading-relaxed">
+          <p className="text-base sm:text-lg text-white/90 mt-5 max-w-md leading-relaxed drop-shadow">
             공연날, 가장 빛나는 무대로 인사드릴게요!
           </p>
           <Link
             href={`/invite/${p.year}/${p.round}`}
-            className="mt-12 text-sm underline text-white/80 hover:text-white"
+            className="mt-14 text-sm underline text-white/80 hover:text-white"
           >
             공연 정보 다시 보기
           </Link>
@@ -163,17 +223,3 @@ export default function ThanksContent(p: ThanksContentProps) {
   );
 }
 
-/**
- * 배경에서 위로 둥둥 떠다니는 이모지. left·delay만 지정해 다양한 위치/타이밍으로 배치.
- */
-function FloatingEmoji({ emoji, left, delay }: { emoji: string; left: string; delay: number }) {
-  return (
-    <span
-      aria-hidden
-      className="absolute bottom-0 text-4xl sm:text-5xl opacity-70 thanks-float pointer-events-none"
-      style={{ left, animationDelay: `${delay}s` }}
-    >
-      {emoji}
-    </span>
-  );
-}
