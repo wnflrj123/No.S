@@ -6,8 +6,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { getInviteClient, listRegistrations } from '@/lib/invites/client';
-import type { Invite, InviteRegistration } from '@/lib/invites/types';
+import { getInviteClient, listRegistrations, listSupporters } from '@/lib/invites/client';
+import type { Invite, InviteRegistration, InviteSupporter } from '@/lib/invites/types';
 import StatsCards from '../../_components/StatsCards';
 import RegistrationsTable from '../../_components/RegistrationsTable';
 import AnswersDigest from '../../_components/AnswersDigest';
@@ -24,6 +24,7 @@ export default function InviteAdminDetailPage() {
 
   const [invite, setInvite] = useState<Invite | null | undefined>(undefined);
   const [regs, setRegs] = useState<InviteRegistration[]>([]);
+  const [supporters, setSupporters] = useState<InviteSupporter[]>([]);
   const [regsLoading, setRegsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('all');
@@ -54,12 +55,19 @@ export default function InviteAdminDetailPage() {
           if (!cancelled) setError('신청자 목록을 불러오지 못했습니다.');
           return [] as InviteRegistration[];
         });
+    const loadSupporters = (!y || !r)
+      ? Promise.resolve([] as InviteSupporter[])
+      : listSupporters(id).catch(err => {
+          console.error('[admin supporters] load failed', err);
+          return [] as InviteSupporter[];
+        });
 
-    Promise.all([loadInvite, loadRegs])
-      .then(([inv, rs]) => {
+    Promise.all([loadInvite, loadRegs, loadSupporters])
+      .then(([inv, rs, sp]) => {
         if (cancelled) return;
         setInvite(inv);
         setRegs(rs);
+        setSupporters(sp);
       })
       .finally(() => {
         if (!cancelled) setRegsLoading(false);
@@ -120,7 +128,7 @@ export default function InviteAdminDetailPage() {
           </div>
         ) : (
           <>
-            <StatsCards invite={invite} registrations={regs} />
+            <StatsCards invite={invite} registrations={regs} supporters={supporters} />
 
             <div className="mt-6">
               <BulkSmsPanel invite={invite} registrations={regs} />
@@ -134,7 +142,7 @@ export default function InviteAdminDetailPage() {
                 항목별 답변
               </TabButton>
               <TabButton active={tab === 'sponsors'} onClick={() => setTab('sponsors')}>
-                후원자 ({regs.filter(r => r.isSponsor && (r.status ?? 'active') === 'active').length})
+                후원자 ({regs.filter(r => r.isSponsor && (r.status ?? 'active') === 'active').length + supporters.length})
               </TabButton>
             </nav>
 
@@ -151,7 +159,7 @@ export default function InviteAdminDetailPage() {
                 />
               )}
               {tab === 'answers' && <AnswersDigest registrations={regs} />}
-              {tab === 'sponsors' && <SponsorsTab registrations={regs} />}
+              {tab === 'sponsors' && <SponsorsTab registrations={regs} supporters={supporters} />}
             </section>
           </>
         )}

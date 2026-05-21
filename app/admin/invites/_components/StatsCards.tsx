@@ -1,14 +1,15 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { Invite, InviteRegistration } from '@/lib/invites/types';
+import type { Invite, InviteRegistration, InviteSupporter } from '@/lib/invites/types';
 
 interface Props {
   invite: Invite;
   registrations: InviteRegistration[];
+  supporters?: InviteSupporter[]; // wall에서 추가된 현장 후원자
 }
 
-export default function StatsCards({ invite, registrations }: Props) {
+export default function StatsCards({ invite, registrations, supporters = [] }: Props) {
   const stats = useMemo(() => {
     // superseded(취소된 이전 신청)는 통계에서 제외
     const active = registrations.filter(r => (r.status ?? 'active') === 'active');
@@ -17,7 +18,7 @@ export default function StatsCards({ invite, registrations }: Props) {
       (sum, r) => sum + r.roundSelections.reduce((s, x) => s + x.headcount, 0),
       0,
     );
-    const sponsors = active.filter(r => r.isSponsor).length;
+    const sponsors = active.filter(r => r.isSponsor).length + supporters.length;
     const byRound = new Map<number, number>();
     for (const r of active) {
       for (const sel of r.roundSelections) {
@@ -25,7 +26,7 @@ export default function StatsCards({ invite, registrations }: Props) {
       }
     }
     return { totalRegs, totalHc, sponsors, byRound };
-  }, [registrations]);
+  }, [registrations, supporters]);
 
   return (
     <div className="space-y-3">

@@ -21,8 +21,8 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { INVITES_COLLECTION, REGISTRATIONS_COLLECTION } from './constants';
-import type { Invite, InviteRegistration, InviteRound, InviteStats } from './types';
+import { INVITES_COLLECTION, REGISTRATIONS_COLLECTION, SUPPORTERS_COLLECTION } from './constants';
+import type { Invite, InviteRegistration, InviteRound, InviteStats, InviteSupporter } from './types';
 
 export interface InviteWriteInput {
   year: number;
@@ -149,6 +149,26 @@ export async function deleteInvite(id: string): Promise<void> {
  * 정렬은 클라이언트에서 createdAt 내림차순으로 처리.
  * 동호회 규모(신청자 100명 미만)에서는 충분한 성능이며 인덱스 관리 부담이 없다.
  */
+/**
+ * wall에서 직접 추가된 외부 응원자(현장 후원자) 목록.
+ * inviteSupporters는 누구나 read 허용이므로 별도 권한 불필요.
+ */
+export async function listSupporters(inviteId: string): Promise<InviteSupporter[]> {
+  const q = query(
+    collection(db, SUPPORTERS_COLLECTION),
+    where('inviteId', '==', inviteId),
+  );
+  const snap = await getDocs(q);
+  const list = snap.docs.map(
+    d => ({ id: d.id, ...(d.data() as Omit<InviteSupporter, 'id'>) }),
+  );
+  return list.sort((a, b) => {
+    const am = a.createdAt?.toMillis?.() ?? 0;
+    const bm = b.createdAt?.toMillis?.() ?? 0;
+    return bm - am;
+  });
+}
+
 export async function listRegistrations(inviteId: string): Promise<InviteRegistration[]> {
   const q = query(
     collection(db, REGISTRATIONS_COLLECTION),

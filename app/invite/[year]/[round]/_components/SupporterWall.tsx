@@ -74,6 +74,7 @@ export default function SupporterWall(p: Props) {
   const [registrationSponsors, setRegistrationSponsors] = useState<SupporterEntry[]>([]);
   const [wallSupporters, setWallSupporters] = useState<SupporterEntry[]>([]);
   const [recentlyAdded, setRecentlyAdded] = useState<string | null>(null);
+  const [celebrationName, setCelebrationName] = useState<string | null>(null);
   const [showSendModal, setShowSendModal] = useState(false);
   const knownIds = useRef<Set<string>>(new Set());
   const initialized = useRef(false);
@@ -150,25 +151,29 @@ export default function SupporterWall(p: Props) {
     return merged;
   }, [registrationSponsors, wallSupporters]);
 
-  // 첫 로드 후 새 supporter 추가 감지 → 폭죽 + 강조
+  // 첫 로드 후 새 supporter 추가 감지 → 가운데 큰 이름 셀러브레이션 + 폭죽 + 목록 강조
   useEffect(() => {
     if (!initialized.current) {
       // 첫 스냅샷은 기존 명단 — 효과 없이 등록만
       allSupporters.forEach(s => knownIds.current.add(s.id));
-      if (allSupporters.length > 0) initialized.current = true;
-      // 빈 명단이어도 다음 변화부터 신규로 인식
-      else initialized.current = true;
+      initialized.current = true;
       return;
     }
     const newOnes = allSupporters.filter(s => !knownIds.current.has(s.id));
     if (newOnes.length === 0) return;
     newOnes.forEach(s => knownIds.current.add(s.id));
-    // 가장 최신 1명 강조
+    // 가장 최신 1명을 셀러브레이션 오버레이로 표시
     const latest = newOnes[0];
+    setCelebrationName(latest.name);
     setRecentlyAdded(latest.id);
     celebrateNewSupporter(latest.name);
-    const t = setTimeout(() => setRecentlyAdded(null), 4500);
-    return () => clearTimeout(t);
+    // 오버레이는 4.5초간 유지(애니메이션과 동일), 목록 강조는 6초까지
+    const t1 = setTimeout(() => setCelebrationName(null), 4500);
+    const t2 = setTimeout(() => setRecentlyAdded(null), 6000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [allSupporters]);
 
   return (
@@ -222,6 +227,31 @@ export default function SupporterWall(p: Props) {
           💐 응원 꽃다발 보내기
         </button>
       </div>
+
+      {/* 새 후원자 등장 셀러브레이션 오버레이 — 또이잉 등장 → 머무름 → 슈우웅 사라짐 */}
+      {celebrationName && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none px-5">
+          <div className="celebration-pop text-center">
+            <div className="text-4xl sm:text-6xl mb-3">
+              <span className="celebration-sparkle">🎉</span>
+              <span className="celebration-sparkle" style={{ animationDelay: '0.15s' }}>💐</span>
+              <span className="celebration-sparkle" style={{ animationDelay: '0.3s' }}>✨</span>
+            </div>
+            <div className="text-lg sm:text-2xl font-semibold text-white drop-shadow-lg mb-2">
+              응원 꽃다발 도착!
+            </div>
+            <div className="celebration-glow text-5xl sm:text-7xl md:text-8xl font-black text-white tracking-tight leading-tight">
+              {celebrationName}
+            </div>
+            <div className="mt-4 text-xl sm:text-3xl font-extrabold text-yellow-200 drop-shadow-lg">
+              야단법석 감사합니다!!
+            </div>
+            <div className="mt-2 text-base sm:text-xl text-white/90 drop-shadow">
+              따뜻한 마음 정말 잊지 않을게요 💛
+            </div>
+          </div>
+        </div>
+      )}
 
       {showSendModal && (
         <SendBouquetModal
