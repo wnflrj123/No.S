@@ -39,19 +39,27 @@ export default function InviteAdminDetailPage() {
     const id = `${y}-${r}`;
     let cancelled = false;
 
-    const loadInvite = (!y || !r) ? Promise.resolve(null) : getInviteClient(y, r);
-    const loadRegs = (!y || !r) ? Promise.resolve([] as InviteRegistration[]) : listRegistrations(id);
+    // 두 쿼리를 독립적으로 처리: invite 로드와 신청자 조회가 서로 영향 주지 않도록.
+    // listRegistrations 실패가 invite 미존재로 오인되는 사고 방지.
+    const loadInvite = (!y || !r)
+      ? Promise.resolve(null)
+      : getInviteClient(y, r).catch(err => {
+          console.error('[admin invite] load failed', err);
+          return null;
+        });
+    const loadRegs = (!y || !r)
+      ? Promise.resolve([] as InviteRegistration[])
+      : listRegistrations(id).catch(err => {
+          console.error('[admin regs] load failed', err);
+          if (!cancelled) setError('신청자 목록을 불러오지 못했습니다.');
+          return [] as InviteRegistration[];
+        });
 
     Promise.all([loadInvite, loadRegs])
       .then(([inv, rs]) => {
         if (cancelled) return;
         setInvite(inv);
         setRegs(rs);
-      })
-      .catch(e => {
-        if (cancelled) return;
-        setError(e instanceof Error ? e.message : '불러오기 실패');
-        setInvite(null);
       })
       .finally(() => {
         if (!cancelled) setRegsLoading(false);

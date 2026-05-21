@@ -142,15 +142,22 @@ export async function deleteInvite(id: string): Promise<void> {
 /**
  * 특정 invite의 신청자 목록 조회. 관리자만 접근 가능 (Firestore Rules에서 차단됨).
  *
- * 복합 인덱스 필요: inviteId ASC + createdAt DESC.
- * 첫 쿼리 시 Firebase 콘솔이 자동으로 인덱스 생성 링크를 제공한다.
+ * inviteId 단일 필드 필터만 사용하여 복합 인덱스 요구를 피한다.
+ * 정렬은 클라이언트에서 createdAt 내림차순으로 처리.
+ * 동호회 규모(신청자 100명 미만)에서는 충분한 성능이며 인덱스 관리 부담이 없다.
  */
 export async function listRegistrations(inviteId: string): Promise<InviteRegistration[]> {
   const q = query(
     collection(db, REGISTRATIONS_COLLECTION),
     where('inviteId', '==', inviteId),
-    orderBy('createdAt', 'desc'),
   );
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<InviteRegistration, 'id'>) }));
+  const list = snap.docs.map(
+    d => ({ id: d.id, ...(d.data() as Omit<InviteRegistration, 'id'>) }),
+  );
+  return list.sort((a, b) => {
+    const am = a.createdAt?.toMillis?.() ?? 0;
+    const bm = b.createdAt?.toMillis?.() ?? 0;
+    return bm - am;
+  });
 }
