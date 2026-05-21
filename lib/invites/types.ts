@@ -54,6 +54,7 @@ export interface Invite {
   id: string; // documentId = "{year}-{round}"
   year: number;
   round: number;
+  overline?: string; // 최상단 작은 라벨 (예: "삼성전자 뮤지컬 동호회 제1회 정기공연")
   title: string;
   subtitle?: string;
   description: string; // HTML (TipTap)

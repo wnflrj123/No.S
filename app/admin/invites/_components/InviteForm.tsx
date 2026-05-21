@@ -17,6 +17,7 @@ interface Props {
 const DEFAULT_INVITE: Omit<InviteWriteInput, 'rounds'> & { rounds: RoundFormValue[] } = {
   year: new Date().getFullYear(),
   round: 1,
+  overline: '',
   title: '',
   subtitle: '',
   description: '',
@@ -67,6 +68,7 @@ export default function InviteForm({ initial, createdBy, onSaved }: Props) {
     try {
       const input: InviteWriteInput = {
         ...form,
+        overline: form.overline?.trim() || undefined,
         subtitle: form.subtitle?.trim() || undefined,
         thanksMessage: form.thanksMessage?.trim() || undefined,
       };
@@ -118,6 +120,19 @@ export default function InviteForm({ initial, createdBy, onSaved }: Props) {
           <p className="text-xs text-gray-500 mt-1">연도·회차는 수정할 수 없습니다.</p>
         )}
 
+        <FieldRow
+          label="최상단 타이틀 (선택)"
+          hint="포스터 위쪽에 작게 표시되는 라벨. 예: '삼성전자 뮤지컬 동호회 제1회 정기공연'"
+        >
+          <input
+            type="text"
+            value={form.overline ?? ''}
+            onChange={e => update('overline', e.target.value)}
+            maxLength={80}
+            className="input"
+            placeholder="삼성전자 뮤지컬 동호회 제1회 정기공연"
+          />
+        </FieldRow>
         <FieldRow label="공연명" required>
           <input
             type="text"
@@ -126,6 +141,7 @@ export default function InviteForm({ initial, createdBy, onSaved }: Props) {
             maxLength={80}
             className="input"
             required
+            placeholder="Les Misérables"
           />
         </FieldRow>
         <FieldRow label="부제 (선택)">
@@ -135,6 +151,7 @@ export default function InviteForm({ initial, createdBy, onSaved }: Props) {
             onChange={e => update('subtitle', e.target.value)}
             maxLength={120}
             className="input"
+            placeholder="뮤지컬 <레미제라블>"
           />
         </FieldRow>
         <FieldRow label="포스터 이미지 경로" required>
@@ -223,10 +240,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function FieldRow({
   label,
   required,
+  hint,
   children,
 }: {
   label: string;
   required?: boolean;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -234,7 +253,8 @@ function FieldRow({
       <span className="text-sm font-medium text-gray-700">
         {label} {required && <span className="text-red-500">*</span>}
       </span>
-      <div className="mt-1">{children}</div>
+      {hint && <p className="text-xs text-gray-500 mt-0.5">{hint}</p>}
+      <div className="mt-1.5">{children}</div>
     </label>
   );
 }
@@ -244,6 +264,7 @@ function toForm(invite: Invite | null): typeof DEFAULT_INVITE {
   return {
     year: invite.year,
     round: invite.round,
+    overline: invite.overline ?? '',
     title: invite.title,
     subtitle: invite.subtitle ?? '',
     description: invite.description,

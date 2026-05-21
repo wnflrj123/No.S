@@ -27,6 +27,7 @@ import type { Invite, InviteRegistration, InviteRound, InviteStats } from './typ
 export interface InviteWriteInput {
   year: number;
   round: number;
+  overline?: string;
   title: string;
   subtitle?: string;
   description: string;
@@ -82,6 +83,7 @@ export async function upsertInvite(
     await setDoc(ref, {
       year: input.year,
       round: input.round,
+      overline: input.overline || '',
       title: input.title,
       subtitle: input.subtitle || '',
       description: input.description,
@@ -100,6 +102,7 @@ export async function upsertInvite(
     await updateDoc(ref, {
       year: input.year,
       round: input.round,
+      overline: input.overline || '',
       title: input.title,
       subtitle: input.subtitle || '',
       description: input.description,
