@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { ko } from 'date-fns/locale';
+
+const KST = 'Asia/Seoul';
 
 export interface ResolvedCasting {
   roleName: string;
@@ -56,14 +58,14 @@ export default function CastingTabs({ data, inviteId }: Props) {
         </nav>
       )}
 
-      {/* 활성 회차 정보 — 일시 노출 */}
-      <div className="mb-4 flex items-baseline gap-2 flex-wrap">
-        <span className="text-sm font-bold text-[#0066B3]">
+      {/* 활성 회차 정보 — 일시를 메인으로, 회차/팀명은 보조 */}
+      <div className="mb-4">
+        <div className="text-base sm:text-lg font-bold text-gray-900">
+          {formatInTimeZone(new Date(active.startAtMs), KST, 'M월 d일(EEE) HH:mm', { locale: ko })}
+        </div>
+        <div className="text-xs sm:text-sm font-medium text-[#0066B3] mt-0.5">
           {active.roundNo}회차 · {active.teamName}
-        </span>
-        <span className="text-xs text-gray-600">
-          {format(new Date(active.startAtMs), 'M월 d일(EEE) HH:mm', { locale: ko })}
-        </span>
+        </div>
       </div>
 
       <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3">

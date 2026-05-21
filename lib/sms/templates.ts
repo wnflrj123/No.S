@@ -5,10 +5,12 @@
  * 키를 한국어로 지원한다.
  */
 
-import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { ko } from 'date-fns/locale';
 import type { Invite, InviteRegistration } from '@/lib/invites/types';
 import type { TemplateVars } from './types';
+
+const KST = 'Asia/Seoul';
 
 /**
  * 템플릿 문자열의 `{변수명}` 패턴을 vars로 치환.
@@ -44,7 +46,7 @@ export function buildVars(reg: InviteRegistration, invite: Invite): TemplateVars
     .map(sel => {
       const round = invite.rounds.find(r => r.roundNo === sel.roundNo);
       if (!round) return `${sel.roundNo}회 (${sel.headcount}명)`;
-      const time = format(round.startAt.toDate(), 'M월 d일(EEE) HH:mm', { locale: ko });
+      const time = formatInTimeZone(round.startAt.toDate(), KST, 'M월 d일(EEE) HH:mm', { locale: ko });
       return `${sel.roundNo}회 ${time} (${sel.headcount}명)`;
     })
     .join(', ');

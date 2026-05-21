@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { ko } from 'date-fns/locale';
+
+const KST = 'Asia/Seoul';
 
 export interface FormRound {
   roundNo: number;
@@ -62,7 +64,7 @@ export default function RoundCheckboxList({ rounds, value, onChange, maxHeadcoun
                   {r.roundNo}회차 · {r.teamName}
                 </div>
                 <div className="text-xs text-gray-500">
-                  {format(new Date(r.startAtMs), 'M월 d일(EEE) HH:mm', { locale: ko })}
+                  {formatInTimeZone(new Date(r.startAtMs), KST, 'M월 d일(EEE) HH:mm', { locale: ko })}
                 </div>
               </div>
               {closed && (

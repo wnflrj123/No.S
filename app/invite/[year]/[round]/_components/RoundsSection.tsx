@@ -1,6 +1,8 @@
-import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { ko } from 'date-fns/locale';
 import type { InviteRound } from '@/lib/invites/types';
+
+const KST = 'Asia/Seoul';
 
 interface Props {
   rounds: InviteRound[];
@@ -27,7 +29,7 @@ export default function RoundsSection({ rounds, nowMs }: Props) {
                     {r.roundNo}회차 · {r.teamName}
                   </div>
                   <div className="text-base font-bold mt-0.5">
-                    {format(new Date(startMs), 'M월 d일(EEE) HH:mm', { locale: ko })}
+                    {formatInTimeZone(new Date(startMs), KST, 'M월 d일(EEE) HH:mm', { locale: ko })}
                   </div>
                 </div>
                 {closed && (
