@@ -11,6 +11,8 @@ export const REMINDER_LMS_TEMPLATE = `[삼성전자 뮤지컬 동호회 No.S] {�
 📍 {공연장명}
 👥 신청 인원: 총 {총인원}명
 
+공연 정보 다시 보기: https://samsung-musical.com/invite/{연도}/{회차}
+
 만나뵙기를 정말 기대하고 있어요!
 편하게 와주세요 💛
 - 삼성전자 뮤지컬 동호회 No.S`;
