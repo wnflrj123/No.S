@@ -27,24 +27,24 @@ export default function Hero({ invite }: { invite: Invite }) {
         </div>
       </div>
 
-      {/* 데스크탑 (md 이상): 좌측 포스터 전체 + 우측 제목·부제 split */}
-      <div className="hidden md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-10 lg:gap-16 max-w-6xl mx-auto px-6 lg:px-8 py-10 lg:py-16 items-center">
-        <div className="aspect-[3/4] relative overflow-hidden rounded-2xl bg-gray-100 shadow-lg max-w-md w-full mx-auto">
+      {/* 데스크탑 (md 이상): 좌측 포스터 + 우측 제목·부제 split */}
+      <div className="hidden md:flex md:items-center md:gap-10 lg:gap-14 max-w-6xl mx-auto px-6 lg:px-8 py-12 lg:py-16">
+        <div className="aspect-[3/4] relative overflow-hidden rounded-2xl bg-gray-100 shadow-2xl w-[48%] max-w-[560px] flex-shrink-0">
           <Image
             src={invite.posterImageUrl}
             alt={invite.title}
             fill
             priority
             className="object-cover"
-            sizes="(min-width: 1024px) 35vw, 45vw"
+            sizes="(min-width: 1280px) 560px, 45vw"
           />
         </div>
-        <div className="flex flex-col">
-          <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 leading-tight">
             {invite.title}
           </h1>
           {invite.subtitle && (
-            <p className="text-lg text-gray-600 mt-4 leading-relaxed whitespace-pre-line">
+            <p className="text-lg lg:text-xl text-gray-600 mt-5 leading-relaxed whitespace-pre-line">
               {invite.subtitle}
             </p>
           )}
