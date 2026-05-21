@@ -7,7 +7,13 @@ import RoundEditor, { type RoundFormValue } from './RoundEditor';
 import RolesEditor from './RolesEditor';
 import SponsorAccountEditor from './SponsorAccountEditor';
 import { upsertInvite, type InviteWriteInput } from '@/lib/invites/client';
-import type { CastingEntry, Invite, InviteRole } from '@/lib/invites/types';
+import {
+  OPTIONAL_FIELD_LABELS,
+  type CastingEntry,
+  type Invite,
+  type InviteRole,
+  type OptionalFieldKey,
+} from '@/lib/invites/types';
 
 interface Props {
   initial: Invite | null; // null이면 신규 생성
@@ -28,8 +34,11 @@ const DEFAULT_INVITE: Omit<InviteWriteInput, 'rounds'> & { rounds: RoundFormValu
   rounds: [],
   sponsorAccount: { bankName: '', accountNumber: '', accountHolder: '' },
   thanksMessage: '',
+  disabledFields: [],
   isPublished: false,
 };
+
+const OPTIONAL_FIELD_KEYS: OptionalFieldKey[] = ['companions', 'supportingActors', 'seatRequests', 'cheerMessage'];
 
 export default function InviteForm({ initial, createdBy, onSaved }: Props) {
   const isNew = initial === null;
@@ -79,6 +88,7 @@ export default function InviteForm({ initial, createdBy, onSaved }: Props) {
         overline: form.overline?.trim() || undefined,
         subtitle: form.subtitle?.trim() || undefined,
         thanksMessage: form.thanksMessage?.trim() || undefined,
+        disabledFields: form.disabledFields ?? [],
       };
       const id = await upsertInvite(input, createdBy, isNew);
       const [yStr, rStr] = id.split('-');
@@ -215,6 +225,36 @@ export default function InviteForm({ initial, createdBy, onSaved }: Props) {
         <SponsorAccountEditor value={form.sponsorAccount} onChange={v => update('sponsorAccount', v)} />
       </Section>
 
+      <Section title="신청 폼에서 받을 선택 항목">
+        <p className="text-xs text-gray-500 mb-2">
+          체크된 항목만 신청자에게 입력 받습니다. 끄면 신청 폼에 해당 칸이 표시되지 않아요.
+          (이름·휴대폰·회차·개인정보 동의는 필수라 끌 수 없습니다.)
+        </p>
+        <ul className="space-y-1">
+          {OPTIONAL_FIELD_KEYS.map(key => {
+            const enabled = !(form.disabledFields ?? []).includes(key);
+            return (
+              <li key={key}>
+                <label className="flex items-center gap-2 text-sm cursor-pointer py-1">
+                  <input
+                    type="checkbox"
+                    checked={enabled}
+                    onChange={e => {
+                      const current = new Set(form.disabledFields ?? []);
+                      if (e.target.checked) current.delete(key);
+                      else current.add(key);
+                      update('disabledFields', Array.from(current));
+                    }}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-gray-800">{OPTIONAL_FIELD_LABELS[key]}</span>
+                </label>
+              </li>
+            );
+          })}
+        </ul>
+      </Section>
+
       <Section title="감사 메시지 (선택)">
         <textarea
           value={form.thanksMessage ?? ''}
@@ -290,6 +330,7 @@ function toForm(invite: Invite | null): typeof DEFAULT_INVITE {
     rounds,
     sponsorAccount: invite.sponsorAccount,
     thanksMessage: invite.thanksMessage ?? '',
+    disabledFields: invite.disabledFields ?? [],
     isPublished: invite.isPublished,
   };
 }

@@ -154,15 +154,20 @@ export async function createRegistration(
   const now = Timestamp.now();
   const totalHc = totalHeadcount(payload.roundSelections);
 
+  // 운영자가 비활성화한 옵션 필드는 클라이언트가 보냈더라도 무시한다 (서버 측 방어선).
+  const disabled = new Set(invite.disabledFields ?? []);
+  const allow = (key: 'companions' | 'supportingActors' | 'seatRequests' | 'cheerMessage') =>
+    !disabled.has(key);
+
   const reg = {
     inviteId: invite.id,
     name: payload.name.trim(),
     phone: payload.phone,
     roundSelections: payload.roundSelections,
-    ...(payload.companions?.trim() ? { companions: payload.companions.trim() } : {}),
-    ...(payload.supportingActors?.trim() ? { supportingActors: payload.supportingActors.trim() } : {}),
-    ...(payload.seatRequests?.trim() ? { seatRequests: payload.seatRequests.trim() } : {}),
-    ...(payload.cheerMessage?.trim() ? { cheerMessage: payload.cheerMessage.trim() } : {}),
+    ...(allow('companions') && payload.companions?.trim() ? { companions: payload.companions.trim() } : {}),
+    ...(allow('supportingActors') && payload.supportingActors?.trim() ? { supportingActors: payload.supportingActors.trim() } : {}),
+    ...(allow('seatRequests') && payload.seatRequests?.trim() ? { seatRequests: payload.seatRequests.trim() } : {}),
+    ...(allow('cheerMessage') && payload.cheerMessage?.trim() ? { cheerMessage: payload.cheerMessage.trim() } : {}),
     privacyConsent: true as const,
     accessToken: token,
     isSponsor: false,

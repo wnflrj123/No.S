@@ -62,6 +62,7 @@ export default async function ApplyPage({ params }: PageParams) {
             teamName: r.teamName,
             startAtMs: r.startAt.toDate().getTime(),
           })),
+          disabledFields: invite.disabledFields,
         }}
       />
     </main>

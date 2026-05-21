@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import RoundCheckboxList, { type FormRound } from './RoundCheckboxList';
 import { MAX_HEADCOUNT, MAX_NAME_LENGTH, MAX_TEXT_LENGTH, PHONE_REGEX } from '@/lib/invites/constants';
+import type { OptionalFieldKey } from '@/lib/invites/types';
 
 export interface FormInvite {
   id: string;
@@ -11,10 +12,13 @@ export interface FormInvite {
   round: number;
   title: string;
   rounds: FormRound[];
+  disabledFields?: OptionalFieldKey[];
 }
 
 export default function ApplyForm({ invite }: { invite: FormInvite }) {
   const router = useRouter();
+  const disabled = new Set(invite.disabledFields ?? []);
+  const isOn = (key: OptionalFieldKey) => !disabled.has(key);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [selections, setSelections] = useState<Record<number, number>>({});
@@ -86,10 +90,10 @@ export default function ApplyForm({ invite }: { invite: FormInvite }) {
           name: name.trim(),
           phone,
           roundSelections,
-          companions: companions.trim() || undefined,
-          supportingActors: supportingActors.trim() || undefined,
-          seatRequests: seatRequests.trim() || undefined,
-          cheerMessage: cheerMessage.trim() || undefined,
+          companions: isOn('companions') ? companions.trim() || undefined : undefined,
+          supportingActors: isOn('supportingActors') ? supportingActors.trim() || undefined : undefined,
+          seatRequests: isOn('seatRequests') ? seatRequests.trim() || undefined : undefined,
+          cheerMessage: isOn('cheerMessage') ? cheerMessage.trim() || undefined : undefined,
           privacyConsent: true,
         }),
       });
@@ -157,45 +161,53 @@ export default function ApplyForm({ invite }: { invite: FormInvite }) {
         />
       </Field>
 
-      <Field label="동반인 이름" hint="함께 오시는 분 이름을 자유롭게 적어주세요 (선택)">
-        <input
-          type="text"
-          value={companions}
-          onChange={e => setCompanions(e.target.value)}
-          maxLength={MAX_TEXT_LENGTH}
-          className="input"
-        />
-      </Field>
+      {isOn('companions') && (
+        <Field label="동반인 이름" hint="함께 오시는 분 이름을 자유롭게 적어주세요 (선택)">
+          <input
+            type="text"
+            value={companions}
+            onChange={e => setCompanions(e.target.value)}
+            maxLength={MAX_TEXT_LENGTH}
+            className="input"
+          />
+        </Field>
+      )}
 
-      <Field label="응원하는 배우" hint="응원하고 싶은 배우가 있다면 적어주세요 (선택)">
-        <input
-          type="text"
-          value={supportingActors}
-          onChange={e => setSupportingActors(e.target.value)}
-          maxLength={MAX_TEXT_LENGTH}
-          className="input"
-        />
-      </Field>
+      {isOn('supportingActors') && (
+        <Field label="응원하는 배우" hint="응원하고 싶은 배우가 있다면 적어주세요 (선택)">
+          <input
+            type="text"
+            value={supportingActors}
+            onChange={e => setSupportingActors(e.target.value)}
+            maxLength={MAX_TEXT_LENGTH}
+            className="input"
+          />
+        </Field>
+      )}
 
-      <Field label="좌석 요청사항" hint="휠체어석, 가까운 자리 등 (선택)">
-        <textarea
-          value={seatRequests}
-          onChange={e => setSeatRequests(e.target.value)}
-          maxLength={MAX_TEXT_LENGTH}
-          rows={2}
-          className="input"
-        />
-      </Field>
+      {isOn('seatRequests') && (
+        <Field label="좌석 요청사항" hint="휠체어석, 가까운 자리 등 (선택)">
+          <textarea
+            value={seatRequests}
+            onChange={e => setSeatRequests(e.target.value)}
+            maxLength={MAX_TEXT_LENGTH}
+            rows={2}
+            className="input"
+          />
+        </Field>
+      )}
 
-      <Field label="응원 메시지" hint="배우들에게 전하고 싶은 한 마디 (선택)">
-        <textarea
-          value={cheerMessage}
-          onChange={e => setCheerMessage(e.target.value)}
-          maxLength={MAX_TEXT_LENGTH}
-          rows={3}
-          className="input"
-        />
-      </Field>
+      {isOn('cheerMessage') && (
+        <Field label="응원 메시지" hint="배우들에게 전하고 싶은 한 마디 (선택)">
+          <textarea
+            value={cheerMessage}
+            onChange={e => setCheerMessage(e.target.value)}
+            maxLength={MAX_TEXT_LENGTH}
+            rows={3}
+            className="input"
+          />
+        </Field>
+      )}
 
       <label className="flex items-start gap-2 text-sm cursor-pointer">
         <input

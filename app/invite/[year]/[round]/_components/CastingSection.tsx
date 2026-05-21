@@ -45,7 +45,7 @@ export default function CastingSection({ rounds, roles, inviteId }: Props) {
 
   return (
     <section className="px-5 py-8 bg-gray-50">
-      <h2 className="text-lg font-bold text-gray-900 mb-3">캐스팅</h2>
+      <h2 className="text-lg font-bold text-gray-900 mb-3">회차별 캐스팅 정보</h2>
       <CastingTabs data={data} inviteId={inviteId} />
     </section>
   );

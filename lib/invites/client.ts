@@ -37,6 +37,7 @@ export interface InviteWriteInput {
   rounds: Array<Omit<InviteRound, 'startAt'> & { startAtMs: number }>;
   sponsorAccount: Invite['sponsorAccount'];
   thanksMessage?: string;
+  disabledFields?: Invite['disabledFields'];
   isPublished: boolean;
 }
 
@@ -100,6 +101,7 @@ export async function upsertInvite(
       rounds,
       sponsorAccount: input.sponsorAccount,
       thanksMessage: input.thanksMessage || '',
+      disabledFields: input.disabledFields ?? [],
       isPublished: input.isPublished,
       stats: EMPTY_STATS,
       createdAt: serverTimestamp(),
@@ -120,6 +122,7 @@ export async function upsertInvite(
       rounds,
       sponsorAccount: input.sponsorAccount,
       thanksMessage: input.thanksMessage || '',
+      disabledFields: input.disabledFields ?? [],
       isPublished: input.isPublished,
       updatedAt: serverTimestamp(),
     });

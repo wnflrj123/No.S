@@ -72,6 +72,19 @@ export interface InviteStats {
   totalSponsors: number; // isSponsor=true인 신청자 수
 }
 
+/**
+ * 신청 폼에서 비활성화 가능한 선택 항목들.
+ * (이름·휴대폰·회차·개인정보 동의 같은 필수 항목은 비활성화 대상이 아님)
+ */
+export type OptionalFieldKey = 'companions' | 'supportingActors' | 'seatRequests' | 'cheerMessage';
+
+export const OPTIONAL_FIELD_LABELS: Record<OptionalFieldKey, string> = {
+  companions: '동반인 이름',
+  supportingActors: '응원하는 배우',
+  seatRequests: '좌석 요청사항',
+  cheerMessage: '응원 메시지',
+};
+
 // ─── 메인 타입 ─────────────────────────────────────────────
 
 export interface Invite {
@@ -88,6 +101,11 @@ export interface Invite {
   rounds: InviteRound[];
   sponsorAccount: SponsorAccount;
   thanksMessage?: string;
+  /**
+   * 신청 폼에서 비활성화할 선택 항목 목록.
+   * 예: ['seatRequests'] → 좌석 요청 입력 칸을 숨기고 서버에서도 무시.
+   */
+  disabledFields?: OptionalFieldKey[];
   isPublished: boolean;
   stats: InviteStats;
   createdAt: Timestamp;
