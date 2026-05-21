@@ -1,8 +1,29 @@
 import type { Venue } from '@/lib/invites/types';
 
+// 지도 임베드를 허용할 신뢰 호스트 화이트리스트
+const ALLOWED_MAP_HOSTS = [
+  'www.google.com',
+  'maps.google.com',
+  'map.naver.com',
+  'pcmap.place.naver.com',
+  'map.kakao.com',
+  'place.map.kakao.com',
+];
+
+function isSafeEmbedUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'https:') return false;
+    return ALLOWED_MAP_HOSTS.some(h => u.hostname === h || u.hostname.endsWith(`.${h}`));
+  } catch {
+    return false;
+  }
+}
+
 export default function VenueSection({ venue }: { venue: Venue }) {
   const { mapLinks } = venue;
   const hasMap = mapLinks.naver || mapLinks.kakao || mapLinks.google;
+  const showEmbed = venue.mapEmbedUrl && isSafeEmbedUrl(venue.mapEmbedUrl);
 
   return (
     <section className="px-5 py-8">
@@ -13,6 +34,18 @@ export default function VenueSection({ venue }: { venue: Venue }) {
         <p className="text-sm text-gray-700 mt-3 whitespace-pre-line leading-relaxed">
           {venue.directions}
         </p>
+      )}
+      {showEmbed && (
+        <div className="mt-4 rounded-xl overflow-hidden border border-gray-200 aspect-[16/10] bg-gray-100">
+          <iframe
+            src={venue.mapEmbedUrl}
+            title={`${venue.name} 지도`}
+            className="w-full h-full"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            allowFullScreen
+          />
+        </div>
       )}
       {hasMap && (
         <div className="flex flex-wrap gap-2 mt-4">

@@ -27,6 +27,7 @@ export interface Venue {
   address: string;
   directions: string; // 오시는 길 (자유 텍스트)
   mapLinks: MapLinks;
+  mapEmbedUrl?: string; // 지도 임베드 iframe src URL (구글/네이버/카카오 지도 "공유 → 퍼가기"에서 복사)
 }
 
 export interface CastingEntry {

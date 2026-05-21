@@ -7,7 +7,7 @@ export default function Hero({ invite }: { invite: Invite }) {
       {/* 텍스트 블록 — 모바일/데스크탑 동일 세로 구조 */}
       <div className="max-w-2xl mx-auto text-center">
         {invite.overline?.trim() && (
-          <div className="text-xs md:text-sm font-semibold text-[#0066B3] mb-3 md:mb-4">
+          <div className="text-sm md:text-base lg:text-lg font-semibold text-[#0066B3] mb-3 md:mb-4">
             {invite.overline}
           </div>
         )}

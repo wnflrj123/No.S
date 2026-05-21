@@ -70,6 +70,18 @@ export default function VenueEditor({ value, onChange }: Props) {
           />
         </div>
       </div>
+      <FieldRow
+        label="지도 임베드 URL (선택)"
+        hint="구글/네이버/카카오 지도에서 '공유 → 퍼가기'로 복사한 iframe src URL. 입력하면 페이지에 지도가 직접 표시됩니다."
+      >
+        <input
+          type="url"
+          value={value.mapEmbedUrl ?? ''}
+          onChange={e => update({ mapEmbedUrl: e.target.value || undefined })}
+          placeholder="https://www.google.com/maps/embed?pb=..."
+          className="input"
+        />
+      </FieldRow>
     </div>
   );
 }
@@ -77,10 +89,12 @@ export default function VenueEditor({ value, onChange }: Props) {
 function FieldRow({
   label,
   required,
+  hint,
   children,
 }: {
   label: string;
   required?: boolean;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -88,7 +102,8 @@ function FieldRow({
       <span className="text-sm font-medium text-gray-700">
         {label} {required && <span className="text-red-500">*</span>}
       </span>
-      <div className="mt-1">{children}</div>
+      {hint && <p className="text-xs text-gray-500 mt-0.5">{hint}</p>}
+      <div className="mt-1.5">{children}</div>
     </label>
   );
 }
