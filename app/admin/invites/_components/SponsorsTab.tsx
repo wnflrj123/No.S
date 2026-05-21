@@ -8,7 +8,7 @@ interface Props {
 }
 
 export default function SponsorsTab({ registrations }: Props) {
-  const sponsors = registrations.filter(r => r.isSponsor);
+  const sponsors = registrations.filter(r => r.isSponsor && (r.status ?? 'active') === 'active');
 
   if (sponsors.length === 0) {
     return (

@@ -33,11 +33,13 @@ export default function BulkSmsPanel({ invite, registrations }: Props) {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const targetRegs = useMemo(() => {
-    if (targetType === 'sponsors') return registrations.filter(r => r.isSponsor);
+    // SMS는 active 신청자에게만 (취소된 이전 신청은 제외)
+    const active = registrations.filter(r => (r.status ?? 'active') === 'active');
+    if (targetType === 'sponsors') return active.filter(r => r.isSponsor);
     if (targetType === 'round') {
-      return registrations.filter(r => r.roundSelections.some(s => s.roundNo === roundNo));
+      return active.filter(r => r.roundSelections.some(s => s.roundNo === roundNo));
     }
-    return registrations;
+    return active;
   }, [registrations, targetType, roundNo]);
 
   const previewText = useMemo(() => {
@@ -151,7 +153,7 @@ export default function BulkSmsPanel({ invite, registrations }: Props) {
           <RadioOption
             checked={targetType === 'all'}
             onChange={() => setTargetType('all')}
-            label={`전체 신청자 (${registrations.length}명)`}
+            label={`전체 신청자 (${registrations.filter(r => (r.status ?? 'active') === 'active').length}명)`}
           />
           <div className="flex items-center gap-2">
             <RadioOption
@@ -175,7 +177,7 @@ export default function BulkSmsPanel({ invite, registrations }: Props) {
           <RadioOption
             checked={targetType === 'sponsors'}
             onChange={() => setTargetType('sponsors')}
-            label={`후원자만 (${registrations.filter(r => r.isSponsor).length}명)`}
+            label={`후원자만 (${registrations.filter(r => r.isSponsor && (r.status ?? 'active') === 'active').length}명)`}
           />
         </div>
       </div>

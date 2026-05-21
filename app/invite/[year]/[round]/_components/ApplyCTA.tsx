@@ -9,7 +9,7 @@ interface Props {
 export default function ApplyCTA({ year, round, disabled }: Props) {
   return (
     <div className="fixed bottom-0 inset-x-0 p-4 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-20">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto space-y-2">
         {disabled ? (
           <button
             disabled
@@ -25,6 +25,12 @@ export default function ApplyCTA({ year, round, disabled }: Props) {
             신청하기
           </Link>
         )}
+        <Link
+          href={`/invite/${year}/${round}/check`}
+          className="block w-full py-2.5 bg-white text-[#0066B3] border border-[#0066B3]/30 rounded-xl font-medium text-sm text-center hover:bg-blue-50 transition-colors"
+        >
+          신청 확인하기
+        </Link>
       </div>
     </div>
   );

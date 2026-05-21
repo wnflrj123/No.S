@@ -142,13 +142,41 @@ export function totalHeadcount(selections: RoundSelection[]): number {
 }
 
 /**
+ * 같은 invite + 같은 이름(trim) + 같은 전화번호인 active 신청을 찾는다.
+ * supersede 흐름의 1차 체크에 사용.
+ */
+export async function findActiveDuplicate(
+  inviteId: string,
+  name: string,
+  phone: string,
+): Promise<InviteRegistration | null> {
+  const trimmedName = name.trim();
+  const q = await adminDb
+    .collection(REGISTRATIONS_COLLECTION)
+    .where('inviteId', '==', inviteId)
+    .where('phone', '==', phone)
+    .get();
+  if (q.empty) return null;
+  for (const doc of q.docs) {
+    const data = doc.data() as Omit<InviteRegistration, 'id'>;
+    const status = data.status ?? 'active';
+    if (status === 'active' && data.name.trim() === trimmedName) {
+      return { id: doc.id, ...data };
+    }
+  }
+  return null;
+}
+
+/**
  * 검증된 페이로드로 신청 문서를 생성하고 invite.stats를 갱신한다.
- * registration 생성과 stats 증가를 batch로 묶어 부분 실패를 방지한다.
- * 반환: 생성된 registration id와 accessToken.
+ * 같은 이름·휴대폰의 active 중복이 있으면 함께 superseded로 표시하고 stats를 보정한다.
+ *
+ * @param supersedeId — 미리 조회한 중복 active registration의 id (있으면 supersede 처리)
  */
 export async function createRegistration(
   invite: Invite,
   payload: RegisterPayload,
+  supersedeId?: string,
 ): Promise<{ id: string; token: string }> {
   const token = generateAccessToken();
   const now = Timestamp.now();
@@ -171,6 +199,7 @@ export async function createRegistration(
     privacyConsent: true as const,
     accessToken: token,
     isSponsor: false,
+    status: 'active' as const,
     createdAt: now,
   };
 
@@ -184,9 +213,71 @@ export async function createRegistration(
     'stats.totalHeadcount': FieldValue.increment(totalHc),
     updatedAt: now,
   });
+
+  // 같은 이름·휴대폰의 기존 active 신청을 superseded로 변경하고 stats를 차감한다.
+  if (supersedeId) {
+    const oldRef = adminDb.collection(REGISTRATIONS_COLLECTION).doc(supersedeId);
+    const oldSnap = await oldRef.get();
+    if (oldSnap.exists) {
+      const oldData = oldSnap.data() as Omit<InviteRegistration, 'id'>;
+      const oldStatus = oldData.status ?? 'active';
+      if (oldStatus === 'active') {
+        const oldHc = totalHeadcount(oldData.roundSelections);
+        batch.update(oldRef, {
+          status: 'superseded',
+          supersededAt: now,
+          supersededByRegId: regRef.id,
+        });
+        batch.update(inviteRef, {
+          'stats.totalRegistrations': FieldValue.increment(-1),
+          'stats.totalHeadcount': FieldValue.increment(-oldHc),
+          ...(oldData.isSponsor ? { 'stats.totalSponsors': FieldValue.increment(-1) } : {}),
+        });
+      }
+    }
+  }
+
   await batch.commit();
 
   return { id: regRef.id, token };
+}
+
+/**
+ * Admin이 신청 하나를 hard delete. stats도 active였던 경우에만 차감.
+ * 반환: 삭제 성공 여부.
+ */
+export async function deleteRegistration(regId: string): Promise<boolean> {
+  const ref = adminDb.collection(REGISTRATIONS_COLLECTION).doc(regId);
+  const snap = await ref.get();
+  if (!snap.exists) return false;
+  const data = snap.data() as Omit<InviteRegistration, 'id'>;
+  const status = data.status ?? 'active';
+  const wasActive = status === 'active';
+  const hc = totalHeadcount(data.roundSelections);
+  const inviteRef = adminDb.collection(INVITES_COLLECTION).doc(data.inviteId);
+
+  const batch = adminDb.batch();
+  batch.delete(ref);
+  if (wasActive) {
+    batch.update(inviteRef, {
+      'stats.totalRegistrations': FieldValue.increment(-1),
+      'stats.totalHeadcount': FieldValue.increment(-hc),
+      ...(data.isSponsor ? { 'stats.totalSponsors': FieldValue.increment(-1) } : {}),
+    });
+  }
+  await batch.commit();
+  return true;
+}
+
+/**
+ * 이름·휴대폰으로 active 신청 단건 조회 (신청 확인 페이지용).
+ */
+export async function lookupActiveRegistration(
+  inviteId: string,
+  name: string,
+  phone: string,
+): Promise<InviteRegistration | null> {
+  return findActiveDuplicate(inviteId, name, phone);
 }
 
 export async function findRegistrationByToken(token: string): Promise<InviteRegistration | null> {
@@ -226,7 +317,10 @@ export async function listRegistrationsServer(
       .where('inviteId', '==', inviteId)
       .get();
   }
-  const all = snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<InviteRegistration, 'id'>) }));
+  const all = snap.docs
+    .map(d => ({ id: d.id, ...(d.data() as Omit<InviteRegistration, 'id'>) }))
+    // SMS 발송은 active 신청자에게만 보낸다 (superseded는 제외)
+    .filter(r => (r.status ?? 'active') === 'active');
   if (target === 'round' && typeof roundNo === 'number') {
     return all.filter(r => r.roundSelections.some(s => s.roundNo === roundNo));
   }

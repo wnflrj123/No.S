@@ -8,19 +8,25 @@ interface Props {
 }
 
 export default function AnswersDigest({ registrations }: Props) {
-  const cheers = useMemo(
-    () => registrations.filter(r => r.cheerMessage?.trim()).map(r => ({ name: r.name, msg: r.cheerMessage! })),
+  // 취소된(superseded) 신청은 항목별 답변 집계에서 제외
+  const activeRegs = useMemo(
+    () => registrations.filter(r => (r.status ?? 'active') === 'active'),
     [registrations],
   );
 
+  const cheers = useMemo(
+    () => activeRegs.filter(r => r.cheerMessage?.trim()).map(r => ({ name: r.name, msg: r.cheerMessage! })),
+    [activeRegs],
+  );
+
   const seats = useMemo(
-    () => registrations.filter(r => r.seatRequests?.trim()).map(r => ({ name: r.name, msg: r.seatRequests! })),
-    [registrations],
+    () => activeRegs.filter(r => r.seatRequests?.trim()).map(r => ({ name: r.name, msg: r.seatRequests! })),
+    [activeRegs],
   );
 
   const actorRanking = useMemo(() => {
     const counter = new Map<string, number>();
-    for (const r of registrations) {
+    for (const r of activeRegs) {
       const text = (r.supportingActors ?? '').trim();
       if (!text) continue;
       for (const raw of text.split(/[,/\s]+/)) {
@@ -30,7 +36,7 @@ export default function AnswersDigest({ registrations }: Props) {
       }
     }
     return Array.from(counter.entries()).sort((a, b) => b[1] - a[1]);
-  }, [registrations]);
+  }, [activeRegs]);
 
   return (
     <div className="grid md:grid-cols-2 gap-4">

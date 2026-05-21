@@ -125,12 +125,19 @@ export default function InviteAdminDetailPage() {
                 항목별 답변
               </TabButton>
               <TabButton active={tab === 'sponsors'} onClick={() => setTab('sponsors')}>
-                후원자 ({regs.filter(r => r.isSponsor).length})
+                후원자 ({regs.filter(r => r.isSponsor && (r.status ?? 'active') === 'active').length})
               </TabButton>
             </nav>
 
             <section className="mt-6">
-              {tab === 'all' && <RegistrationsTable registrations={regs} />}
+              {tab === 'all' && (
+                <RegistrationsTable
+                  registrations={regs}
+                  year={Number(params.year)}
+                  round={Number(params.round)}
+                  onDeleted={regId => setRegs(prev => prev.filter(r => r.id !== regId))}
+                />
+              )}
               {tab === 'answers' && <AnswersDigest registrations={regs} />}
               {tab === 'sponsors' && <SponsorsTab registrations={regs} />}
             </section>

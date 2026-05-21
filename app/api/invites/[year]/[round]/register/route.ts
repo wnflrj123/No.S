@@ -1,6 +1,7 @@
 import { after, NextResponse } from 'next/server';
 import {
   createRegistration,
+  findActiveDuplicate,
   getInvite,
   validateRegistrationPayload,
 } from '@/lib/invites/server';
@@ -42,7 +43,20 @@ export async function POST(req: Request, { params }: RouteParams) {
 
   try {
     const typed = payload as RegisterPayload;
-    const { id, token } = await createRegistration(invite, typed);
+
+    // 중복(같은 이름+전화번호 active) 체크
+    const existing = await findActiveDuplicate(invite.id, typed.name, typed.phone);
+    if (existing && !typed.confirmSupersede) {
+      return NextResponse.json(
+        {
+          message: '이미 같은 이름·전화번호로 신청한 내역이 있어요. 새로 신청하시면 기존 신청은 취소됩니다.',
+          duplicate: true,
+        },
+        { status: 409 },
+      );
+    }
+
+    const { id, token } = await createRegistration(invite, typed, existing?.id);
 
     // 신청 완료 자동 LMS 발송. after()로 응답 후 background에서 안전하게 처리.
     // Vercel serverless 환경에서 응답 직후 컨테이너 동결로 fire-and-forget이 끊기는 문제를 회피.

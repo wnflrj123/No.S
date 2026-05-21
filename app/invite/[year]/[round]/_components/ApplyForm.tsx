@@ -29,6 +29,7 @@ export default function ApplyForm({ invite }: { invite: FormInvite }) {
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const [duplicateConfirm, setDuplicateConfirm] = useState<string | null>(null);
 
   const handlePhoneChange = (v: string) => {
     const digits = v.replace(/\D/g, '').slice(0, 11);
@@ -68,15 +69,9 @@ export default function ApplyForm({ invite }: { invite: FormInvite }) {
     return '서버 검증에 실패했습니다: ' + list.join(', ');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const errs = validate();
-    if (errs.length > 0) {
-      setErrors(errs);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
+  const submitRegistration = async (confirmSupersede: boolean) => {
     setErrors([]);
+    setDuplicateConfirm(null);
     setSubmitting(true);
     try {
       const roundSelections = Object.entries(selections)
@@ -95,9 +90,17 @@ export default function ApplyForm({ invite }: { invite: FormInvite }) {
           seatRequests: isOn('seatRequests') ? seatRequests.trim() || undefined : undefined,
           cheerMessage: isOn('cheerMessage') ? cheerMessage.trim() || undefined : undefined,
           privacyConsent: true,
+          confirmSupersede,
         }),
       });
 
+      if (res.status === 409) {
+        const data = await res.json().catch(() => ({}));
+        // 중복 안내. 확인 모달 띄움.
+        setDuplicateConfirm(data?.message ?? '이미 신청 내역이 있어요. 새로 신청하면 기존 신청은 취소됩니다.');
+        setSubmitting(false);
+        return;
+      }
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         if (Array.isArray(data?.errors) && data.errors.length > 0) {
@@ -115,6 +118,17 @@ export default function ApplyForm({ invite }: { invite: FormInvite }) {
       setErrors(['네트워크 오류가 발생했습니다. 다시 시도해주세요.']);
       setSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const errs = validate();
+    if (errs.length > 0) {
+      setErrors(errs);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    await submitRegistration(false);
   };
 
   return (
@@ -232,6 +246,40 @@ export default function ApplyForm({ invite }: { invite: FormInvite }) {
       >
         {submitting ? '신청 중…' : '신청 완료하기'}
       </button>
+
+      {duplicateConfirm && (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+          onClick={() => setDuplicateConfirm(null)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-sm w-full p-5"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="text-4xl text-center mb-3">📝</div>
+            <h4 className="font-bold text-gray-900 text-center text-lg">이미 신청 내역이 있어요</h4>
+            <p className="text-sm text-gray-600 text-center mt-2 leading-relaxed whitespace-pre-line">
+              {duplicateConfirm}
+            </p>
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setDuplicateConfirm(null)}
+                className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => submitRegistration(true)}
+                className="flex-1 py-2.5 bg-[#0066B3] text-white rounded-lg text-sm font-semibold hover:bg-[#0055a0]"
+              >
+                새로 신청하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

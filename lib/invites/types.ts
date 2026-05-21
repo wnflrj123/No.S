@@ -133,6 +133,15 @@ export interface InviteRegistration {
   isSponsor: boolean;
   sponsorCheckedAt?: Timestamp;
   createdAt: Timestamp;
+
+  /**
+   * 신청 상태.
+   *  - 'active' (기본/누락): 정상 신청. 통계·SMS·확인 페이지 대상
+   *  - 'superseded': 같은 이름·휴대폰의 새 신청에 의해 대체됨. 로그로만 남음
+   */
+  status?: 'active' | 'superseded';
+  supersededAt?: Timestamp;
+  supersededByRegId?: string; // 대체한 새 registration id
 }
 
 // ─── 클라이언트 페이로드 (API 입력) ─────────────────────────
@@ -146,4 +155,6 @@ export interface RegisterPayload {
   seatRequests?: string;
   cheerMessage?: string;
   privacyConsent: boolean;
+  /** 같은 이름·휴대폰 active 신청이 있어도 새 신청을 우선시(이전을 superseded로 표시)할지 */
+  confirmSupersede?: boolean;
 }

@@ -10,14 +10,16 @@ interface Props {
 
 export default function StatsCards({ invite, registrations }: Props) {
   const stats = useMemo(() => {
-    const totalRegs = registrations.length;
-    const totalHc = registrations.reduce(
+    // superseded(취소된 이전 신청)는 통계에서 제외
+    const active = registrations.filter(r => (r.status ?? 'active') === 'active');
+    const totalRegs = active.length;
+    const totalHc = active.reduce(
       (sum, r) => sum + r.roundSelections.reduce((s, x) => s + x.headcount, 0),
       0,
     );
-    const sponsors = registrations.filter(r => r.isSponsor).length;
+    const sponsors = active.filter(r => r.isSponsor).length;
     const byRound = new Map<number, number>();
-    for (const r of registrations) {
+    for (const r of active) {
       for (const sel of r.roundSelections) {
         byRound.set(sel.roundNo, (byRound.get(sel.roundNo) ?? 0) + sel.headcount);
       }

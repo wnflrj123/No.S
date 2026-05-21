@@ -9,79 +9,91 @@ import type { SponsorAccount } from '@/lib/invites/types';
 const CONFETTI_COLORS = [
   '#0066B3', '#3a8fd6', '#ffd700', '#ff6b6b', '#ff85a2',
   '#a8e6cf', '#fff', '#ffb347', '#c084fc', '#34d399',
+  '#f472b6', '#facc15', '#06b6d4',
 ];
 
 /**
- * 후원 클릭 시 발사되는 화려한 효과.
- *  1. 즉시 중앙 큰 burst
- *  2. 좌우 사이드 burst
- *  3. 꽃다발(💐) emoji confetti 큰 입자
- *  4. 6초간 화면 곳곳에서 반복 폭죽
+ * 후원 클릭 시 발사되는 야단법석 효과.
+ *  1. 화면 양옆에서 비스듬히 큰 burst (4번 빵빵빵빵)
+ *  2. 꽃다발·꽃·하트·별 emoji confetti가 사방에서 떨어짐
+ *  3. 12초간 화면 전 영역 폭죽 (간격 짧게, 입자 많이)
+ *  4. 화면 진동 (vibrate API, 지원 시)
  */
 function fireConfetti(): () => void {
   const burst = (opts: confetti.Options) =>
     confetti({ colors: CONFETTI_COLORS, ...opts, zIndex: 50 });
 
-  // 1) 중앙·좌·우 큰 burst
-  burst({ particleCount: 150, spread: 80, origin: { y: 0.55 }, startVelocity: 55 });
-  setTimeout(() => burst({ particleCount: 100, angle: 60, spread: 80, origin: { x: 0, y: 0.7 }, startVelocity: 60 }), 150);
-  setTimeout(() => burst({ particleCount: 100, angle: 120, spread: 80, origin: { x: 1, y: 0.7 }, startVelocity: 60 }), 150);
-  setTimeout(() => burst({ particleCount: 80, spread: 120, startVelocity: 50, origin: { y: 0.4 }, scalar: 1.2 }), 400);
+  // 1) 양옆 + 중앙 + 위쪽 4단계 큰 burst
+  burst({ particleCount: 220, spread: 90, origin: { y: 0.55 }, startVelocity: 65 });
+  setTimeout(() => burst({ particleCount: 160, angle: 60, spread: 100, origin: { x: 0, y: 0.7 }, startVelocity: 70 }), 100);
+  setTimeout(() => burst({ particleCount: 160, angle: 120, spread: 100, origin: { x: 1, y: 0.7 }, startVelocity: 70 }), 100);
+  setTimeout(() => burst({ particleCount: 200, spread: 360, startVelocity: 60, origin: { y: 0.35 }, scalar: 1.2 }), 350);
+  setTimeout(() => burst({ particleCount: 120, angle: 90, spread: 60, origin: { x: 0.5, y: 1 }, startVelocity: 90 }), 600);
 
-  // 2) 꽃다발 emoji confetti — 큰 입자, 천천히 떨어짐
+  // 2) 꽃다발·꽃·하트·별 emoji confetti (여러 차례)
   try {
-    const bouquet = confetti.shapeFromText({ text: '💐', scalar: 3 });
-    const flower = confetti.shapeFromText({ text: '🌸', scalar: 2 });
-    setTimeout(() => {
-      confetti({
-        shapes: [bouquet, flower],
-        scalar: 3,
-        particleCount: 25,
-        spread: 100,
-        startVelocity: 35,
-        gravity: 0.6,
-        ticks: 300,
-        origin: { y: 0.3 },
-        zIndex: 50,
-      });
-    }, 300);
-    setTimeout(() => {
-      confetti({
-        shapes: [bouquet],
-        scalar: 4,
-        particleCount: 12,
-        spread: 140,
-        startVelocity: 30,
-        gravity: 0.5,
-        ticks: 400,
-        origin: { y: 0.2 },
-        zIndex: 50,
-      });
-    }, 800);
+    const bouquet = confetti.shapeFromText({ text: '💐', scalar: 3.5 });
+    const flower = confetti.shapeFromText({ text: '🌸', scalar: 2.5 });
+    const heart = confetti.shapeFromText({ text: '💝', scalar: 2.5 });
+    const star = confetti.shapeFromText({ text: '⭐', scalar: 2.5 });
+    const rose = confetti.shapeFromText({ text: '🌹', scalar: 2.5 });
+
+    const emojiRain = (delay: number, shapes: confetti.Shape[], count: number) => {
+      setTimeout(() => {
+        confetti({
+          shapes,
+          scalar: 3,
+          particleCount: count,
+          spread: 140,
+          startVelocity: 40,
+          gravity: 0.7,
+          ticks: 300,
+          origin: { x: Math.random(), y: 0.1 + Math.random() * 0.2 },
+          zIndex: 50,
+        });
+      }, delay);
+    };
+    emojiRain(200, [bouquet, flower], 30);
+    emojiRain(700, [heart, star], 25);
+    emojiRain(1300, [bouquet, rose], 25);
+    emojiRain(2200, [flower, heart, star], 30);
+    emojiRain(3500, [bouquet], 20);
+    emojiRain(5000, [rose, flower], 25);
+    emojiRain(7000, [bouquet, heart, star], 30);
   } catch {
-    // shapeFromText는 modern 브라우저 한정. 실패해도 다른 효과는 계속 동작.
+    // shapeFromText 미지원 브라우저
   }
 
-  // 3) 6초간 화면 곳곳에서 반복 폭죽
-  const duration = 6000;
+  // 3) 12초간 화면 전 영역 폭죽 (250ms 간격, 더 빈번하게)
+  const duration = 12000;
   const animationEnd = Date.now() + duration;
   const interval = setInterval(() => {
     if (Date.now() > animationEnd) {
       clearInterval(interval);
       return;
     }
-    const particleCount = 40 + Math.floor(Math.random() * 30);
+    const particleCount = 60 + Math.floor(Math.random() * 50);
     burst({
-      startVelocity: 25 + Math.random() * 15,
+      startVelocity: 30 + Math.random() * 25,
       spread: 360,
-      ticks: 60,
+      ticks: 80,
       particleCount,
+      scalar: 0.8 + Math.random() * 0.8,
       origin: {
         x: Math.random(),
-        y: Math.random() * 0.6,
+        y: Math.random() * 0.7,
       },
     });
-  }, 350);
+  }, 250);
+
+  // 4) 진동 (지원 기기만)
+  try {
+    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+      navigator.vibrate([100, 50, 100, 50, 200]);
+    }
+  } catch {
+    // noop
+  }
 
   return () => clearInterval(interval);
 }
@@ -104,14 +116,16 @@ export default function ThanksContent(p: ThanksContentProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // thanked가 되는 순간 화려한 효과 발사. 6초 폭죽 + 3초 후 한 번 더.
+  // thanked가 되는 순간 야단법석 효과. 12초 폭죽 + 4초, 8초 후 한 번씩 더 = 약 20초 화려함
   useEffect(() => {
     if (!thanked) return;
     const stop1 = fireConfetti();
-    const tid = setTimeout(() => fireConfetti(), 3000);
+    const t1 = setTimeout(() => fireConfetti(), 4000);
+    const t2 = setTimeout(() => fireConfetti(), 8000);
     return () => {
       stop1();
-      clearTimeout(tid);
+      clearTimeout(t1);
+      clearTimeout(t2);
     };
   }, [thanked]);
 
@@ -139,7 +153,7 @@ export default function ThanksContent(p: ThanksContentProps) {
 
   if (thanked) {
     return (
-      <main className="relative min-h-dvh overflow-hidden text-white px-5 py-20 flex flex-col items-center justify-center thanks-bg">
+      <main className="relative min-h-dvh overflow-hidden text-white px-5 py-20 flex flex-col items-center justify-center thanks-bg thanks-shake">
         {/* 메시지 */}
         <div className="relative z-10 flex flex-col items-center text-center">
           <h1 className="text-5xl sm:text-6xl font-extrabold mb-6 drop-shadow-2xl tracking-tight thanks-headline">
