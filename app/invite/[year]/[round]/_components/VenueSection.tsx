@@ -36,7 +36,7 @@ export default function VenueSection({ venue }: { venue: Venue }) {
         </p>
       )}
       {showEmbed && (
-        <div className="mt-4 rounded-xl overflow-hidden border border-gray-200 aspect-[16/10] bg-gray-100">
+        <div className="mt-4 mx-auto max-w-xl rounded-xl overflow-hidden border border-gray-200 aspect-[16/9] bg-gray-100">
           <iframe
             src={venue.mapEmbedUrl}
             title={`${venue.name} 지도`}
