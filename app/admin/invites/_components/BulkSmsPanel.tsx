@@ -17,7 +17,7 @@ interface SendResult {
   total: number;
   success: number;
   failure: number;
-  failures: { name: string; phone: string }[];
+  failures: { name: string; phone: string; error?: string }[];
 }
 
 const COST_PER_LMS = 33; // 원 단위, 예상 표시용
@@ -196,9 +196,14 @@ export default function BulkSmsPanel({ invite, registrations }: Props) {
           {result.failures.length > 0 && (
             <div className="mt-2 text-xs text-gray-700">
               <div className="font-medium">실패 목록:</div>
-              <ul className="mt-1 space-y-0.5">
+              <ul className="mt-1 space-y-1">
                 {result.failures.map((f, i) => (
-                  <li key={i}>• {f.name} ({f.phone})</li>
+                  <li key={i}>
+                    <span className="font-medium">{f.name}</span> ({f.phone})
+                    {f.error && (
+                      <div className="text-red-600 ml-3 break-all">↳ {f.error}</div>
+                    )}
+                  </li>
                 ))}
               </ul>
             </div>

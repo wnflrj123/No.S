@@ -101,6 +101,7 @@ export async function POST(req: Request, { params }: RouteParams) {
     total: regs.length,
     success: success.length,
     failure: failures.length,
-    failures: failures.map(f => ({ name: f.name, phone: f.phone })),
+    // 운영자가 실패 원인을 즉시 볼 수 있도록 솔라피 에러 메시지도 함께 반환
+    failures: failures.map(f => ({ name: f.name, phone: f.phone, error: f.error })),
   });
 }
