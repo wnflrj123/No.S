@@ -30,7 +30,7 @@ export default function BulkSmsPanel({ invite, registrations }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<SendResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const targetRegs = useMemo(() => {
     if (targetType === 'sponsors') return registrations.filter(r => r.isSponsor);
@@ -48,7 +48,8 @@ export default function BulkSmsPanel({ invite, registrations }: Props) {
 
   const estimatedCost = targetRegs.length * COST_PER_LMS;
 
-  const handleSend = async () => {
+  const openConfirm = () => {
+    setError(null);
     if (targetRegs.length === 0) {
       setError('발송 대상이 없습니다.');
       return;
@@ -57,11 +58,11 @@ export default function BulkSmsPanel({ invite, registrations }: Props) {
       setError('메시지를 입력해주세요.');
       return;
     }
-    const ok = window.confirm(
-      `${targetRegs.length}명에게 LMS를 발송합니다.\n예상 비용: 약 ${estimatedCost.toLocaleString()}원\n\n계속하시겠어요? (취소 불가)`,
-    );
-    if (!ok) return;
+    setShowConfirm(true);
+  };
 
+  const handleSend = async () => {
+    setShowConfirm(false);
     setSubmitting(true);
     setError(null);
     setResult(null);
@@ -171,23 +172,15 @@ export default function BulkSmsPanel({ invite, registrations }: Props) {
         </div>
       </div>
 
-      {/* 액션 */}
-      <div className="flex gap-2 pt-1">
+      {/* 액션 — 발송 버튼 클릭 시 메시지 미리보기 + 확인 모달 */}
+      <div className="pt-1">
         <button
           type="button"
-          onClick={() => setShowPreview(true)}
-          disabled={targetRegs.length === 0}
-          className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-        >
-          미리보기
-        </button>
-        <button
-          type="button"
-          onClick={handleSend}
+          onClick={openConfirm}
           disabled={submitting || targetRegs.length === 0}
-          className="flex-1 px-4 py-2 bg-[#0066B3] text-white rounded-lg text-sm font-semibold hover:bg-[#0055a0] disabled:bg-gray-300"
+          className="w-full px-4 py-3 bg-[#0066B3] text-white rounded-lg text-sm font-semibold hover:bg-[#0055a0] disabled:bg-gray-300"
         >
-          {submitting ? '발송 중…' : `발송 (${targetRegs.length}건)`}
+          {submitting ? '발송 중…' : `발송 확인 (${targetRegs.length}건)`}
         </button>
       </div>
 
@@ -213,28 +206,68 @@ export default function BulkSmsPanel({ invite, registrations }: Props) {
         </div>
       )}
 
-      {/* 미리보기 모달 */}
-      {showPreview && (
+      {/* 발송 확인 모달 — 메시지 본문 + 인원수 + 비용 + 발송/취소 */}
+      {showConfirm && (
         <div
           className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
-          onClick={() => setShowPreview(false)}
+          onClick={() => setShowConfirm(false)}
         >
           <div
-            className="bg-white rounded-xl max-w-md w-full p-5 max-h-[80vh] overflow-auto"
+            className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] flex flex-col"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-bold text-gray-900">미리보기</h4>
-              <button onClick={() => setShowPreview(false)} className="text-gray-400">✕</button>
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+              <h4 className="font-bold text-gray-900">이렇게 보낼게요. 진짜 발송할까요?</h4>
+              <button onClick={() => setShowConfirm(false)} className="text-gray-400 text-lg">✕</button>
             </div>
-            <div className="text-xs text-gray-500 mb-2">
-              첫 번째 대상자({targetRegs[0]?.name})의 치환 결과입니다.
-              <br />
-              치환 후 글자수: {previewText.length}자
+
+            <div className="p-5 overflow-auto space-y-3">
+              <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="bg-gray-50 rounded-lg p-2">
+                  <div className="text-gray-500">발송 인원</div>
+                  <div className="text-gray-900 font-bold text-lg mt-0.5">{targetRegs.length}명</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-2">
+                  <div className="text-gray-500">예상 비용</div>
+                  <div className="text-gray-900 font-bold text-lg mt-0.5">
+                    ~{estimatedCost.toLocaleString()}원
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-2">
+                  <div className="text-gray-500">글자수</div>
+                  <div className="text-gray-900 font-bold text-lg mt-0.5">{previewText.length}자</div>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs text-gray-500 mb-1">
+                  미리보기 (첫 번째 대상자 <strong>{targetRegs[0]?.name}</strong>의 치환 결과)
+                </div>
+                <pre className="text-sm whitespace-pre-wrap bg-gray-50 p-3 rounded-lg border border-gray-200 font-sans leading-relaxed">
+                  {previewText}
+                </pre>
+                <p className="text-xs text-gray-500 mt-2">
+                  실제로는 각 신청자의 이름·회차·인원에 맞춰 개별 치환되어 발송됩니다.
+                </p>
+              </div>
             </div>
-            <pre className="text-sm whitespace-pre-wrap bg-gray-50 p-3 rounded-lg border border-gray-200 font-sans">
-              {previewText}
-            </pre>
+
+            <div className="p-5 border-t border-gray-100 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleSend}
+                className="flex-1 px-4 py-2.5 bg-[#0066B3] text-white rounded-lg text-sm font-semibold hover:bg-[#0055a0]"
+              >
+                네, 발송할게요
+              </button>
+            </div>
           </div>
         </div>
       )}
