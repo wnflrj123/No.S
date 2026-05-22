@@ -23,16 +23,15 @@ function fireConfetti(): () => void {
   const burst = (opts: confetti.Options) =>
     confetti({ colors: CONFETTI_COLORS, ...opts, zIndex: 9999, disableForReducedMotion: false });
 
-  // 1) 중앙·좌·우 3방향 가벼운 burst
-  burst({ particleCount: 100, spread: 80, origin: { y: 0.6 }, startVelocity: 50 });
-  setTimeout(() => burst({ particleCount: 70, angle: 60, spread: 75, origin: { x: 0, y: 0.7 }, startVelocity: 55 }), 150);
-  setTimeout(() => burst({ particleCount: 70, angle: 120, spread: 75, origin: { x: 1, y: 0.7 }, startVelocity: 55 }), 150);
+  // 1) 중앙·좌·우 3방향 burst (입자 조금 줄임)
+  burst({ particleCount: 80, spread: 80, origin: { y: 0.6 }, startVelocity: 50 });
+  setTimeout(() => burst({ particleCount: 50, angle: 60, spread: 75, origin: { x: 0, y: 0.7 }, startVelocity: 55 }), 150);
+  setTimeout(() => burst({ particleCount: 50, angle: 120, spread: 75, origin: { x: 1, y: 0.7 }, startVelocity: 55 }), 150);
 
-  // 2) 꽃다발 emoji confetti 3회 (적당히)
+  // 2) 꽃다발 emoji confetti 2회로 축소
   try {
     const bouquet = confetti.shapeFromText({ text: '💐', scalar: 3 });
     const flower = confetti.shapeFromText({ text: '🌸', scalar: 2.2 });
-    const heart = confetti.shapeFromText({ text: '💝', scalar: 2.2 });
 
     const emojiRain = (delay: number, shapes: confetti.Shape[], count: number) => {
       setTimeout(() => {
@@ -43,21 +42,20 @@ function fireConfetti(): () => void {
           spread: 130,
           startVelocity: 35,
           gravity: 0.7,
-          ticks: 280,
+          ticks: 240,
           origin: { x: Math.random(), y: 0.1 + Math.random() * 0.2 },
           zIndex: 9999,
         });
       }, delay);
     };
-    emojiRain(300, [bouquet, flower], 14);
-    emojiRain(1500, [heart, bouquet], 12);
-    emojiRain(3500, [flower, heart], 12);
+    emojiRain(300, [bouquet, flower], 10);
+    emojiRain(2200, [flower, bouquet], 10);
   } catch {
     // shapeFromText 미지원 브라우저
   }
 
-  // 3) 7초간 적당한 빈도로 폭죽 (300ms 간격)
-  const duration = 7000;
+  // 3) 5초간 폭죽 (500ms 간격 — 모바일 fps 부담 감소)
+  const duration = 5000;
   const animationEnd = Date.now() + duration;
   const interval = setInterval(() => {
     if (Date.now() > animationEnd) {
@@ -67,15 +65,15 @@ function fireConfetti(): () => void {
     burst({
       startVelocity: 30 + Math.random() * 20,
       spread: 360,
-      ticks: 80,
-      particleCount: 40 + Math.floor(Math.random() * 30),
-      scalar: 0.8 + Math.random() * 0.5,
+      ticks: 70,
+      particleCount: 25 + Math.floor(Math.random() * 20),
+      scalar: 0.8 + Math.random() * 0.4,
       origin: {
         x: Math.random(),
         y: Math.random() * 0.7,
       },
     });
-  }, 300);
+  }, 500);
 
   // 4) 짧은 진동 1회 (지원 기기만)
   try {
@@ -108,15 +106,11 @@ export default function ThanksContent(p: ThanksContentProps) {
   const [error, setError] = useState<string | null>(null);
   const [showAccount, setShowAccount] = useState(false);
 
-  // thanked가 되는 순간 귀여운 폭죽. 7초 시퀀스 + 5초 시점에 한 번 더 → 약 12초 화려함
+  // thanked 순간 한 번만 발사 (5초 시퀀스). 부담 감소 + 자연스럽게 마무리.
   useEffect(() => {
     if (!thanked) return;
-    const stop1 = fireConfetti();
-    const t1 = setTimeout(() => fireConfetti(), 5000);
-    return () => {
-      stop1();
-      clearTimeout(t1);
-    };
+    const stop = fireConfetti();
+    return () => stop();
   }, [thanked]);
 
   const handleSponsor = async () => {

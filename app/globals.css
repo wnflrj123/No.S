@@ -247,9 +247,10 @@ body {
   100% { background-position: 0% 50%; }
 }
 .thanks-bg {
-  background: linear-gradient(135deg, #0066B3, #1b7fc4, #6b46c1, #ec4899, #f59e0b, #1b7fc4, #0066B3);
-  background-size: 400% 400%;
-  animation: thanksBgShift 12s ease-in-out infinite;
+  /* 색상 6종 + cycle 늦춤(18s)으로 GPU 부담 감소 */
+  background: linear-gradient(135deg, #0066B3, #1b7fc4, #6b46c1, #ec4899, #f59e0b, #0066B3);
+  background-size: 300% 300%;
+  animation: thanksBgShift 18s ease-in-out infinite;
 }
 
 @keyframes thanksHeadlinePulse {
@@ -289,7 +290,8 @@ body {
   position: absolute;
   top: 0;
   pointer-events: none;
-  animation: petalFall var(--dur, 10s) linear infinite;
+  /* both: delay 동안에도 0% 키프레임 값 적용 → 시작부터 -120vh에 위치 */
+  animation: petalFall var(--dur, 10s) linear infinite both;
   animation-delay: var(--delay, 0s);
   /* will-change + backface-visibility만으로 GPU 합성. transform inline은 keyframe과 충돌하므로 제거. */
   will-change: transform, opacity;
