@@ -21,7 +21,7 @@ const CONFETTI_COLORS = [
  */
 function fireConfetti(): () => void {
   const burst = (opts: confetti.Options) =>
-    confetti({ colors: CONFETTI_COLORS, ...opts, zIndex: 50 });
+    confetti({ colors: CONFETTI_COLORS, ...opts, zIndex: 9999, disableForReducedMotion: false });
 
   // 1) 양옆 + 중앙 + 위쪽 4단계 큰 burst
   burst({ particleCount: 220, spread: 90, origin: { y: 0.55 }, startVelocity: 65 });
@@ -49,7 +49,7 @@ function fireConfetti(): () => void {
           gravity: 0.7,
           ticks: 300,
           origin: { x: Math.random(), y: 0.1 + Math.random() * 0.2 },
-          zIndex: 50,
+          zIndex: 9999,
         });
       }, delay);
     };

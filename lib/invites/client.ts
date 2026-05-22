@@ -38,6 +38,7 @@ export interface InviteWriteInput {
   sponsorAccount: Invite['sponsorAccount'];
   thanksMessage?: string;
   disabledFields?: Invite['disabledFields'];
+  disableWallSupport?: boolean;
   isPublished: boolean;
 }
 
@@ -102,6 +103,7 @@ export async function upsertInvite(
       sponsorAccount: input.sponsorAccount,
       thanksMessage: input.thanksMessage || '',
       disabledFields: input.disabledFields ?? [],
+      disableWallSupport: input.disableWallSupport ?? false,
       isPublished: input.isPublished,
       stats: EMPTY_STATS,
       createdAt: serverTimestamp(),
@@ -123,6 +125,7 @@ export async function upsertInvite(
       sponsorAccount: input.sponsorAccount,
       thanksMessage: input.thanksMessage || '',
       disabledFields: input.disabledFields ?? [],
+      disableWallSupport: input.disableWallSupport ?? false,
       isPublished: input.isPublished,
       updatedAt: serverTimestamp(),
     });

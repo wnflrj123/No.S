@@ -26,6 +26,8 @@ interface Props {
   title: string;
   overline?: string;
   sponsorAccount: SponsorAccount;
+  /** true면 '응원 꽃다발 보내기' 버튼 숨김 (현장 후원자 받기 OFF) */
+  disableWallSupport: boolean;
 }
 
 const CONFETTI_COLORS = [
@@ -36,7 +38,7 @@ const CONFETTI_COLORS = [
 
 function celebrateNewSupporter(name: string) {
   const burst = (opts: confetti.Options) =>
-    confetti({ colors: CONFETTI_COLORS, ...opts, zIndex: 60 });
+    confetti({ colors: CONFETTI_COLORS, ...opts, zIndex: 9999, disableForReducedMotion: false });
 
   burst({ particleCount: 180, spread: 90, origin: { y: 0.55 }, startVelocity: 65 });
   setTimeout(() => burst({ particleCount: 120, angle: 60, spread: 80, origin: { x: 0, y: 0.7 } }), 120);
@@ -56,7 +58,7 @@ function celebrateNewSupporter(name: string) {
         gravity: 0.6,
         ticks: 300,
         origin: { y: 0.2 },
-        zIndex: 60,
+        zIndex: 9999,
       });
     }, 200);
   } catch {
@@ -218,15 +220,17 @@ export default function SupporterWall(p: Props) {
         )}
       </section>
 
-      <div className="fixed bottom-0 inset-x-0 z-20 p-4 sm:p-6 flex justify-center pointer-events-none">
-        <button
-          type="button"
-          onClick={() => setShowSendModal(true)}
-          className="pointer-events-auto px-6 sm:px-8 py-3 sm:py-4 bg-white text-[#0066B3] rounded-full font-bold text-base sm:text-lg shadow-2xl hover:bg-yellow-50 transition-colors"
-        >
-          💐 응원 꽃다발 보내기
-        </button>
-      </div>
+      {!p.disableWallSupport && (
+        <div className="fixed bottom-0 inset-x-0 z-20 p-4 sm:p-6 flex justify-center pointer-events-none">
+          <button
+            type="button"
+            onClick={() => setShowSendModal(true)}
+            className="pointer-events-auto px-6 sm:px-8 py-3 sm:py-4 bg-white text-[#0066B3] rounded-full font-bold text-base sm:text-lg shadow-2xl hover:bg-yellow-50 transition-colors"
+          >
+            💐 응원 꽃다발 보내기
+          </button>
+        </div>
+      )}
 
       {/* 새 후원자 등장 셀러브레이션 오버레이 — 또이잉 등장 → 머무름 → 슈우웅 사라짐 */}
       {celebrationName && (

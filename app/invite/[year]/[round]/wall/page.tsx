@@ -21,6 +21,7 @@ export default async function WallPage({ params }: PageParams) {
       title={invite.title}
       overline={invite.overline}
       sponsorAccount={invite.sponsorAccount}
+      disableWallSupport={invite.disableWallSupport ?? false}
     />
   );
 }

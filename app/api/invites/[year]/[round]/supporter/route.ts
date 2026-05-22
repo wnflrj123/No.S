@@ -30,6 +30,9 @@ export async function POST(req: Request, { params }: RouteParams) {
   if (!invite || !invite.isPublished) {
     return NextResponse.json({ message: '공연을 찾을 수 없습니다.' }, { status: 404 });
   }
+  if (invite.disableWallSupport === true) {
+    return NextResponse.json({ message: '현재 현장 응원 등록이 받지 않고 있습니다.' }, { status: 403 });
+  }
 
   try {
     const { id } = await addSupporter(inviteIdFrom(year, round), rawName);

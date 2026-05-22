@@ -118,6 +118,11 @@ export interface Invite {
    * 예: ['seatRequests'] → 좌석 요청 입력 칸을 숨기고 서버에서도 무시.
    */
   disabledFields?: OptionalFieldKey[];
+  /**
+   * 후원자 wall에서 외부 응원자(현장 후원자) 받기 기능을 끄는지 여부.
+   * true면 '응원 꽃다발 보내기' 버튼 숨김 + API에서도 거절.
+   */
+  disableWallSupport?: boolean;
   isPublished: boolean;
   stats: InviteStats;
   createdAt: Timestamp;

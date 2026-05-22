@@ -35,6 +35,7 @@ const DEFAULT_INVITE: Omit<InviteWriteInput, 'rounds'> & { rounds: RoundFormValu
   sponsorAccount: { bankName: '', accountNumber: '', accountHolder: '' },
   thanksMessage: '',
   disabledFields: [],
+  disableWallSupport: false,
   isPublished: false,
 };
 
@@ -89,6 +90,7 @@ export default function InviteForm({ initial, createdBy, onSaved }: Props) {
         subtitle: form.subtitle?.trim() || undefined,
         thanksMessage: form.thanksMessage?.trim() || undefined,
         disabledFields: form.disabledFields ?? [],
+        disableWallSupport: form.disableWallSupport ?? false,
       };
       const id = await upsertInvite(input, createdBy, isNew);
       const [yStr, rStr] = id.split('-');
@@ -255,6 +257,24 @@ export default function InviteForm({ initial, createdBy, onSaved }: Props) {
         </ul>
       </Section>
 
+      <Section title="후원자 Wall 설정">
+        <label className="flex items-start gap-2 cursor-pointer text-sm py-1">
+          <input
+            type="checkbox"
+            checked={!form.disableWallSupport}
+            onChange={e => update('disableWallSupport', !e.target.checked)}
+            className="w-4 h-4 mt-0.5"
+          />
+          <span className="text-gray-800">
+            <strong>현장 후원자 받기</strong> (응원 꽃다발 보내기 버튼 노출)
+            <br />
+            <span className="text-xs text-gray-500">
+              끄면 wall 페이지에서 외부 응원자 등록이 차단됩니다. 이미 등록된 분은 그대로 표시.
+            </span>
+          </span>
+        </label>
+      </Section>
+
       <Section title="감사 메시지 (선택)">
         <textarea
           value={form.thanksMessage ?? ''}
@@ -331,6 +351,7 @@ function toForm(invite: Invite | null): typeof DEFAULT_INVITE {
     sponsorAccount: invite.sponsorAccount,
     thanksMessage: invite.thanksMessage ?? '',
     disabledFields: invite.disabledFields ?? [],
+    disableWallSupport: invite.disableWallSupport ?? false,
     isPublished: invite.isPublished,
   };
 }
