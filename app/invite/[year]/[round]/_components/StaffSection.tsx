@@ -6,19 +6,11 @@ interface Props {
   inviteId: string;
 }
 
-/** 직책 라벨. 사진/텍스트 두 모드에서 공통으로 쓰는 파란 톤 핀. */
-function RolePill({ role }: { role: string }) {
-  return (
-    <span className="inline-block rounded-full bg-[#0066B3]/10 px-2.5 py-0.5 text-xs font-semibold text-[#0066B3]">
-      {role}
-    </span>
-  );
-}
-
 /**
  * 제작진 소개 섹션. 공개 정보 페이지에서 캐스팅 섹션 아래에 표시.
- * - 사진 있는 직책 → 정사각 헤드샷 그리드 (상단에 먼저)
- * - 사진 없는 직책 → 직책 핀 + 이름의 크레딧 카드 그리드
+ * 공연 프로그램북 감성의 "플레이빌" 스타일 — 직책과 이름을 점선 리더로 잇는다.
+ * - 사진 있는 직책 → 정사각 헤드샷 그리드 (패널 위에 먼저)
+ * - 사진 없는 직책 → 점선 리더 크레딧 패널
  * 제작진이 없으면 아무것도 렌더하지 않는다.
  */
 export default function StaffSection({ staff, inviteId }: Props) {
@@ -31,16 +23,14 @@ export default function StaffSection({ staff, inviteId }: Props) {
   return (
     <section className="bg-gray-50 px-5 py-8">
       <h2 className="text-lg font-bold text-gray-900">제작진</h2>
-      <p className="mt-1 mb-5 text-xs text-gray-500">이 무대를 함께 만든 사람들</p>
+      <p className="mt-1 text-xs text-gray-500">이 무대를 함께 만든 사람들</p>
 
       {/* 사진 있는 직책 — 헤드샷 그리드 */}
       {photoGroups.length > 0 && (
-        <div className="mb-6 space-y-5">
+        <div className="mt-5 space-y-5">
           {photoGroups.map(group => (
             <div key={group.id}>
-              <div className="mb-2.5">
-                <RolePill role={group.role} />
-              </div>
+              <h3 className="mb-2.5 text-sm font-semibold text-gray-800">{group.role}</h3>
               <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
                 {group.members.map((m, i) => (
                   <li key={i} className="text-center">
@@ -68,21 +58,31 @@ export default function StaffSection({ staff, inviteId }: Props) {
         </div>
       )}
 
-      {/* 사진 없는 직책 — 크레딧 카드 그리드 */}
+      {/* 사진 없는 직책 — 플레이빌 점선 리더 패널 */}
       {textGroups.length > 0 && (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {textGroups.map(group => (
-            <li
-              key={group.id}
-              className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-colors hover:border-[#0066B3]/30"
-            >
-              <RolePill role={group.role} />
-              <p className="mt-2.5 text-sm font-semibold leading-snug text-gray-900">
-                {group.members.map(m => m.name).join(', ')}
-              </p>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-5 rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+          {/* 프로그램북 장식 */}
+          <div className="mb-1.5 flex items-center justify-center gap-2 text-[#0066B3]/40">
+            <span className="h-px w-8 bg-current" />
+            <span className="text-xs leading-none">✦</span>
+            <span className="h-px w-8 bg-current" />
+          </div>
+
+          <ul>
+            {textGroups.map(group => (
+              <li key={group.id} className="flex items-baseline gap-2 py-2">
+                <span className="shrink-0 text-sm text-gray-500">{group.role}</span>
+                <span
+                  aria-hidden
+                  className="min-w-6 flex-1 -translate-y-1 border-b border-dotted border-gray-300"
+                />
+                <span className="text-right text-sm font-semibold text-gray-900">
+                  {group.members.map(m => m.name).join(' · ')}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </section>
   );
