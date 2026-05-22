@@ -288,33 +288,6 @@ body {
   animation: cameraFlash 0.7s ease-out forwards;
 }
 
-/* 10. 헤드라인 둘레를 회전하는 별 */
-@keyframes orbitClockwise {
-  from { transform: rotate(0deg) translateX(var(--orbit-r, 140px)) rotate(0deg); }
-  to { transform: rotate(360deg) translateX(var(--orbit-r, 140px)) rotate(-360deg); }
-}
-@keyframes orbitCounter {
-  from { transform: rotate(0deg) translateX(var(--orbit-r, 140px)) rotate(0deg); }
-  to { transform: rotate(-360deg) translateX(var(--orbit-r, 140px)) rotate(360deg); }
-}
-.thanks-orbit-star {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  margin-top: -14px;
-  margin-left: -14px;
-  font-size: 1.5rem;
-  pointer-events: none;
-  will-change: transform;
-  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
-}
-.thanks-orbit-star.cw {
-  animation: orbitClockwise var(--orbit-dur, 8s) linear infinite;
-}
-.thanks-orbit-star.ccw {
-  animation: orbitCounter var(--orbit-dur, 8s) linear infinite;
-}
-
 /* 12. 신청자 이름 글로우 펄스 */
 @keyframes nameGlowPulse {
   0%, 100% {

@@ -151,40 +151,9 @@ export default function ThanksContent(p: ThanksContentProps) {
 
         {/* 메시지 — shake는 여기에만 (꽃잎 컨테이너에는 transform 영향 X) */}
         <div className="relative z-10 flex flex-col items-center text-center thanks-shake">
-          {/* 10. 헤드라인 둘레를 회전하는 별 (양방향) */}
-          <div className="relative">
-            <span
-              className="thanks-orbit-star cw"
-              style={{ ['--orbit-r' as string]: '180px', ['--orbit-dur' as string]: '9s' } as React.CSSProperties}
-              aria-hidden
-            >
-              ⭐
-            </span>
-            <span
-              className="thanks-orbit-star ccw"
-              style={{ ['--orbit-r' as string]: '210px', ['--orbit-dur' as string]: '12s', animationDelay: '-3s' } as React.CSSProperties}
-              aria-hidden
-            >
-              ✨
-            </span>
-            <span
-              className="thanks-orbit-star cw"
-              style={{ ['--orbit-r' as string]: '160px', ['--orbit-dur' as string]: '14s', animationDelay: '-6s' } as React.CSSProperties}
-              aria-hidden
-            >
-              🌟
-            </span>
-            <span
-              className="thanks-orbit-star ccw"
-              style={{ ['--orbit-r' as string]: '230px', ['--orbit-dur' as string]: '11s', animationDelay: '-2s' } as React.CSSProperties}
-              aria-hidden
-            >
-              💫
-            </span>
-            <h1 className="text-5xl sm:text-6xl font-extrabold mb-6 drop-shadow-2xl tracking-tight thanks-headline">
-              정말, 정말, 정말<br className="sm:hidden" /> 고맙습니다!
-            </h1>
-          </div>
+          <h1 className="text-5xl sm:text-6xl font-extrabold mb-6 drop-shadow-2xl tracking-tight thanks-headline">
+            정말, 정말, 정말<br className="sm:hidden" /> 고맙습니다!
+          </h1>
           <p className="text-lg sm:text-xl text-white/95 max-w-md leading-relaxed drop-shadow-lg">
             {/* 12. 이름 글로우 펄스 */}
             <strong className="text-yellow-200 thanks-name-glow inline-block">
