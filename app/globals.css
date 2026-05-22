@@ -272,13 +272,14 @@ body {
  */
 @keyframes petalFall {
   0% {
-    transform: translate3d(0, -10dvh, 0) rotate(0deg);
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
     opacity: 0;
   }
   8% { opacity: 0.95; }
   92% { opacity: 0.95; }
   100% {
-    transform: translate3d(var(--drift, 0px), 110dvh, 0) rotate(720deg);
+    /* 모바일 main이 콘텐츠로 길어져도 꽃잎이 확실히 화면 밖으로 나가도록 충분히 큰 값 */
+    transform: translate3d(var(--drift, 0px), 200vh, 0) rotate(720deg);
     opacity: 0;
   }
 }

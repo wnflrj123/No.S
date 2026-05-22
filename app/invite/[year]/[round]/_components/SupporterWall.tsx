@@ -384,15 +384,15 @@ function SendBouquetModal({
 
 /** wall 전용 꽃잎 (ThanksContent의 PetalRain과 동일 패턴) */
 function WallPetals() {
-  const petals = Array.from({ length: 28 }, (_, i) => i);
+  const petals = Array.from({ length: 16 }, (_, i) => i);
   const colors = ['#ffc1d6', '#ffd6e7', '#ff9bb3', '#ffe9a8', '#fff', '#ffb3c6', '#d8b4fe'];
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" aria-hidden>
       {petals.map(i => {
-        const left = (i * 3.57) % 100;
+        const left = (i * 6.25) % 100;
         const drift = (i % 2 === 0 ? 1 : -1) * (60 + ((i * 13) % 140));
-        const dur = 9 + ((i * 5) % 10);
-        const delay = (i * 0.6) % 10;
+        const dur = 10 + ((i * 5) % 9);
+        const delay = (i * 0.9) % 11;
         const color = colors[i % colors.length];
         const size = 16 + (i % 5) * 4;
         return (

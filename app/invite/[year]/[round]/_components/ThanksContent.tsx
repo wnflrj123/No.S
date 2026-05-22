@@ -302,14 +302,15 @@ const PETAL_COLORS = ['#ffc1d6', '#ffd6e7', '#ff9bb3', '#ffe9a8', '#fff', '#ffb3
  * 24장의 꽃잎이 다양한 left/duration/delay/색상으로 화면을 가득 채운다.
  */
 function PetalRain() {
-  const petals = Array.from({ length: 24 }, (_, i) => i);
+  // 모바일·데스크탑 둘 다 자연스러운 양으로 (개수 너무 많으면 화면 가림)
+  const petals = Array.from({ length: 14 }, (_, i) => i);
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" aria-hidden>
       {petals.map(i => {
-        const left = (i * 4.17) % 100;
+        const left = (i * 7.14) % 100;
         const drift = (i % 2 === 0 ? 1 : -1) * (60 + ((i * 17) % 120));
-        const dur = 8 + ((i * 5) % 9);
-        const delay = (i * 0.7) % 9;
+        const dur = 9 + ((i * 5) % 8);
+        const delay = (i * 1.1) % 10;
         const color = PETAL_COLORS[i % PETAL_COLORS.length];
         const size = 16 + (i % 4) * 4;
         return (
