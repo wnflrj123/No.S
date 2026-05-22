@@ -272,15 +272,15 @@ body {
  */
 @keyframes petalFall {
   0% {
-    /* 시작 위치를 화면 위로 충분히 멀리 (-30vh) → fade-in 동안 화면 밖에서 떨어지기 시작 */
-    transform: translate3d(0, -30vh, 0) rotate(0deg);
+    /* 시작 위치를 화면 위로 충분히 멀리 (-120vh) — viewport 한참 위에서 시작 */
+    transform: translate3d(0, -120vh, 0) rotate(0deg);
     opacity: 0;
   }
-  /* 화면 밖에서 빠르게 fade-in 완료 → 화면 진입 시점에는 이미 완전 불투명 */
-  3% { opacity: 0.95; }
+  /* fade-in은 화면 밖에서 천천히 (10% 지점, 이때 위치는 -88vh로 여전히 화면 위) */
+  10% { opacity: 0.95; }
   95% { opacity: 0.95; }
   100% {
-    /* 모바일 main이 콘텐츠로 길어져도 꽃잎이 확실히 화면 밖으로 나가도록 충분히 큰 값 */
+    /* 200vh로 떨어져 화면 밖으로 나감 */
     transform: translate3d(var(--drift, 0px), 200vh, 0) rotate(720deg);
     opacity: 0;
   }
@@ -401,6 +401,19 @@ body {
   animation: celebrationPop 4.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   will-change: transform, opacity;
   backface-visibility: hidden;
+}
+
+/* 셀러브레이션 등장 시 뒤 명단을 어둡고 흐리게 → 시인성 ↑ */
+@keyframes celebrationBackdrop {
+  0% { opacity: 0; backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); }
+  12% { opacity: 1; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  82% { opacity: 1; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  100% { opacity: 0; backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); }
+}
+.celebration-backdrop {
+  background: rgba(0, 0, 0, 0.4);
+  animation: celebrationBackdrop 4.5s ease forwards;
+  will-change: opacity, backdrop-filter;
 }
 
 @keyframes celebrationGlow {

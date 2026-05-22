@@ -245,8 +245,14 @@ export default function SupporterWall(p: Props) {
 
       {/* 새 후원자 등장 셀러브레이션 오버레이 — 또이잉 등장 → 머무름 → 슈우웅 사라짐 */}
       {celebrationName && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none px-5">
-          <div className="celebration-pop text-center">
+        <>
+          {/* dim + 블러 backdrop으로 뒤 후원자 명단을 흐리게 → 가운데 큰 이름이 잘 보임 */}
+          <div
+            className="fixed inset-0 z-30 celebration-backdrop pointer-events-none"
+            aria-hidden
+          />
+          <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none px-5">
+            <div className="celebration-pop text-center">
             <div className="text-4xl sm:text-6xl mb-3">
               <span className="celebration-sparkle">🎉</span>
               <span className="celebration-sparkle" style={{ animationDelay: '0.15s' }}>💐</span>
@@ -265,7 +271,8 @@ export default function SupporterWall(p: Props) {
               따뜻한 마음 잊지 않을게요 💛
             </div>
           </div>
-        </div>
+          </div>
+        </>
       )}
 
       {showSendModal && (
