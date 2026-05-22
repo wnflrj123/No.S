@@ -5,6 +5,7 @@ import RichTextEditor from '@/components/notices/RichTextEditor';
 import VenueEditor from './VenueEditor';
 import RoundEditor, { type RoundFormValue } from './RoundEditor';
 import RolesEditor from './RolesEditor';
+import StaffEditor from './StaffEditor';
 import SponsorAccountEditor from './SponsorAccountEditor';
 import { upsertInvite, type InviteWriteInput } from '@/lib/invites/client';
 import {
@@ -12,6 +13,7 @@ import {
   type CastingEntry,
   type Invite,
   type InviteRole,
+  type InviteStaff,
   type OptionalFieldKey,
 } from '@/lib/invites/types';
 
@@ -31,6 +33,7 @@ const DEFAULT_INVITE: Omit<InviteWriteInput, 'rounds'> & { rounds: RoundFormValu
   posterImageUrl: '',
   venue: { name: '', address: '', directions: '', mapLinks: {} },
   roles: [],
+  staff: [],
   rounds: [],
   sponsorAccount: { bankName: '', accountNumber: '', accountHolder: '' },
   thanksMessage: '',
@@ -72,6 +75,13 @@ export default function InviteForm({ initial, createdBy, onSaved }: Props) {
     }
     if (form.roles.some(r => !r.name.trim())) {
       return setError('배역 이름을 모두 입력해주세요. (불필요한 행은 삭제)');
+    }
+    const staffList: InviteStaff[] = form.staff ?? [];
+    if (staffList.some(s => !s.role.trim())) {
+      return setError('제작진 직책을 모두 입력해주세요. (불필요한 직책은 삭제)');
+    }
+    if (staffList.some(s => s.members.some(m => !m.name.trim()))) {
+      return setError('제작진 이름을 모두 입력해주세요. (불필요한 멤버는 삭제)');
     }
     const roundNos = form.rounds.map(r => r.roundNo);
     if (new Set(roundNos).size !== roundNos.length) return setError('회차 번호가 중복됩니다.');
@@ -214,6 +224,14 @@ export default function InviteForm({ initial, createdBy, onSaved }: Props) {
         <RolesEditor value={form.roles} onChange={v => update('roles', v)} />
       </Section>
 
+      <Section title="제작진">
+        <StaffEditor
+          value={form.staff ?? []}
+          onChange={v => update('staff', v)}
+          inviteId={inviteIdPreview}
+        />
+      </Section>
+
       <Section title="회차">
         <RoundEditor
           value={form.rounds}
@@ -347,6 +365,7 @@ function toForm(invite: Invite | null): typeof DEFAULT_INVITE {
     posterImageUrl: invite.posterImageUrl,
     venue: invite.venue,
     roles,
+    staff: invite.staff ?? [],
     rounds,
     sponsorAccount: invite.sponsorAccount,
     thanksMessage: invite.thanksMessage ?? '',

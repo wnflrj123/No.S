@@ -6,6 +6,7 @@ import DescriptionSection from './_components/DescriptionSection';
 import RoundsSection from './_components/RoundsSection';
 import VenueSection from './_components/VenueSection';
 import CastingSection from './_components/CastingSection';
+import StaffSection from './_components/StaffSection';
 import ApplyCTA from './_components/ApplyCTA';
 
 export const dynamic = 'force-dynamic';
@@ -48,6 +49,7 @@ export default async function InvitePage({ params }: PageParams) {
       <div className="md:max-w-3xl md:mx-auto">
         <DescriptionSection html={invite.description} />
         <CastingSection rounds={invite.rounds} roles={invite.roles ?? []} inviteId={invite.id} />
+        <StaffSection staff={invite.staff ?? []} inviteId={invite.id} />
         <RoundsSection rounds={invite.rounds} nowMs={nowMs} />
         <VenueSection venue={invite.venue} />
       </div>
