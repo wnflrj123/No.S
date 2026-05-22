@@ -13,93 +13,74 @@ const CONFETTI_COLORS = [
 ];
 
 /**
- * 후원 클릭 시 발사되는 야단법석 효과.
- *  1. 화면 양옆에서 비스듬히 큰 burst (4번 빵빵빵빵)
- *  2. 꽃다발·꽃·하트·별 emoji confetti가 사방에서 떨어짐
- *  3. 12초간 화면 전 영역 폭죽 (간격 짧게, 입자 많이)
- *  4. 화면 진동 (vibrate API, 지원 시)
+ * 후원 클릭 시 발사되는 귀여운 폭죽 효과.
+ *  1. 중앙·좌·우 가벼운 burst (3번)
+ *  2. 꽃다발 emoji confetti 3회
+ *  3. 7초간 화면에 폭죽 (간격 적당)
+ *  4. 가벼운 진동
  */
 function fireConfetti(): () => void {
   const burst = (opts: confetti.Options) =>
     confetti({ colors: CONFETTI_COLORS, ...opts, zIndex: 9999, disableForReducedMotion: false });
 
-  // 1) 양옆 + 중앙 + 위쪽 4단계 큰 burst
-  burst({ particleCount: 220, spread: 90, origin: { y: 0.55 }, startVelocity: 65 });
-  setTimeout(() => burst({ particleCount: 160, angle: 60, spread: 100, origin: { x: 0, y: 0.7 }, startVelocity: 70 }), 100);
-  setTimeout(() => burst({ particleCount: 160, angle: 120, spread: 100, origin: { x: 1, y: 0.7 }, startVelocity: 70 }), 100);
-  setTimeout(() => burst({ particleCount: 200, spread: 360, startVelocity: 60, origin: { y: 0.35 }, scalar: 1.2 }), 350);
-  setTimeout(() => burst({ particleCount: 120, angle: 90, spread: 60, origin: { x: 0.5, y: 1 }, startVelocity: 90 }), 600);
+  // 1) 중앙·좌·우 3방향 가벼운 burst
+  burst({ particleCount: 100, spread: 80, origin: { y: 0.6 }, startVelocity: 50 });
+  setTimeout(() => burst({ particleCount: 70, angle: 60, spread: 75, origin: { x: 0, y: 0.7 }, startVelocity: 55 }), 150);
+  setTimeout(() => burst({ particleCount: 70, angle: 120, spread: 75, origin: { x: 1, y: 0.7 }, startVelocity: 55 }), 150);
 
-  // 2) 꽃다발·꽃·하트·별 emoji confetti (여러 차례)
+  // 2) 꽃다발 emoji confetti 3회 (적당히)
   try {
-    const bouquet = confetti.shapeFromText({ text: '💐', scalar: 3.5 });
-    const flower = confetti.shapeFromText({ text: '🌸', scalar: 2.5 });
-    const heart = confetti.shapeFromText({ text: '💝', scalar: 2.5 });
-    const star = confetti.shapeFromText({ text: '⭐', scalar: 2.5 });
-    const rose = confetti.shapeFromText({ text: '🌹', scalar: 2.5 });
+    const bouquet = confetti.shapeFromText({ text: '💐', scalar: 3 });
+    const flower = confetti.shapeFromText({ text: '🌸', scalar: 2.2 });
+    const heart = confetti.shapeFromText({ text: '💝', scalar: 2.2 });
 
     const emojiRain = (delay: number, shapes: confetti.Shape[], count: number) => {
       setTimeout(() => {
         confetti({
           shapes,
-          scalar: 3,
+          scalar: 2.5,
           particleCount: count,
-          spread: 140,
-          startVelocity: 40,
+          spread: 130,
+          startVelocity: 35,
           gravity: 0.7,
-          ticks: 300,
+          ticks: 280,
           origin: { x: Math.random(), y: 0.1 + Math.random() * 0.2 },
           zIndex: 9999,
         });
       }, delay);
     };
-    emojiRain(200, [bouquet, flower], 30);
-    emojiRain(700, [heart, star], 25);
-    emojiRain(1300, [bouquet, rose], 25);
-    emojiRain(2200, [flower, heart, star], 30);
-    emojiRain(3500, [bouquet], 20);
-    emojiRain(5000, [rose, flower], 25);
-    emojiRain(7000, [bouquet, heart, star], 30);
+    emojiRain(300, [bouquet, flower], 14);
+    emojiRain(1500, [heart, bouquet], 12);
+    emojiRain(3500, [flower, heart], 12);
   } catch {
     // shapeFromText 미지원 브라우저
   }
 
-  // 3) 18초간 화면 전 영역에 더 빈번한 폭죽 (140ms 간격, 입자 더 많이)
-  const duration = 18000;
+  // 3) 7초간 적당한 빈도로 폭죽 (300ms 간격)
+  const duration = 7000;
   const animationEnd = Date.now() + duration;
   const interval = setInterval(() => {
     if (Date.now() > animationEnd) {
       clearInterval(interval);
       return;
     }
-    const particleCount = 80 + Math.floor(Math.random() * 60);
     burst({
-      startVelocity: 35 + Math.random() * 30,
+      startVelocity: 30 + Math.random() * 20,
       spread: 360,
-      ticks: 90,
-      particleCount,
-      scalar: 0.9 + Math.random() * 0.8,
+      ticks: 80,
+      particleCount: 40 + Math.floor(Math.random() * 30),
+      scalar: 0.8 + Math.random() * 0.5,
       origin: {
         x: Math.random(),
-        y: Math.random() * 0.75,
+        y: Math.random() * 0.7,
       },
     });
-    // 동시 2발: 좌우 동시 발사 효과
-    if (Math.random() > 0.6) {
-      burst({
-        startVelocity: 50 + Math.random() * 20,
-        spread: 80,
-        angle: Math.random() > 0.5 ? 60 : 120,
-        particleCount: 60,
-        origin: { x: Math.random() > 0.5 ? 0 : 1, y: 0.4 + Math.random() * 0.3 },
-      });
-    }
-  }, 140);
+  }, 300);
 
-  // 4) 진동 (지원 기기만)
+  // 4) 짧은 진동 1회 (지원 기기만)
   try {
     if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
-      navigator.vibrate([100, 50, 100, 50, 200]);
+      navigator.vibrate([80, 40, 80]);
     }
   } catch {
     // noop
@@ -127,18 +108,14 @@ export default function ThanksContent(p: ThanksContentProps) {
   const [error, setError] = useState<string | null>(null);
   const [showAccount, setShowAccount] = useState(false);
 
-  // thanked가 되는 순간 야단법석 효과. 18초 폭죽 + 5, 10, 15초 시점에 추가 발사.
+  // thanked가 되는 순간 귀여운 폭죽. 7초 시퀀스 + 5초 시점에 한 번 더 → 약 12초 화려함
   useEffect(() => {
     if (!thanked) return;
     const stop1 = fireConfetti();
     const t1 = setTimeout(() => fireConfetti(), 5000);
-    const t2 = setTimeout(() => fireConfetti(), 10000);
-    const t3 = setTimeout(() => fireConfetti(), 15000);
     return () => {
       stop1();
       clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
     };
   }, [thanked]);
 
@@ -303,15 +280,15 @@ const PETAL_COLORS = ['#ffc1d6', '#ffd6e7', '#ff9bb3', '#ffe9a8', '#fff', '#ffb3
  * 24장의 꽃잎이 다양한 left/duration/delay/색상으로 화면을 가득 채운다.
  */
 function PetalRain() {
-  // 모바일·데스크탑 둘 다 자연스러운 양으로 (개수 너무 많으면 화면 가림)
-  const petals = Array.from({ length: 14 }, (_, i) => i);
+  // fixed로 viewport 기준 + 적당한 개수 (이전보다 줄여 모바일에서도 가볍게)
+  const petals = Array.from({ length: 8 }, (_, i) => i);
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" aria-hidden>
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden>
       {petals.map(i => {
-        const left = (i * 7.14) % 100;
+        const left = (i * 12.5) % 100;
         const drift = (i % 2 === 0 ? 1 : -1) * (60 + ((i * 17) % 120));
-        const dur = 9 + ((i * 5) % 8);
-        const delay = (i * 1.1) % 10;
+        const dur = 10 + ((i * 3) % 6);
+        const delay = (i * 1.6) % 11;
         const color = PETAL_COLORS[i % PETAL_COLORS.length];
         const size = 16 + (i % 4) * 4;
         return (
@@ -363,15 +340,14 @@ function PetalSvg({ size, color }: { size: number; color: string }) {
  * 이모지를 쓰지 않고 직접 그린다.
  */
 function FlyingFlowers() {
+  // 3송이로 줄임 — 너무 많으면 모바일에서 산만
   const items = [
-    { dir: 'lr' as const, startY: '15vh', midY: '5vh', endY: '40vh', dur: 9, delay: 0, palette: 0, size: 88 },
-    { dir: 'rl' as const, startY: '60vh', midY: '20vh', endY: '70vh', dur: 11, delay: 1.5, palette: 1, size: 100 },
-    { dir: 'lr' as const, startY: '70vh', midY: '40vh', endY: '20vh', dur: 13, delay: 3, palette: 2, size: 80 },
-    { dir: 'rl' as const, startY: '25vh', midY: '50vh', endY: '15vh', dur: 12, delay: 4.5, palette: 3, size: 92 },
-    { dir: 'lr' as const, startY: '50vh', midY: '30vh', endY: '60vh', dur: 10, delay: 6, palette: 4, size: 96 },
+    { dir: 'lr' as const, startY: '15vh', midY: '5vh', endY: '40vh', dur: 11, delay: 0, palette: 0, size: 76 },
+    { dir: 'rl' as const, startY: '60vh', midY: '20vh', endY: '70vh', dur: 13, delay: 3, palette: 1, size: 84 },
+    { dir: 'lr' as const, startY: '40vh', midY: '30vh', endY: '50vh', dur: 12, delay: 6, palette: 2, size: 80 },
   ];
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" aria-hidden>
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden>
       {items.map((it, i) => (
         <span
           key={i}
