@@ -82,12 +82,15 @@
 
 ### 8. 정기공연 신청 페이지 (`/invite/[year]/[round]`) — 외부 관객용
 
-- **공개 정보 페이지** (`/invite/[year]/[round]`): 비로그인 접근, 포스터·공연 안내·시간·장소·오시는길·회차별 캐스팅 + 신청 CTA
-- **신청 페이지** (`/invite/[year]/[round]/apply`): 이름·휴대폰·회차별 인원·동반인·응원배우·좌석요청·응원메시지 입력, 개인정보 동의 필수
-- **감사 페이지** (`/invite/[year]/[round]/thanks/[token]`): 신청 완료 안내 + 후원 계좌 + "후원했어요" 버튼 (32자 토큰 보호)
+- **공개 정보 페이지** (`/invite/[year]/[round]`): 비로그인 접근, 포스터·공연 안내·회차별 캐스팅(탭) + 시간·장소(지도 임베드) + 신청 CTA
+- **신청 페이지** (`/invite/[year]/[round]/apply`): 이름·휴대폰·회차별 인원·옵션 항목(폼별 on/off 가능), 동일 이름·전화번호 중복 시 supersede 흐름
+- **신청 확인 페이지** (`/invite/[year]/[round]/check`): 이름·휴대폰으로 본인 신청 내역 조회 (회차+일시 표시)
+- **감사 페이지** (`/invite/[year]/[round]/thanks/[token]`): 신청 완료 안내 + 후원 계좌 + "후원했어요" 버튼, 후원 후 폭죽·꽃잎·꽃다발 야단법석 효과
+- **후원자 Wall** (`/invite/[year]/[round]/wall`): 공연장 TV용 실시간 후원자 명단, "응원 꽃다발 보내기"로 현장 후원자 추가, 새 등장 시 셀러브레이션 오버레이(dim+블러+꽃다발)
 - **회차별 마감**: 회차 시작 시각 지나면 그 회차 자동 비활성, 모든 회차 종료 시 신청 차단
-- **관리자 페이지** (`/admin/invites`): 공연 CRUD, 공개 토글, 신청자 목록·통계·항목별 답변·후원자 모아보기
-- **데이터**: `invites` / `inviteRegistrations` 컬렉션, 캐스팅 사진은 `/public/invites/{year}-{round}/cast/` 정적 파일
+- **관리자 페이지** (`/admin/invites`): 공연 CRUD, 공개 토글, 신청자 목록(검색·삭제·후원 토글)·통계·항목별 답변·후원자 모아보기(신청자/현장 후원자 통합, 현장은 추가/삭제 가능)
+- **SMS 발송** (솔라피 LMS): 신청 완료 자동 발송 + 관리자 일괄 발송(전체/회차/후원자, 변수 치환)
+- **데이터**: `invites` / `inviteRegistrations` / `inviteSupporters` / `smsLogs` 컬렉션, 캐스팅·포스터 사진은 `/public/invites/{year}-{round}/` 정적 파일
 - **무료 한도**: Firestore Spark 한도 내, 이미지 대역폭은 Vercel CDN 활용
 
 ## 예약 장소 목록
