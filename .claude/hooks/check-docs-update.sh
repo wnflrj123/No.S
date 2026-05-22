@@ -4,7 +4,13 @@
 
 # git push 명령인지 확인 (stdin JSON 또는 env 변수 둘 다 지원)
 input=$(cat - 2>/dev/null)
-if ! echo "$input$CLAUDE_TOOL_INPUT" | grep -q 'git push'; then
+combined="$input$CLAUDE_TOOL_INPUT"
+if ! echo "$combined" | grep -q 'git push'; then
+  exit 0
+fi
+
+# 명령 본문에 '[skip-docs-check]' 마커가 있으면 의도적 우회 — docs 검사 생략
+if echo "$combined" | grep -q '\[skip-docs-check\]'; then
   exit 0
 fi
 
