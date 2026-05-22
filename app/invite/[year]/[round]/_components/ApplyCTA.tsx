@@ -9,7 +9,7 @@ interface Props {
 export default function ApplyCTA({ year, round, disabled }: Props) {
   return (
     <div
-      className="fixed bottom-0 inset-x-0 z-20 p-4 bg-white/80 backdrop-blur-xl shadow-[0_-12px_32px_-16px_rgba(15,23,42,0.12),0_-2px_6px_-4px_rgba(15,23,42,0.05)] md:bg-white/95 md:backdrop-blur-sm md:border-t md:border-gray-200 md:shadow-none"
+      className="fixed bottom-0 inset-x-0 z-20 p-4 bg-white/80 backdrop-blur-xl shadow-[0_-18px_40px_-10px_rgba(15,23,42,0.20),0_-3px_8px_-1px_rgba(15,23,42,0.12)] md:static md:px-5 md:pt-4 md:pb-16 md:bg-transparent md:backdrop-blur-none md:shadow-none"
     >
       <div className="max-w-2xl mx-auto flex flex-row gap-2 md:flex-col">
         {disabled ? (
