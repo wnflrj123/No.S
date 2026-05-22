@@ -28,6 +28,12 @@ if [ -z "$src_changes" ]; then
   exit 0
 fi
 
+# 순수 스타일 변경(.css만)이면 docs 갱신 요구 안 함 — 효과 미세 조정 등
+non_css_changes=$(echo "$src_changes" | grep -vE '\.css$')
+if [ -z "$non_css_changes" ]; then
+  exit 0
+fi
+
 # 변경 유형 분류
 has_component_change=$(echo "$src_changes" | grep -c 'components/')
 has_page_change=$(echo "$src_changes" | grep -c 'app/')
