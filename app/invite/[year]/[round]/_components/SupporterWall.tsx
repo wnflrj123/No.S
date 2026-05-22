@@ -174,26 +174,42 @@ export default function SupporterWall(p: Props) {
     return merged;
   }, [registrationSponsors, wallSupporters]);
 
+  // 셀러브레이션 재실행 가능한 헬퍼 — 새 supporter 자동 등장 시 + 카드 수동 클릭 시 공유
+  const celebrationTimers = useRef<{ overlay?: NodeJS.Timeout; ring?: NodeJS.Timeout }>({});
+  const playCelebration = (name: string, id: string) => {
+    // 이전 타이머 정리 (재클릭 시 깜빡임 방지)
+    if (celebrationTimers.current.overlay) clearTimeout(celebrationTimers.current.overlay);
+    if (celebrationTimers.current.ring) clearTimeout(celebrationTimers.current.ring);
+    // 같은 이름을 다시 호출해도 React가 state 변화로 인식하도록 잠깐 null로 reset
+    setCelebrationName(null);
+    setRecentlyAdded(null);
+    requestAnimationFrame(() => {
+      setCelebrationName(name);
+      setRecentlyAdded(id);
+      celebrateNewSupporter(name);
+      celebrationTimers.current.overlay = setTimeout(() => setCelebrationName(null), 4500);
+      celebrationTimers.current.ring = setTimeout(() => setRecentlyAdded(null), 6000);
+    });
+  };
+
   // 두 onSnapshot 모두 첫 스냅샷 후에만 새 supporter 감지 → 셀러브레이션
   useEffect(() => {
-    // 두 데이터 소스 중 하나라도 첫 스냅샷이 아직이면 트리거 X
     if (!regsInited.current || !wallInited.current) return;
     const newOnes = allSupporters.filter(s => !knownIds.current.has(s.id));
     if (newOnes.length === 0) return;
     newOnes.forEach(s => knownIds.current.add(s.id));
-    // 가장 최신 1명을 셀러브레이션 오버레이로 표시
     const latest = newOnes[0];
-    setCelebrationName(latest.name);
-    setRecentlyAdded(latest.id);
-    celebrateNewSupporter(latest.name);
-    // 오버레이는 4.5초간 유지(애니메이션과 동일), 목록 강조는 6초까지
-    const t1 = setTimeout(() => setCelebrationName(null), 4500);
-    const t2 = setTimeout(() => setRecentlyAdded(null), 6000);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
+    playCelebration(latest.name, latest.id);
   }, [allSupporters]);
+
+  // 컴포넌트 unmount 시 타이머 정리
+  useEffect(() => {
+    const timers = celebrationTimers.current;
+    return () => {
+      if (timers.overlay) clearTimeout(timers.overlay);
+      if (timers.ring) clearTimeout(timers.ring);
+    };
+  }, []);
 
   return (
     <main className="relative min-h-dvh overflow-hidden text-white thanks-bg flex flex-col">
@@ -221,15 +237,19 @@ export default function SupporterWall(p: Props) {
         ) : (
           <ul className="flex flex-wrap justify-center gap-3 sm:gap-4 max-w-6xl mx-auto">
             {allSupporters.map(s => (
-              <li
-                key={s.id}
-                className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-full bg-white/95 text-gray-900 font-semibold text-base sm:text-lg shadow-lg backdrop-blur-sm ${
-                  s.id === recentlyAdded
-                    ? 'ring-4 ring-yellow-300 scale-110 transition-transform'
-                    : 'transition-transform'
-                }`}
-              >
-                💛 {s.name}
+              <li key={s.id}>
+                <button
+                  type="button"
+                  onClick={() => playCelebration(s.name, s.id)}
+                  className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-full bg-white/95 text-gray-900 font-semibold text-base sm:text-lg shadow-lg backdrop-blur-sm transition-transform hover:scale-105 active:scale-95 cursor-pointer ${
+                    s.id === recentlyAdded
+                      ? 'ring-4 ring-yellow-300 scale-110'
+                      : ''
+                  }`}
+                  aria-label={`${s.name}님께 다시 감사 인사`}
+                >
+                  💛 {s.name}
+                </button>
               </li>
             ))}
           </ul>
