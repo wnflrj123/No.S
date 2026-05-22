@@ -1,6 +1,7 @@
 'use client';
 
-import { FiPlus, FiTrash2 } from 'react-icons/fi';
+import { useState } from 'react';
+import { FiMenu, FiPlus, FiTrash2 } from 'react-icons/fi';
 import type { InviteStaff, InviteStaffMember } from '@/lib/invites/types';
 
 interface Props {
@@ -20,6 +21,10 @@ function emptyMember(): InviteStaffMember {
 }
 
 export default function StaffEditor({ value, onChange, inviteId }: Props) {
+  // 드래그로 순서를 바꾸는 동안의 출발/도착 인덱스
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+
   // patch에 없는 필드(id·role·members)는 spread로 보존된다.
   const updateStaff = (index: number, patch: Partial<InviteStaff>) => {
     onChange(value.map((s, i) => (i === index ? { ...s, ...patch } : s)));
@@ -29,6 +34,20 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
 
   const addStaff = () => {
     onChange([...value, { id: newStaffId(), role: '', members: [emptyMember()] }]);
+  };
+
+  // 직책 순서 변경: from 위치의 항목을 빼서 to 위치에 끼워넣는다.
+  const moveStaff = (from: number, to: number) => {
+    if (from === to) return;
+    const next = [...value];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    onChange(next);
+  };
+
+  const endDrag = () => {
+    setDragIndex(null);
+    setOverIndex(null);
   };
 
   const updateMember = (
@@ -58,6 +77,8 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
         연출·분장·강사 등 제작진을 직책별로 추가하세요. 사진은 선택이며,{' '}
         <code>/public/invites/{inviteId}/staff/</code> 폴더에 파일을 넣고 파일명만 입력합니다. (예:{' '}
         <code>lee.jpg</code>)
+        <br />
+        직책 카드 왼쪽 손잡이를 드래그하면 순서를 바꿀 수 있어요.
       </p>
 
       {value.length === 0 && (
@@ -68,8 +89,44 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
 
       <ul className="space-y-3">
         {value.map((staff, si) => (
-          <li key={staff.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2">
+          <li
+            key={staff.id}
+            onDragOver={e => {
+              if (dragIndex === null) return;
+              e.preventDefault();
+              if (overIndex !== si) setOverIndex(si);
+            }}
+            onDrop={e => {
+              e.preventDefault();
+              if (dragIndex !== null) moveStaff(dragIndex, si);
+              endDrag();
+            }}
+            className={`rounded-lg border bg-gray-50 p-3 space-y-2 transition-colors ${
+              dragIndex === si ? 'opacity-40 ' : ''
+            }${
+              overIndex === si && dragIndex !== null && dragIndex !== si
+                ? 'border-[#0066B3] ring-2 ring-[#0066B3]/30'
+                : 'border-gray-200'
+            }`}
+          >
             <div className="flex gap-2 items-center">
+              <button
+                type="button"
+                draggable
+                onDragStart={e => {
+                  setDragIndex(si);
+                  e.dataTransfer.effectAllowed = 'move';
+                  e.dataTransfer.setData('text/plain', String(si));
+                  const li = e.currentTarget.closest('li');
+                  if (li) e.dataTransfer.setDragImage(li, 16, 16);
+                }}
+                onDragEnd={endDrag}
+                className="shrink-0 cursor-grab px-1.5 py-2 text-gray-400 hover:text-gray-600 active:cursor-grabbing"
+                aria-label="드래그해서 직책 순서 변경"
+                title="드래그해서 순서 변경"
+              >
+                <FiMenu />
+              </button>
               <input
                 type="text"
                 value={staff.role}
