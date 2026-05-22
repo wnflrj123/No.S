@@ -166,14 +166,15 @@ export default function ThanksContent(p: ThanksContentProps) {
 
   if (thanked) {
     return (
-      <main className="relative min-h-dvh overflow-hidden text-white px-5 py-20 flex flex-col items-center justify-center thanks-bg thanks-shake">
-        {/* 끝없이 떨어지는 꽃잎 (배경 레이어) */}
+      <main className="relative min-h-dvh overflow-hidden text-white px-5 py-20 flex flex-col items-center justify-center thanks-bg">
+        {/* 끝없이 떨어지는 꽃잎 (배경 레이어) — main에 transform이 없어야 absolute가
+            main 기준으로 정확히 viewport 영역에 머무름. shake는 콘텐츠 div에만 적용. */}
         <PetalRain />
         {/* 좌우로 날아다니는 꽃다발 SVG */}
         <FlyingFlowers />
 
-        {/* 메시지 */}
-        <div className="relative z-10 flex flex-col items-center text-center">
+        {/* 메시지 — shake는 여기에만 (꽃잎 컨테이너에는 transform 영향 X) */}
+        <div className="relative z-10 flex flex-col items-center text-center thanks-shake">
           <h1 className="text-5xl sm:text-6xl font-extrabold mb-6 drop-shadow-2xl tracking-tight thanks-headline">
             정말, 정말, 정말<br className="sm:hidden" /> 고맙습니다!
           </h1>
