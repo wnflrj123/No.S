@@ -51,6 +51,10 @@ export async function POST(req: Request, { params }: RouteParams) {
       totalHeadcount: reg.roundSelections.reduce((s, x) => s + x.headcount, 0),
       isSponsor: reg.isSponsor,
       createdAt: reg.createdAt.toMillis(),
+      companions: reg.companions,
+      supportingActors: reg.supportingActors,
+      seatRequests: reg.seatRequests,
+      cheerMessage: reg.cheerMessage,
     },
     rounds: invite.rounds.map(r => ({
       roundNo: r.roundNo,

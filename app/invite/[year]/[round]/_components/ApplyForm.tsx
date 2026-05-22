@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import RoundCheckboxList, { type FormRound } from './RoundCheckboxList';
 import { MAX_HEADCOUNT, MAX_NAME_LENGTH, MAX_TEXT_LENGTH, PHONE_REGEX } from '@/lib/invites/constants';
@@ -13,6 +13,16 @@ export interface FormInvite {
   title: string;
   rounds: FormRound[];
   disabledFields?: OptionalFieldKey[];
+}
+
+interface EditPrefill {
+  name?: string;
+  phone?: string;
+  roundSelections?: { roundNo: number; headcount: number }[];
+  companions?: string;
+  supportingActors?: string;
+  seatRequests?: string;
+  cheerMessage?: string;
 }
 
 export default function ApplyForm({ invite }: { invite: FormInvite }) {
@@ -30,6 +40,33 @@ export default function ApplyForm({ invite }: { invite: FormInvite }) {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [duplicateConfirm, setDuplicateConfirm] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('edit') !== '1') return;
+    const raw = sessionStorage.getItem(`invite-edit:${invite.year}-${invite.round}`);
+    if (!raw) return;
+    try {
+      const data = JSON.parse(raw) as EditPrefill;
+      if (data.name) setName(data.name);
+      if (data.phone) setPhone(data.phone);
+      if (Array.isArray(data.roundSelections)) {
+        const sel: Record<number, number> = {};
+        for (const s of data.roundSelections) sel[s.roundNo] = s.headcount;
+        setSelections(sel);
+      }
+      if (data.companions) setCompanions(data.companions);
+      if (data.supportingActors) setSupportingActors(data.supportingActors);
+      if (data.seatRequests) setSeatRequests(data.seatRequests);
+      if (data.cheerMessage) setCheerMessage(data.cheerMessage);
+      setPrivacyConsent(true);
+      setIsEditMode(true);
+    } catch {
+      // 손상된 데이터 — 일반 신청 모드로 fallback
+    }
+  }, [invite.year, invite.round]);
 
   const handlePhoneChange = (v: string) => {
     const digits = v.replace(/\D/g, '').slice(0, 11);
@@ -121,6 +158,13 @@ export default function ApplyForm({ invite }: { invite: FormInvite }) {
           // sessionStorage 미지원/용량 초과 — fallback으로 thanks 페이지가 API 조회
         }
       }
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.removeItem(`invite-edit:${invite.year}-${invite.round}`);
+        } catch {
+          // 무시
+        }
+      }
       router.replace(`/invite/${invite.year}/${invite.round}/thanks/${token}`);
     } catch {
       setErrors(['네트워크 오류가 발생했습니다. 다시 시도해주세요.']);
@@ -136,11 +180,22 @@ export default function ApplyForm({ invite }: { invite: FormInvite }) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    await submitRegistration(false);
+    // edit 모드: 같은 이름·휴대폰의 기존 신청을 자동 갱신(supersede)하므로 중복 모달을 건너뛴다
+    await submitRegistration(isEditMode);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {isEditMode && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+          <strong className="block">신청 내용을 변경하고 있어요</strong>
+          <p className="text-xs text-blue-700 mt-1 leading-relaxed">
+            저장하시면 기존 신청 내역이 새 내용으로 자동 갱신됩니다.<br />
+            이름과 휴대폰 번호는 본인 확인용이라 변경할 수 없어요.
+          </p>
+        </div>
+      )}
+
       {errors.length > 0 && (
         <ul className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 space-y-1">
           {errors.map((m, i) => (
@@ -155,13 +210,14 @@ export default function ApplyForm({ invite }: { invite: FormInvite }) {
           value={name}
           onChange={e => setName(e.target.value)}
           maxLength={MAX_NAME_LENGTH}
-          className="input"
+          className={`input ${isEditMode ? 'bg-gray-100 text-gray-600 cursor-not-allowed' : ''}`}
           required
+          readOnly={isEditMode}
           autoComplete="name"
         />
       </Field>
 
-      <Field label="휴대폰" required hint="공연 안내 연락용입니다.">
+      <Field label="휴대폰" required hint={isEditMode ? undefined : '공연 안내 연락용입니다.'}>
         <input
           type="tel"
           value={phone}
@@ -169,8 +225,9 @@ export default function ApplyForm({ invite }: { invite: FormInvite }) {
           placeholder="010-1234-5678"
           inputMode="numeric"
           autoComplete="tel"
-          className="input"
+          className={`input ${isEditMode ? 'bg-gray-100 text-gray-600 cursor-not-allowed' : ''}`}
           required
+          readOnly={isEditMode}
         />
       </Field>
 
@@ -252,7 +309,13 @@ export default function ApplyForm({ invite }: { invite: FormInvite }) {
         disabled={submitting}
         className="w-full py-4 bg-[#0066B3] text-white rounded-xl font-semibold text-base disabled:bg-gray-300"
       >
-        {submitting ? '신청 중…' : '신청 완료하기'}
+        {submitting
+          ? isEditMode
+            ? '저장 중…'
+            : '신청 중…'
+          : isEditMode
+            ? '변경 사항 저장하기'
+            : '신청 완료하기'}
       </button>
 
       {duplicateConfirm && (

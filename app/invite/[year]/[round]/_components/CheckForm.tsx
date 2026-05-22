@@ -6,6 +6,7 @@ import { ko } from 'date-fns/locale';
 import { PHONE_REGEX } from '@/lib/invites/constants';
 
 const KST = 'Asia/Seoul';
+const EDIT_DEADLINE_MS = 2 * 24 * 60 * 60 * 1000; // 공연 시작 48시간 전 (D-2)
 
 interface LookupResult {
   found: boolean;
@@ -16,6 +17,10 @@ interface LookupResult {
     totalHeadcount: number;
     isSponsor: boolean;
     createdAt: number;
+    companions?: string;
+    supportingActors?: string;
+    seatRequests?: string;
+    cheerMessage?: string;
   };
   rounds?: { roundNo: number; teamName: string; startAtMs: number }[];
   message?: string;
@@ -115,59 +120,120 @@ export default function CheckForm({ year, round }: { year: number; round: number
       )}
 
       {result?.found && result.registration && (
-        <div className="p-5 bg-blue-50 border border-blue-200 rounded-xl space-y-3">
-          <div className="text-3xl text-center">🎉</div>
-          <p className="text-center font-semibold text-[#0066B3]">
-            {result.registration.name}님의 신청 내역
-          </p>
-          <div className="bg-white rounded-lg p-4 space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500">휴대폰</span>
-              <span className="text-gray-900">{result.registration.phone}</span>
-            </div>
-            <div className="flex justify-between items-start gap-3">
-              <span className="text-gray-500 shrink-0">신청 회차</span>
-              <div className="text-gray-900 text-right space-y-1">
-                {result.registration.roundSelections.map(s => {
-                  const r = result.rounds?.find(x => x.roundNo === s.roundNo);
-                  return (
-                    <div key={s.roundNo}>
-                      <div className="font-medium">
-                        {s.roundNo}회차{r?.teamName ? ` · ${r.teamName}` : ''} — {s.headcount}명
-                      </div>
-                      {r && (
-                        <div className="text-xs text-gray-500">
-                          {formatInTimeZone(new Date(r.startAtMs), KST, 'M월 d일(EEE) HH:mm', { locale: ko })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">총 인원</span>
-              <span className="text-gray-900 font-semibold">{result.registration.totalHeadcount}명</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">신청일</span>
-              <span className="text-gray-900">
-                {formatInTimeZone(new Date(result.registration.createdAt), KST, 'M월 d일 HH:mm', { locale: ko })}
-              </span>
-            </div>
-            {result.registration.isSponsor && (
-              <div className="flex justify-between">
-                <span className="text-gray-500">후원</span>
-                <span className="text-[#0066B3] font-semibold">💛 후원해주셨어요</span>
-              </div>
-            )}
-          </div>
-          <p className="text-xs text-gray-500 text-center">
-            정보 변경이 필요하시면 같은 이름·휴대폰 번호로 다시 신청해주세요.<br />
-            새로 신청하시면 기존 내역은 자동으로 취소됩니다.
-          </p>
-        </div>
+        <RegistrationCard
+          year={year}
+          round={round}
+          registration={result.registration}
+          rounds={result.rounds ?? []}
+        />
       )}
+    </div>
+  );
+}
+
+interface RegistrationCardProps {
+  year: number;
+  round: number;
+  registration: NonNullable<LookupResult['registration']>;
+  rounds: NonNullable<LookupResult['rounds']>;
+}
+
+function RegistrationCard({ year, round, registration, rounds }: RegistrationCardProps) {
+  const startAtMsList = registration.roundSelections
+    .map(s => rounds.find(r => r.roundNo === s.roundNo)?.startAtMs)
+    .filter((x): x is number => typeof x === 'number');
+  const earliestStartMs = startAtMsList.length > 0 ? Math.min(...startAtMsList) : null;
+  const editDeadlineMs = earliestStartMs !== null ? earliestStartMs - EDIT_DEADLINE_MS : null;
+  const canEdit = editDeadlineMs !== null && Date.now() < editDeadlineMs;
+
+  const handleEdit = () => {
+    if (!canEdit) return;
+    const data = {
+      name: registration.name,
+      phone: registration.phone,
+      roundSelections: registration.roundSelections,
+      companions: registration.companions,
+      supportingActors: registration.supportingActors,
+      seatRequests: registration.seatRequests,
+      cheerMessage: registration.cheerMessage,
+    };
+    try {
+      sessionStorage.setItem(`invite-edit:${year}-${round}`, JSON.stringify(data));
+    } catch {
+      // sessionStorage 미지원 — apply 페이지에서 빈 폼이 뜨므로 안내 후 진행
+    }
+    window.location.href = `/invite/${year}/${round}/apply?edit=1`;
+  };
+
+  return (
+    <div className="p-5 bg-blue-50 border border-blue-200 rounded-xl space-y-3">
+      <div className="text-3xl text-center">🎉</div>
+      <p className="text-center font-semibold text-[#0066B3]">
+        {registration.name}님의 신청 내역
+      </p>
+      <div className="bg-white rounded-lg p-4 space-y-2 text-sm">
+        <div className="flex justify-between">
+          <span className="text-gray-500">휴대폰</span>
+          <span className="text-gray-900">{registration.phone}</span>
+        </div>
+        <div className="flex justify-between items-start gap-3">
+          <span className="text-gray-500 shrink-0">신청 회차</span>
+          <div className="text-gray-900 text-right space-y-1">
+            {registration.roundSelections.map(s => {
+              const r = rounds.find(x => x.roundNo === s.roundNo);
+              return (
+                <div key={s.roundNo}>
+                  <div className="font-medium">
+                    {s.roundNo}회차{r?.teamName ? ` · ${r.teamName}` : ''} — {s.headcount}명
+                  </div>
+                  {r && (
+                    <div className="text-xs text-gray-500">
+                      {formatInTimeZone(new Date(r.startAtMs), KST, 'M월 d일(EEE) HH:mm', { locale: ko })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-500">총 인원</span>
+          <span className="text-gray-900 font-semibold">{registration.totalHeadcount}명</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-500">신청일</span>
+          <span className="text-gray-900">
+            {formatInTimeZone(new Date(registration.createdAt), KST, 'M월 d일 HH:mm', { locale: ko })}
+          </span>
+        </div>
+        {registration.isSponsor && (
+          <div className="flex justify-between">
+            <span className="text-gray-500">후원</span>
+            <span className="text-[#0066B3] font-semibold">💛 후원해주셨어요</span>
+          </div>
+        )}
+      </div>
+
+      <div className="pt-1 space-y-2">
+        <button
+          type="button"
+          onClick={handleEdit}
+          disabled={!canEdit}
+          className="w-full py-3 bg-[#0066B3] text-white rounded-xl font-semibold text-sm hover:bg-[#0055a0] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+        >
+          {canEdit ? '신청 내용 변경하기' : '변경 가능 기간이 지났어요'}
+        </button>
+        <p className="text-xs text-gray-500 text-center leading-relaxed">
+          공연 시작 48시간 전(D-2)까지 변경할 수 있어요.
+          {editDeadlineMs !== null && (
+            <>
+              <br />
+              {canEdit ? '변경 마감' : '마감됨'}:{' '}
+              {formatInTimeZone(new Date(editDeadlineMs), KST, 'M월 d일(EEE) HH:mm', { locale: ko })}
+            </>
+          )}
+        </p>
+      </div>
     </div>
   );
 }
