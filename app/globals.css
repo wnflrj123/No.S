@@ -272,11 +272,13 @@ body {
  */
 @keyframes petalFall {
   0% {
-    transform: translate3d(0, -10vh, 0) rotate(0deg);
+    /* 시작 위치를 화면 위로 충분히 멀리 (-30vh) → fade-in 동안 화면 밖에서 떨어지기 시작 */
+    transform: translate3d(0, -30vh, 0) rotate(0deg);
     opacity: 0;
   }
-  8% { opacity: 0.95; }
-  92% { opacity: 0.95; }
+  /* 화면 밖에서 빠르게 fade-in 완료 → 화면 진입 시점에는 이미 완전 불투명 */
+  3% { opacity: 0.95; }
+  95% { opacity: 0.95; }
   100% {
     /* 모바일 main이 콘텐츠로 길어져도 꽃잎이 확실히 화면 밖으로 나가도록 충분히 큰 값 */
     transform: translate3d(var(--drift, 0px), 200vh, 0) rotate(720deg);
