@@ -22,7 +22,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { INVITES_COLLECTION, REGISTRATIONS_COLLECTION, SUPPORTERS_COLLECTION } from './constants';
-import type { Invite, InviteRegistration, InviteRound, InviteStats, InviteSupporter } from './types';
+import type { Invite, InviteRegistration, InviteRound, InviteStaff, InviteStats, InviteSupporter } from './types';
 
 export interface InviteWriteInput {
   year: number;
@@ -34,6 +34,8 @@ export interface InviteWriteInput {
   posterImageUrl: string;
   venue: Invite['venue'];
   roles: Invite['roles'];
+  /** 제작진. 폼에서 항상 배열로 전달되지만 호환을 위해 optional. */
+  staff?: InviteStaff[];
   rounds: Array<Omit<InviteRound, 'startAt'> & { startAtMs: number }>;
   sponsorAccount: Invite['sponsorAccount'];
   thanksMessage?: string;
@@ -83,6 +85,20 @@ export async function upsertInvite(
     startAt: Timestamp.fromMillis(startAtMs),
   }));
 
+  // 제작진 정제: 빈 직책·빈 멤버 제거, photoFile 빈 값은 필드 자체를 생략
+  const staff: InviteStaff[] = (input.staff ?? [])
+    .map(s => ({
+      id: s.id,
+      role: s.role.trim(),
+      members: s.members
+        .filter(m => m.name.trim())
+        .map(m => ({
+          name: m.name.trim(),
+          ...(m.photoFile && m.photoFile.trim() ? { photoFile: m.photoFile.trim() } : {}),
+        })),
+    }))
+    .filter(s => s.role && s.members.length > 0);
+
   if (isNew) {
     // 이미 존재하는 문서를 덮어써서 stats가 초기화되는 사고 방지
     const existing = await getDoc(ref);
@@ -99,6 +115,7 @@ export async function upsertInvite(
       posterImageUrl: input.posterImageUrl,
       venue: input.venue,
       roles: input.roles,
+      staff,
       rounds,
       sponsorAccount: input.sponsorAccount,
       thanksMessage: input.thanksMessage || '',
@@ -121,6 +138,7 @@ export async function upsertInvite(
       posterImageUrl: input.posterImageUrl,
       venue: input.venue,
       roles: input.roles,
+      staff,
       rounds,
       sponsorAccount: input.sponsorAccount,
       thanksMessage: input.thanksMessage || '',
