@@ -48,19 +48,25 @@ function celebrateNewSupporter(name: string) {
   try {
     const bouquet = confetti.shapeFromText({ text: '💐', scalar: 3 });
     const heart = confetti.shapeFromText({ text: '💝', scalar: 2.5 });
-    setTimeout(() => {
-      confetti({
-        shapes: [bouquet, heart],
-        scalar: 3,
-        particleCount: 25,
-        spread: 140,
-        startVelocity: 35,
-        gravity: 0.6,
-        ticks: 300,
-        origin: { y: 0.2 },
-        zIndex: 9999,
-      });
-    }, 200);
+    const flower = confetti.shapeFromText({ text: '🌸', scalar: 2.2 });
+    const rain = (delay: number, originX: number, shapes: confetti.Shape[], count: number) => {
+      setTimeout(() => {
+        confetti({
+          shapes,
+          scalar: 2.7,
+          particleCount: count,
+          spread: 110,
+          startVelocity: 45,
+          gravity: 0.6,
+          ticks: 280,
+          origin: { x: originX, y: 0.1 },
+          zIndex: 9999,
+        });
+      }, delay);
+    };
+    rain(100, 0.2, [bouquet, flower], 10);
+    rain(900, 0.8, [bouquet, heart], 10);
+    rain(1800, 0.5, [flower, heart], 10);
   } catch {
     // 미지원 브라우저는 polygon confetti만
   }
@@ -192,7 +198,6 @@ export default function SupporterWall(p: Props) {
   return (
     <main className="relative min-h-dvh overflow-hidden text-white thanks-bg flex flex-col">
       <WallPetals />
-      <WallFlowers />
 
       <header className="relative z-10 px-6 pt-10 pb-6 text-center">
         {p.overline?.trim() && (
@@ -434,88 +439,3 @@ function WallPetals() {
   );
 }
 
-/** wall 전용 날아다니는 꽃다발 */
-function WallFlowers() {
-  const items = [
-    { dir: 'lr' as const, startY: '20vh', midY: '5vh', endY: '40vh', dur: 11, delay: 0, paletteIdx: 0, size: 110 },
-    { dir: 'rl' as const, startY: '55vh', midY: '15vh', endY: '65vh', dur: 13, delay: 2, paletteIdx: 1, size: 120 },
-    { dir: 'lr' as const, startY: '75vh', midY: '40vh', endY: '15vh', dur: 14, delay: 4, paletteIdx: 2, size: 100 },
-    { dir: 'rl' as const, startY: '30vh', midY: '55vh', endY: '20vh', dur: 12, delay: 6, paletteIdx: 3, size: 110 },
-    { dir: 'lr' as const, startY: '45vh', midY: '25vh', endY: '60vh', dur: 13, delay: 8, paletteIdx: 4, size: 115 },
-  ];
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" aria-hidden>
-      {items.map((it, i) => (
-        <span
-          key={i}
-          className={it.dir === 'lr' ? 'flower-fly-lr' : 'flower-fly-rl'}
-          style={
-            {
-              ['--start-y' as string]: it.startY,
-              ['--mid-y' as string]: it.midY,
-              ['--end-y' as string]: it.endY,
-              ['--dur' as string]: `${it.dur}s`,
-              ['--delay' as string]: `${it.delay}s`,
-            } as React.CSSProperties
-          }
-        >
-          <BouquetSvg size={it.size} paletteIdx={it.paletteIdx} />
-        </span>
-      ))}
-    </div>
-  );
-}
-
-const BOUQUET_PALETTES: { petals: string[]; center: string; leaf: string }[] = [
-  { petals: ['#ff85a2', '#ff9bb3'], center: '#ffd700', leaf: '#86c8a3' },
-  { petals: ['#f9a8d4', '#fbcfe8'], center: '#fde68a', leaf: '#86c8a3' },
-  { petals: ['#fda4af', '#ffe4e6'], center: '#fde047', leaf: '#86c8a3' },
-  { petals: ['#fcd34d', '#fef3c7'], center: '#fb923c', leaf: '#86c8a3' },
-  { petals: ['#c084fc', '#e9d5ff'], center: '#fde68a', leaf: '#86c8a3' },
-];
-
-function BouquetSvg({ size, paletteIdx }: { size: number; paletteIdx: number }) {
-  const p = BOUQUET_PALETTES[paletteIdx % BOUQUET_PALETTES.length];
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="22" cy="60" rx="14" ry="6" fill={p.leaf} transform="rotate(-30 22 60)" />
-      <ellipse cx="78" cy="60" rx="14" ry="6" fill={p.leaf} transform="rotate(30 78 60)" />
-      <ellipse cx="50" cy="80" rx="16" ry="6" fill={p.leaf} />
-      <Flower cx={50} cy={42} r={20} petalColor={p.petals[0]} centerColor={p.center} />
-      <Flower cx={28} cy={32} r={14} petalColor={p.petals[1]} centerColor={p.center} />
-      <Flower cx={72} cy={32} r={14} petalColor={p.petals[0]} centerColor={p.center} />
-      <Flower cx={32} cy={62} r={11} petalColor={p.petals[1]} centerColor={p.center} />
-      <Flower cx={68} cy={62} r={11} petalColor={p.petals[1]} centerColor={p.center} />
-      <rect x="42" y="78" width="16" height="14" rx="3" fill="#fb7185" />
-      <path d="M42 92 L34 96 L42 88 Z" fill="#fb7185" />
-      <path d="M58 92 L66 96 L58 88 Z" fill="#fb7185" />
-    </svg>
-  );
-}
-
-function Flower({
-  cx,
-  cy,
-  r,
-  petalColor,
-  centerColor,
-}: {
-  cx: number;
-  cy: number;
-  r: number;
-  petalColor: string;
-  centerColor: string;
-}) {
-  const petalR = r * 0.6;
-  const offset = r * 0.55;
-  return (
-    <g>
-      <circle cx={cx} cy={cy - offset} r={petalR} fill={petalColor} />
-      <circle cx={cx + offset} cy={cy - offset * 0.3} r={petalR} fill={petalColor} />
-      <circle cx={cx - offset} cy={cy - offset * 0.3} r={petalR} fill={petalColor} />
-      <circle cx={cx + offset * 0.7} cy={cy + offset * 0.7} r={petalR} fill={petalColor} />
-      <circle cx={cx - offset * 0.7} cy={cy + offset * 0.7} r={petalR} fill={petalColor} />
-      <circle cx={cx} cy={cy} r={r * 0.35} fill={centerColor} />
-    </g>
-  );
-}

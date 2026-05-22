@@ -28,28 +28,30 @@ function fireConfetti(): () => void {
   setTimeout(() => burst({ particleCount: 50, angle: 60, spread: 75, origin: { x: 0, y: 0.7 }, startVelocity: 55 }), 150);
   setTimeout(() => burst({ particleCount: 50, angle: 120, spread: 75, origin: { x: 1, y: 0.7 }, startVelocity: 55 }), 150);
 
-  // 2) 꽃다발 emoji confetti 2회로 축소
+  // 2) 꽃다발·꽃 emoji confetti 3회 — 좌·중·우에서 떨어져 화면 가로지르는 효과
   try {
     const bouquet = confetti.shapeFromText({ text: '💐', scalar: 3 });
     const flower = confetti.shapeFromText({ text: '🌸', scalar: 2.2 });
+    const heart = confetti.shapeFromText({ text: '💝', scalar: 2.2 });
 
-    const emojiRain = (delay: number, shapes: confetti.Shape[], count: number) => {
+    const emojiRain = (delay: number, originX: number, shapes: confetti.Shape[], count: number) => {
       setTimeout(() => {
         confetti({
           shapes,
           scalar: 2.5,
           particleCount: count,
-          spread: 130,
-          startVelocity: 35,
-          gravity: 0.7,
-          ticks: 240,
-          origin: { x: Math.random(), y: 0.1 + Math.random() * 0.2 },
+          spread: 110,
+          startVelocity: 45,
+          gravity: 0.6,
+          ticks: 260,
+          origin: { x: originX, y: 0.1 },
           zIndex: 9999,
         });
       }, delay);
     };
-    emojiRain(300, [bouquet, flower], 10);
-    emojiRain(2200, [flower, bouquet], 10);
+    emojiRain(200, 0.15, [bouquet, flower], 8);
+    emojiRain(1500, 0.85, [bouquet, heart], 8);
+    emojiRain(3000, 0.5, [flower, bouquet], 10);
   } catch {
     // shapeFromText 미지원 브라우저
   }
@@ -138,11 +140,9 @@ export default function ThanksContent(p: ThanksContentProps) {
   if (thanked) {
     return (
       <main className="relative min-h-dvh overflow-hidden text-white px-5 py-20 flex flex-col items-center justify-center thanks-bg">
-        {/* 끝없이 떨어지는 꽃잎 (배경 레이어) — main에 transform이 없어야 absolute가
-            main 기준으로 정확히 viewport 영역에 머무름. shake는 콘텐츠 div에만 적용. */}
+        {/* 끝없이 떨어지는 꽃잎 (배경 레이어). 꽃다발 시각 효과는 canvas-confetti의
+            emoji rain(💐🌸)으로 대체 — CSS animation의 fill-mode 이슈 회피. */}
         <PetalRain />
-        {/* 좌우로 날아다니는 꽃다발 SVG */}
-        <FlyingFlowers />
 
         {/* 메시지 — shake는 여기에만 (꽃잎 컨테이너에는 transform 영향 X) */}
         <div className="relative z-10 flex flex-col items-center text-center thanks-shake">
@@ -329,98 +329,3 @@ function PetalSvg({ size, color }: { size: number; color: string }) {
   );
 }
 
-/**
- * 화면을 좌우로 가로지르며 날아다니는 꽃다발. SVG 5송이 묶음을 회전시키며 이동.
- * 이모지를 쓰지 않고 직접 그린다.
- */
-function FlyingFlowers() {
-  // 3송이로 줄임 — 너무 많으면 모바일에서 산만
-  const items = [
-    { dir: 'lr' as const, startY: '15vh', midY: '5vh', endY: '40vh', dur: 11, delay: 0, palette: 0, size: 76 },
-    { dir: 'rl' as const, startY: '60vh', midY: '20vh', endY: '70vh', dur: 13, delay: 3, palette: 1, size: 84 },
-    { dir: 'lr' as const, startY: '40vh', midY: '30vh', endY: '50vh', dur: 12, delay: 6, palette: 2, size: 80 },
-  ];
-  return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden>
-      {items.map((it, i) => (
-        <span
-          key={i}
-          className={it.dir === 'lr' ? 'flower-fly-lr' : 'flower-fly-rl'}
-          style={
-            {
-              ['--start-y' as string]: it.startY,
-              ['--mid-y' as string]: it.midY,
-              ['--end-y' as string]: it.endY,
-              ['--dur' as string]: `${it.dur}s`,
-              ['--delay' as string]: `${it.delay}s`,
-            } as React.CSSProperties
-          }
-        >
-          <BouquetSvg size={it.size} paletteIdx={it.palette} />
-        </span>
-      ))}
-    </div>
-  );
-}
-
-const BOUQUET_PALETTES: { petals: string[]; center: string; leaf: string }[] = [
-  { petals: ['#ff85a2', '#ff9bb3'], center: '#ffd700', leaf: '#86c8a3' },
-  { petals: ['#f9a8d4', '#fbcfe8'], center: '#fde68a', leaf: '#86c8a3' },
-  { petals: ['#fda4af', '#ffe4e6'], center: '#fde047', leaf: '#86c8a3' },
-  { petals: ['#fcd34d', '#fef3c7'], center: '#fb923c', leaf: '#86c8a3' },
-  { petals: ['#c084fc', '#e9d5ff'], center: '#fde68a', leaf: '#86c8a3' },
-];
-
-function BouquetSvg({ size, paletteIdx }: { size: number; paletteIdx: number }) {
-  const p = BOUQUET_PALETTES[paletteIdx % BOUQUET_PALETTES.length];
-  // 5송이 꽃 다발 (3송이 큰 + 2송이 작은) + 잎사귀 + 리본
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      {/* 잎사귀 */}
-      <ellipse cx="22" cy="60" rx="14" ry="6" fill={p.leaf} transform="rotate(-30 22 60)" />
-      <ellipse cx="78" cy="60" rx="14" ry="6" fill={p.leaf} transform="rotate(30 78 60)" />
-      <ellipse cx="50" cy="80" rx="16" ry="6" fill={p.leaf} />
-      {/* 꽃 1 (가운데) */}
-      <Flower cx={50} cy={42} r={20} petalColor={p.petals[0]} centerColor={p.center} />
-      {/* 꽃 2 (왼쪽 위) */}
-      <Flower cx={28} cy={32} r={14} petalColor={p.petals[1]} centerColor={p.center} />
-      {/* 꽃 3 (오른쪽 위) */}
-      <Flower cx={72} cy={32} r={14} petalColor={p.petals[0]} centerColor={p.center} />
-      {/* 꽃 4 (왼쪽 아래) */}
-      <Flower cx={32} cy={62} r={11} petalColor={p.petals[1]} centerColor={p.center} />
-      {/* 꽃 5 (오른쪽 아래) */}
-      <Flower cx={68} cy={62} r={11} petalColor={p.petals[1]} centerColor={p.center} />
-      {/* 리본 */}
-      <rect x="42" y="78" width="16" height="14" rx="3" fill="#fb7185" />
-      <path d="M42 92 L34 96 L42 88 Z" fill="#fb7185" />
-      <path d="M58 92 L66 96 L58 88 Z" fill="#fb7185" />
-    </svg>
-  );
-}
-
-function Flower({
-  cx,
-  cy,
-  r,
-  petalColor,
-  centerColor,
-}: {
-  cx: number;
-  cy: number;
-  r: number;
-  petalColor: string;
-  centerColor: string;
-}) {
-  const petalR = r * 0.6;
-  const offset = r * 0.55;
-  return (
-    <g>
-      <circle cx={cx} cy={cy - offset} r={petalR} fill={petalColor} />
-      <circle cx={cx + offset} cy={cy - offset * 0.3} r={petalR} fill={petalColor} />
-      <circle cx={cx - offset} cy={cy - offset * 0.3} r={petalR} fill={petalColor} />
-      <circle cx={cx + offset * 0.7} cy={cy + offset * 0.7} r={petalR} fill={petalColor} />
-      <circle cx={cx - offset * 0.7} cy={cy + offset * 0.7} r={petalR} fill={petalColor} />
-      <circle cx={cx} cy={cy} r={r * 0.35} fill={centerColor} />
-    </g>
-  );
-}

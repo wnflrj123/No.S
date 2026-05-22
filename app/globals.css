@@ -299,57 +299,7 @@ body {
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));
 }
 
-/* 날아다니는 꽃다발 — 좌→우 또는 우→좌 사선 이동 */
-@keyframes flowerFlyLR {
-  0% {
-    transform: translate3d(-30vw, var(--start-y, 20dvh), 0) rotate(-40deg) scale(0.7);
-    opacity: 0;
-  }
-  10% { opacity: 1; }
-  50% {
-    transform: translate3d(50vw, var(--mid-y, -5dvh), 0) rotate(180deg) scale(1);
-  }
-  90% { opacity: 1; }
-  100% {
-    transform: translate3d(130vw, var(--end-y, 30dvh), 0) rotate(720deg) scale(0.7);
-    opacity: 0;
-  }
-}
-@keyframes flowerFlyRL {
-  0% {
-    transform: translate3d(130vw, var(--start-y, 20dvh), 0) rotate(40deg) scale(0.7);
-    opacity: 0;
-  }
-  10% { opacity: 1; }
-  50% {
-    transform: translate3d(50vw, var(--mid-y, -5dvh), 0) rotate(-180deg) scale(1);
-  }
-  90% { opacity: 1; }
-  100% {
-    transform: translate3d(-30vw, var(--end-y, 30dvh), 0) rotate(-720deg) scale(0.7);
-    opacity: 0;
-  }
-}
-.flower-fly-lr {
-  position: absolute;
-  top: 0;
-  pointer-events: none;
-  animation: flowerFlyLR var(--dur, 9s) ease-in-out infinite;
-  animation-delay: var(--delay, 0s);
-  will-change: transform;
-  backface-visibility: hidden;
-  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.25));
-}
-.flower-fly-rl {
-  position: absolute;
-  top: 0;
-  pointer-events: none;
-  animation: flowerFlyRL var(--dur, 9s) ease-in-out infinite;
-  animation-delay: var(--delay, 0s);
-  will-change: transform;
-  backface-visibility: hidden;
-  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.25));
-}
+/* 날아다니는 꽃다발 CSS animation은 canvas-confetti의 emoji rain(💐 🌸 💝)으로 대체되어 제거. */
 
 @keyframes thanksShake {
   0%, 100% { transform: translate(0, 0); }
