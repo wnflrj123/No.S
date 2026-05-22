@@ -42,6 +42,25 @@ export interface InviteRole {
 }
 
 /**
+ * 제작진(스태프) 멤버 한 명.
+ */
+export interface InviteStaffMember {
+  name: string;
+  /** 정적 파일명 (선택). 경로: /invites/{year}-{round}/staff/{photoFile} */
+  photoFile?: string;
+}
+
+/**
+ * 제작진 한 직책 (예: 연출, 분장). 멤버 1명 이상.
+ * 공연 전체 공통이며 회차와 무관.
+ */
+export interface InviteStaff {
+  id: string; // crypto.randomUUID()
+  role: string; // 직책명
+  members: InviteStaffMember[];
+}
+
+/**
  * 회차별 캐스팅. 배역(roleId)을 참조하고, 그 배역에 누가 캐스팅됐는지 + 사진을 보관.
  *
  * 레거시 호환: 과거에는 { role, description, photoFile }로 회차마다 직접 입력했다.
@@ -110,6 +129,8 @@ export interface Invite {
   posterImageUrl: string; // 정적 경로 또는 외부 URL
   venue: Venue;
   roles: InviteRole[]; // 배역 마스터 (공연 전체 공통). 레거시 데이터는 폼 저장 시 자동 채워짐
+  /** 제작진. 선택 필드 — staff 없는 기존 공연 데이터와 호환. */
+  staff?: InviteStaff[];
   rounds: InviteRound[];
   sponsorAccount: SponsorAccount;
   thanksMessage?: string;
