@@ -312,6 +312,17 @@ export async function lookupActiveRegistration(
 }
 
 /**
+ * Admin이 현장 후원자를 삭제. inviteSupporters 컬렉션 hard delete.
+ */
+export async function deleteSupporter(supporterId: string): Promise<boolean> {
+  const ref = adminDb.collection(SUPPORTERS_COLLECTION).doc(supporterId);
+  const snap = await ref.get();
+  if (!snap.exists) return false;
+  await ref.delete();
+  return true;
+}
+
+/**
  * 후원자 wall용 외부 supporter를 추가한다. (이름만 기록)
  */
 export async function addSupporter(inviteId: string, name: string): Promise<{ id: string }> {

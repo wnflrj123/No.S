@@ -248,10 +248,10 @@ export default function SupporterWall(p: Props) {
               {celebrationName}
             </div>
             <div className="mt-4 text-xl sm:text-3xl font-extrabold text-yellow-200 drop-shadow-lg">
-              야단법석 감사합니다!!
+              정말 감사합니다!!
             </div>
             <div className="mt-2 text-base sm:text-xl text-white/90 drop-shadow">
-              따뜻한 마음 정말 잊지 않을게요 💛
+              따뜻한 마음 잊지 않을게요 💛
             </div>
           </div>
         </div>

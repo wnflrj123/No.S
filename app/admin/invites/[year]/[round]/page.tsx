@@ -159,7 +159,16 @@ export default function InviteAdminDetailPage() {
                 />
               )}
               {tab === 'answers' && <AnswersDigest registrations={regs} />}
-              {tab === 'sponsors' && <SponsorsTab registrations={regs} supporters={supporters} />}
+              {tab === 'sponsors' && (
+                <SponsorsTab
+                  registrations={regs}
+                  supporters={supporters}
+                  year={Number(params.year)}
+                  round={Number(params.round)}
+                  onSupporterAdded={s => setSupporters(prev => [s, ...prev])}
+                  onSupporterDeleted={id => setSupporters(prev => prev.filter(x => x.id !== id))}
+                />
+              )}
             </section>
           </>
         )}

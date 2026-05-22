@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { addSupporter, getInvite, inviteIdFrom } from '@/lib/invites/server';
+import { addSupporter, getInvite, inviteIdFrom, verifyAdminToken } from '@/lib/invites/server';
 import { MAX_NAME_LENGTH } from '@/lib/invites/constants';
 
 export const runtime = 'nodejs';
@@ -10,6 +10,10 @@ interface RouteParams {
 
 export async function POST(req: Request, { params }: RouteParams) {
   const { year, round } = await params;
+
+  // 관리자 토큰이 있으면 disableWallSupport·공개 여부 제약을 우회한다.
+  // (현장에서 운영자가 직접 후원자를 추가하는 경우 등)
+  const adminUid = await verifyAdminToken(req.headers.get('authorization'));
 
   let body: { name?: unknown };
   try {
@@ -27,11 +31,16 @@ export async function POST(req: Request, { params }: RouteParams) {
   }
 
   const invite = await getInvite(year, round);
-  if (!invite || !invite.isPublished) {
+  if (!invite) {
     return NextResponse.json({ message: '공연을 찾을 수 없습니다.' }, { status: 404 });
   }
-  if (invite.disableWallSupport === true) {
-    return NextResponse.json({ message: '현재 현장 응원 등록이 받지 않고 있습니다.' }, { status: 403 });
+  if (!adminUid) {
+    if (!invite.isPublished) {
+      return NextResponse.json({ message: '공연을 찾을 수 없습니다.' }, { status: 404 });
+    }
+    if (invite.disableWallSupport === true) {
+      return NextResponse.json({ message: '현재 현장 응원 등록이 받지 않고 있습니다.' }, { status: 403 });
+    }
   }
 
   try {
