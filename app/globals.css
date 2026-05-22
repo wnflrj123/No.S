@@ -253,6 +253,81 @@ body {
   animation: thanksBgShift 18s ease-in-out infinite;
 }
 
+/* 7. 가장자리 빛나는 vignette (무대 조명 느낌) */
+@keyframes vignettePulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.9; }
+}
+.thanks-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 35%,
+    rgba(255, 215, 0, 0.18) 70%,
+    rgba(255, 215, 0, 0.45) 100%
+  );
+  mix-blend-mode: screen;
+  animation: vignettePulse 3.2s ease-in-out infinite;
+  will-change: opacity;
+}
+
+/* 8. 카메라 플래시 (thanked 진입 직후 한 번만) */
+@keyframes cameraFlash {
+  0% { opacity: 0; }
+  12% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+.thanks-flash {
+  position: fixed;
+  inset: 0;
+  background: white;
+  pointer-events: none;
+  z-index: 9998;
+  animation: cameraFlash 0.7s ease-out forwards;
+}
+
+/* 10. 헤드라인 둘레를 회전하는 별 */
+@keyframes orbitClockwise {
+  from { transform: rotate(0deg) translateX(var(--orbit-r, 140px)) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(var(--orbit-r, 140px)) rotate(-360deg); }
+}
+@keyframes orbitCounter {
+  from { transform: rotate(0deg) translateX(var(--orbit-r, 140px)) rotate(0deg); }
+  to { transform: rotate(-360deg) translateX(var(--orbit-r, 140px)) rotate(360deg); }
+}
+.thanks-orbit-star {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: -14px;
+  margin-left: -14px;
+  font-size: 1.5rem;
+  pointer-events: none;
+  will-change: transform;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
+}
+.thanks-orbit-star.cw {
+  animation: orbitClockwise var(--orbit-dur, 8s) linear infinite;
+}
+.thanks-orbit-star.ccw {
+  animation: orbitCounter var(--orbit-dur, 8s) linear infinite;
+}
+
+/* 12. 신청자 이름 글로우 펄스 */
+@keyframes nameGlowPulse {
+  0%, 100% {
+    text-shadow: 0 0 18px rgba(255, 215, 0, 0.7), 0 0 36px rgba(255, 215, 0, 0.4);
+  }
+  50% {
+    text-shadow: 0 0 32px rgba(255, 215, 0, 1), 0 0 64px rgba(255, 215, 0, 0.8), 0 0 90px rgba(255, 255, 255, 0.4);
+  }
+}
+.thanks-name-glow {
+  animation: nameGlowPulse 1.8s ease-in-out infinite;
+}
+
 @keyframes thanksHeadlinePulse {
   0%, 100% {
     transform: scale(1);

@@ -140,17 +140,57 @@ export default function ThanksContent(p: ThanksContentProps) {
   if (thanked) {
     return (
       <main className="relative min-h-dvh overflow-hidden text-white px-5 py-20 flex flex-col items-center justify-center thanks-bg">
-        {/* 끝없이 떨어지는 꽃잎 (배경 레이어). 꽃다발 시각 효과는 canvas-confetti의
-            emoji rain(💐🌸)으로 대체 — CSS animation의 fill-mode 이슈 회피. */}
+        {/* 8. 카메라 플래시 — thanked 진입 직후 한 번만 (key로 마운트 제어, 0.7초 후 자동 사라짐) */}
+        <div className="thanks-flash" aria-hidden />
+
+        {/* 7. 가장자리 빛나는 vignette — 무대 조명 느낌 */}
+        <div className="thanks-vignette" aria-hidden />
+
+        {/* 끝없이 떨어지는 꽃잎 (배경 레이어) */}
         <PetalRain />
 
         {/* 메시지 — shake는 여기에만 (꽃잎 컨테이너에는 transform 영향 X) */}
         <div className="relative z-10 flex flex-col items-center text-center thanks-shake">
-          <h1 className="text-5xl sm:text-6xl font-extrabold mb-6 drop-shadow-2xl tracking-tight thanks-headline">
-            정말, 정말, 정말<br className="sm:hidden" /> 고맙습니다!
-          </h1>
+          {/* 10. 헤드라인 둘레를 회전하는 별 (양방향) */}
+          <div className="relative">
+            <span
+              className="thanks-orbit-star cw"
+              style={{ ['--orbit-r' as string]: '180px', ['--orbit-dur' as string]: '9s' } as React.CSSProperties}
+              aria-hidden
+            >
+              ⭐
+            </span>
+            <span
+              className="thanks-orbit-star ccw"
+              style={{ ['--orbit-r' as string]: '210px', ['--orbit-dur' as string]: '12s', animationDelay: '-3s' } as React.CSSProperties}
+              aria-hidden
+            >
+              ✨
+            </span>
+            <span
+              className="thanks-orbit-star cw"
+              style={{ ['--orbit-r' as string]: '160px', ['--orbit-dur' as string]: '14s', animationDelay: '-6s' } as React.CSSProperties}
+              aria-hidden
+            >
+              🌟
+            </span>
+            <span
+              className="thanks-orbit-star ccw"
+              style={{ ['--orbit-r' as string]: '230px', ['--orbit-dur' as string]: '11s', animationDelay: '-2s' } as React.CSSProperties}
+              aria-hidden
+            >
+              💫
+            </span>
+            <h1 className="text-5xl sm:text-6xl font-extrabold mb-6 drop-shadow-2xl tracking-tight thanks-headline">
+              정말, 정말, 정말<br className="sm:hidden" /> 고맙습니다!
+            </h1>
+          </div>
           <p className="text-lg sm:text-xl text-white/95 max-w-md leading-relaxed drop-shadow-lg">
-            <strong className="text-yellow-200">{p.registrant.name}</strong>님의 응원이<br />
+            {/* 12. 이름 글로우 펄스 */}
+            <strong className="text-yellow-200 thanks-name-glow inline-block">
+              {p.registrant.name}
+            </strong>
+            님의 응원이<br />
             저희에게 정말 큰 힘이 됩니다.
           </p>
           <p className="text-base sm:text-lg text-white/90 mt-5 max-w-md leading-relaxed drop-shadow">

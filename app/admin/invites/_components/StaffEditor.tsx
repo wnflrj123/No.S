@@ -15,10 +15,12 @@ function newStaffId(): string {
 }
 
 function emptyMember(): InviteStaffMember {
-  return { name: '', photoFile: '' };
+  // photoFile은 선택 필드 — 빈 문자열 대신 생략한다. 사진 입력칸은 value={photoFile ?? ''}로 렌더.
+  return { name: '' };
 }
 
 export default function StaffEditor({ value, onChange, inviteId }: Props) {
+  // patch에 없는 필드(id·role·members)는 spread로 보존된다.
   const updateStaff = (index: number, patch: Partial<InviteStaff>) => {
     onChange(value.map((s, i) => (i === index ? { ...s, ...patch } : s)));
   };
@@ -111,7 +113,7 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
                     type="button"
                     onClick={() => removeMember(si, mi)}
                     disabled={staff.members.length <= 1}
-                    className="px-2 py-2 text-red-500 hover:bg-red-50 rounded-lg shrink-0 disabled:text-gray-300 disabled:hover:bg-transparent"
+                    className="px-2 py-2 text-red-500 hover:bg-red-50 rounded-lg shrink-0 disabled:text-gray-300 disabled:hover:bg-transparent disabled:cursor-not-allowed"
                     aria-label="멤버 삭제"
                   >
                     <FiTrash2 />
