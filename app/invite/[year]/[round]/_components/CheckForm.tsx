@@ -219,7 +219,7 @@ function RegistrationCard({ year, round, registration, rounds }: RegistrationCar
           type="button"
           onClick={handleEdit}
           disabled={!canEdit}
-          className="w-full py-3 bg-[#0066B3] text-white rounded-xl font-semibold text-sm hover:bg-[#0055a0] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          className="w-full py-2.5 bg-white text-gray-600 border border-gray-300 rounded-xl font-medium text-sm hover:bg-gray-50 hover:text-gray-800 disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors"
         >
           {canEdit ? '신청 내용 변경하기' : '변경 가능 기간이 지났어요'}
         </button>
