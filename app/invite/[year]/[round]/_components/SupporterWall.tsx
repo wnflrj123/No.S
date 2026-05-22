@@ -79,7 +79,10 @@ export default function SupporterWall(p: Props) {
   const [celebrationName, setCelebrationName] = useState<string | null>(null);
   const [showSendModal, setShowSendModal] = useState(false);
   const knownIds = useRef<Set<string>>(new Set());
-  const initialized = useRef(false);
+  // 두 onSnapshot 각각 첫 스냅샷을 받은 뒤에만 셀러브레이션을 발사한다.
+  // (페이지 진입 시 기존 명단을 '새 supporter'로 오인해 폭죽이 터지는 사고 방지)
+  const regsInited = useRef(false);
+  const wallInited = useRef(false);
 
   // 1) 신청자 중 후원 체크한 사람 실시간 구독
   useEffect(() => {
@@ -103,11 +106,17 @@ export default function SupporterWall(p: Props) {
             createdAtMs: data.sponsorCheckedAt?.toMillis?.() ?? data.createdAt.toMillis(),
           });
         }
+        // 첫 스냅샷의 명단은 '기존'으로 분류 — 셀러브레이션 트리거 X
+        if (!regsInited.current) {
+          list.forEach(s => knownIds.current.add(s.id));
+          regsInited.current = true;
+        }
         setRegistrationSponsors(list);
       },
       err => {
         // 일반 회원이 wall에 접근하면 inviteRegistrations read는 admin only라 차단됨.
-        // wall은 누구나 볼 수 있어야 하므로, 이 에러는 expected이고 console에만 기록.
+        // 차단되어도 wall은 동작해야 하므로 init은 완료 처리.
+        regsInited.current = true;
         console.warn('[wall] registration sponsors subscribe failed (expected for non-admin):', err.code);
       },
     );
@@ -132,9 +141,15 @@ export default function SupporterWall(p: Props) {
             createdAtMs: data.createdAt?.toMillis?.() ?? 0,
           };
         });
+        // 첫 스냅샷의 명단은 '기존'으로 분류 — 셀러브레이션 트리거 X
+        if (!wallInited.current) {
+          list.forEach(s => knownIds.current.add(s.id));
+          wallInited.current = true;
+        }
         setWallSupporters(list);
       },
       err => {
+        wallInited.current = true;
         console.error(
           '[wall] supporters subscribe failed. Firestore Rules 미배포일 수 있습니다:',
           err.code,
@@ -153,14 +168,10 @@ export default function SupporterWall(p: Props) {
     return merged;
   }, [registrationSponsors, wallSupporters]);
 
-  // 첫 로드 후 새 supporter 추가 감지 → 가운데 큰 이름 셀러브레이션 + 폭죽 + 목록 강조
+  // 두 onSnapshot 모두 첫 스냅샷 후에만 새 supporter 감지 → 셀러브레이션
   useEffect(() => {
-    if (!initialized.current) {
-      // 첫 스냅샷은 기존 명단 — 효과 없이 등록만
-      allSupporters.forEach(s => knownIds.current.add(s.id));
-      initialized.current = true;
-      return;
-    }
+    // 두 데이터 소스 중 하나라도 첫 스냅샷이 아직이면 트리거 X
+    if (!regsInited.current || !wallInited.current) return;
     const newOnes = allSupporters.filter(s => !knownIds.current.has(s.id));
     if (newOnes.length === 0) return;
     newOnes.forEach(s => knownIds.current.add(s.id));
