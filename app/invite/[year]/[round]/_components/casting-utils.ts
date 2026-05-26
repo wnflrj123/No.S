@@ -14,6 +14,7 @@ export function resolveCasting(round: InviteRound, roles: InviteRole[]): Resolve
         description: role?.description ?? '',
         actorName: c.actorName ?? '',
         photoFile: c.photoFile,
+        photoCrop: c.photoCrop,
       };
     }
     // 레거시: role/description이 캐스팅에 직접 들어있음
@@ -22,6 +23,7 @@ export function resolveCasting(round: InviteRound, roles: InviteRole[]): Resolve
       description: c.description ?? '',
       actorName: c.actorName ?? '',
       photoFile: c.photoFile,
+      photoCrop: c.photoCrop,
     };
   });
 }

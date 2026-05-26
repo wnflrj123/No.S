@@ -1,8 +1,10 @@
 'use client';
 
-import { FiPlus, FiTrash2 } from 'react-icons/fi';
+import { useState } from 'react';
+import { FiCrop, FiPlus, FiTrash2 } from 'react-icons/fi';
 import type { CastingEntry, InviteRole } from '@/lib/invites/types';
 import usePhotoFiles from './usePhotoFiles';
+import CropEditor from './CropEditor';
 
 interface Props {
   value: CastingEntry[];
@@ -13,6 +15,7 @@ interface Props {
 
 export default function CastingEditor({ value, onChange, roles, inviteId }: Props) {
   const photoFiles = usePhotoFiles(inviteId, 'cast');
+  const [croppingIdx, setCroppingIdx] = useState<number | null>(null);
 
   const update = (index: number, patch: Partial<CastingEntry>) => {
     onChange(value.map((c, i) => (i === index ? { ...c, ...patch } : c)));
@@ -38,7 +41,7 @@ export default function CastingEditor({ value, onChange, roles, inviteId }: Prop
       <ul className="space-y-2">
         {value.map((c, i) => (
           <li key={i} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="grid sm:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-start">
+            <div className="grid sm:grid-cols-[1fr_1fr_1fr_auto_auto] gap-2 items-start">
               <select
                 value={c.roleId}
                 onChange={e => update(i, { roleId: e.target.value })}
@@ -66,7 +69,11 @@ export default function CastingEditor({ value, onChange, roles, inviteId }: Prop
               />
               <select
                 value={c.photoFile ?? ''}
-                onChange={e => update(i, { photoFile: e.target.value || undefined })}
+                onChange={e => {
+                  const next = e.target.value || undefined;
+                  // 사진을 변경/제거하면 기존 crop은 의미 없으므로 함께 비움
+                  update(i, { photoFile: next, photoCrop: undefined });
+                }}
                 className="input"
               >
                 <option value="">사진 없음</option>
@@ -77,6 +84,22 @@ export default function CastingEditor({ value, onChange, roles, inviteId }: Prop
                   <option value={c.photoFile}>{c.photoFile} (폴더에 없음)</option>
                 )}
               </select>
+              <button
+                type="button"
+                onClick={() => setCroppingIdx(i)}
+                disabled={!c.photoFile}
+                title={c.photoFile ? (c.photoCrop ? '사진 자르기 (설정됨)' : '사진 자르기') : '사진을 먼저 선택하세요'}
+                className={`px-2 py-2 rounded-lg flex items-center justify-center ${
+                  c.photoFile
+                    ? c.photoCrop
+                      ? 'text-[#0066B3] bg-blue-50 hover:bg-blue-100'
+                      : 'text-gray-600 hover:bg-gray-100'
+                    : 'text-gray-300 cursor-not-allowed'
+                }`}
+                aria-label="사진 자르기"
+              >
+                <FiCrop />
+              </button>
               <button
                 type="button"
                 onClick={() => remove(i)}
@@ -97,6 +120,18 @@ export default function CastingEditor({ value, onChange, roles, inviteId }: Prop
       >
         <FiPlus /> 캐스팅 추가
       </button>
+
+      {croppingIdx !== null && value[croppingIdx]?.photoFile && (
+        <CropEditor
+          src={`/invites/${inviteId}/cast/${value[croppingIdx].photoFile}`}
+          initialCrop={value[croppingIdx].photoCrop}
+          onSave={crop => {
+            update(croppingIdx, { photoCrop: crop ?? undefined });
+            setCroppingIdx(null);
+          }}
+          onClose={() => setCroppingIdx(null)}
+        />
+      )}
     </div>
   );
 }

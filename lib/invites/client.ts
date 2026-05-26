@@ -82,6 +82,8 @@ export async function upsertInvite(
       roleId: c.roleId,
       actorName: c.actorName,
       ...(c.photoFile ? { photoFile: c.photoFile } : {}),
+      // photoCrop은 photoFile이 있을 때만 의미. Firestore는 undefined 거부.
+      ...(c.photoFile && c.photoCrop ? { photoCrop: c.photoCrop } : {}),
     })),
     startAt: Timestamp.fromMillis(startAtMs),
     // Firestore는 undefined를 거부하므로 값이 있을 때만 필드 포함

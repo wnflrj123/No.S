@@ -70,6 +70,17 @@ export interface CastingEntry {
   roleId: string; // InviteRole.id 참조
   actorName: string; // 회차별 배우 이름
   photoFile?: string; // 정적 파일명 (예: "kim.jpg"). 경로: /invites/{year}-{round}/cast/{photoFile}
+  /**
+   * 사진 crop 메타데이터 (3:4 frame에 어떻게 보여줄지). react-easy-crop의
+   * croppedArea 출력 그대로: 각 값은 원본 이미지 기준 %(0~100).
+   * 미설정 시 object-cover 기본 동작.
+   */
+  photoCrop?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
 
   // ─── 레거시 필드 (마이그레이션용, 새로 저장하지 않음) ───
   /** @deprecated InviteRole로 이전됨. 폼 로드 시 자동 변환. */

@@ -404,6 +404,7 @@ function migrateRolesAndCasting(invite: Invite): {
           roleId: c.roleId ?? '',
           actorName: c.actorName ?? '',
           photoFile: c.photoFile,
+          photoCrop: c.photoCrop,
         })),
       })),
     };
@@ -440,6 +441,7 @@ function migrateRolesAndCasting(invite: Invite): {
       roleId: c.role ? nameToId.get(c.role) ?? '' : c.roleId ?? '',
       actorName: c.actorName ?? '', // 레거시 데이터에는 배우 이름이 없음 → 사용자가 다시 입력
       photoFile: c.photoFile,
+      photoCrop: c.photoCrop,
     })),
   }));
 

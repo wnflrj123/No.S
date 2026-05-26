@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { formatInTimeZone } from 'date-fns-tz';
 import { ko } from 'date-fns/locale';
+import CastingPhoto from './CastingPhoto';
 
 const KST = 'Asia/Seoul';
 
@@ -12,6 +12,7 @@ export interface ResolvedCasting {
   description: string;
   actorName: string;
   photoFile?: string;
+  photoCrop?: { x: number; y: number; width: number; height: number };
 }
 
 export interface RoundCasting {
@@ -75,12 +76,11 @@ export default function CastingTabs({ data, inviteId }: Props) {
             className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200"
           >
             {c.photoFile ? (
-              <div className="relative aspect-[3/4] bg-gray-100">
-                <Image
+              <div className="relative aspect-[3/4] bg-gray-100 overflow-hidden">
+                <CastingPhoto
                   src={`/invites/${inviteId}/cast/${c.photoFile}`}
                   alt={`${c.roleName} - ${c.actorName}`}
-                  fill
-                  className="object-cover"
+                  crop={c.photoCrop}
                   sizes="(max-width: 640px) 50vw, 33vw"
                 />
               </div>

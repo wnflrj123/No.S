@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import { formatInTimeZone } from 'date-fns-tz';
 import { ko } from 'date-fns/locale';
 import type { ResolvedCasting } from './CastingTabs';
+import CastingPhoto from './CastingPhoto';
 
 const KST = 'Asia/Seoul';
 
@@ -148,12 +148,11 @@ function CastingModal({
                   className="bg-gray-50 rounded-xl overflow-hidden border border-gray-200"
                 >
                   {c.photoFile ? (
-                    <div className="relative aspect-[3/4] bg-gray-100">
-                      <Image
+                    <div className="relative aspect-[3/4] bg-gray-100 overflow-hidden">
+                      <CastingPhoto
                         src={`/invites/${inviteId}/cast/${c.photoFile}`}
                         alt={`${c.roleName} - ${c.actorName}`}
-                        fill
-                        className="object-cover"
+                        crop={c.photoCrop}
                         sizes="(max-width: 640px) 50vw, 33vw"
                       />
                     </div>
