@@ -17,8 +17,9 @@ interface Props {
  *  - 모바일 ~2-up, 데스크탑 ~3-up 자연스럽게 분배
  *  - 모든 텍스트에 break-keep로 한글 어색한 줄바꿈 방지
  */
-// 1-cast/2-cast/N-cast 모두 동일하게 — 사이즈 유일 진실원천
-const ACTOR_CARD_W = 'w-[140px] sm:w-56';
+// 1-cast/2-cast/N-cast 모두 동일 폭. percentage라서 role card 너비에 자연 비례.
+// 이전 grid-cols-2 sm:grid-cols-3 시절과 동일한 사이즈 (~154 모바일 / ~234 데스크탑).
+const ACTOR_CARD_W = 'w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)]';
 export default function CastingSection({ rounds, roles, inviteId }: Props) {
   const data = groupCastByRole(rounds, roles);
   if (data.length === 0) return null;
@@ -57,8 +58,8 @@ export default function CastingSection({ rounds, roles, inviteId }: Props) {
               <div aria-hidden className="mt-6 mx-auto w-8 h-px bg-gray-200" />
             </div>
 
-            {/* 배우 카드 — 모든 카드 동일 고정 사이즈, 인원수 무관 항상 가운데 */}
-            <div className="px-3 pb-7 pt-5">
+            {/* 배우 카드 — 모든 카드 동일 percentage 폭. role card edge-to-edge로 사이즈 보존 */}
+            <div className="pb-6 pt-5">
               <div className="flex flex-wrap justify-center gap-3">
                 {actors.map((a, i) => (
                   <figure key={i} className={ACTOR_CARD_W}>
