@@ -54,9 +54,9 @@ export default function StaffSection({ staff, inviteId }: Props) {
         </div>
       )}
 
-      {/* 사진 없는 직책 — 흰 패널 with hairline divider */}
+      {/* 사진 없는 직책 — 흰 패널, 가로 꽉 차게 */}
       {textGroups.length > 0 && (
-        <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 border border-gray-100 px-5 max-w-xl mx-auto">
+        <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 border border-gray-100 px-5">
           <ul className="divide-y divide-gray-100">
             {textGroups.map(group => (
               <li
