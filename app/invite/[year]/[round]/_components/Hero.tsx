@@ -27,46 +27,46 @@ export default function Hero({ invite }: { invite: Invite }) {
   }
 
   return (
-    <section className="px-5 md:px-8 pt-6 md:pt-14 pb-4 md:pb-8">
-      <div className="max-w-3xl mx-auto flex items-start gap-3 md:gap-8">
-        {/* 포스터 — 클릭하면 모달로 크게 표시 */}
-        <div className="w-24 md:w-56 shrink-0">
+    <section className="px-5 md:px-8 pt-8 md:pt-14 pb-4 md:pb-8">
+      <div className="max-w-3xl mx-auto md:flex md:items-start md:gap-8">
+        {/* 포스터 — 모바일: 가운데 정렬 작은 thumbnail / 데스크탑: 좌측 thumbnail */}
+        <div className="mx-auto md:mx-0 w-40 md:w-56 shrink-0">
           <PosterThumb
             src={invite.posterImageUrl}
             alt={invite.title}
-            sizes="(min-width: 768px) 224px, 96px"
+            sizes="(min-width: 768px) 224px, 160px"
             priority
           />
         </div>
 
-        {/* 정보 영역 — 항상 좌측 정렬 */}
-        <div className="flex-1 min-w-0">
+        {/* 정보 영역 — 모바일: 가운데 정렬 / 데스크탑: 좌측 정렬 */}
+        <div className="mt-5 md:mt-0 text-center md:text-left flex-1 min-w-0">
           {invite.overline?.trim() && (
-            <div className="text-[11px] md:text-sm font-semibold text-[#0066B3] mb-1 md:mb-2 leading-tight">
+            <div className="text-xs md:text-sm font-semibold text-[#0066B3] mb-2">
               {invite.overline}
             </div>
           )}
-          <h1 className="text-lg md:text-3xl lg:text-4xl font-bold text-gray-900 leading-snug md:leading-tight tracking-tight">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight tracking-tight">
             {invite.title}
           </h1>
           {invite.subtitle && (
-            <p className="text-xs md:text-base text-gray-600 mt-1.5 md:mt-2 leading-relaxed whitespace-pre-line line-clamp-2 md:line-clamp-none">
+            <p className="text-sm md:text-base text-gray-600 mt-2 leading-relaxed whitespace-pre-line">
               {invite.subtitle}
             </p>
           )}
 
           {(dateLabel || invite.venue?.name) && (
-            <dl className="mt-2.5 md:mt-5 flex flex-col gap-1 md:gap-1.5 text-xs md:text-sm text-gray-700">
+            <dl className="mt-4 md:mt-5 flex flex-col gap-1.5 text-sm text-gray-700 items-center md:items-start">
               {dateLabel && (
-                <div className="flex items-start gap-1.5 md:gap-2">
-                  <span className="text-gray-400 shrink-0 leading-4 md:leading-5">📅</span>
-                  <span className="leading-4 md:leading-5">{dateLabel}</span>
+                <div className="flex items-start gap-2">
+                  <span className="text-gray-400 shrink-0 leading-5">📅</span>
+                  <span className="leading-5">{dateLabel}</span>
                 </div>
               )}
               {invite.venue?.name && (
-                <div className="flex items-start gap-1.5 md:gap-2">
-                  <span className="text-gray-400 shrink-0 leading-4 md:leading-5">📍</span>
-                  <span className="leading-4 md:leading-5">{invite.venue.name}</span>
+                <div className="flex items-start gap-2">
+                  <span className="text-gray-400 shrink-0 leading-5">📍</span>
+                  <span className="leading-5">{invite.venue.name}</span>
                 </div>
               )}
             </dl>
