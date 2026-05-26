@@ -24,9 +24,11 @@ export default function usePhotoFiles(
   const [fetched, setFetched] = useState<FetchedFiles>(INITIAL);
 
   useEffect(() => {
-    if (!/^\d+-\d+$/.test(inviteId)) return;
+    const match = inviteId.match(/^(\d+)-(\d+)$/);
+    if (!match) return;
+    const [, year, round] = match;
     let cancelled = false;
-    fetch(`/api/invites/${inviteId}/photo-files?type=${type}`, { cache: 'no-store' })
+    fetch(`/api/invites/${year}/${round}/photo-files?type=${type}`, { cache: 'no-store' })
       .then(r => (r.ok ? r.json() : { files: [] }))
       .then((data: { files?: string[] }) => {
         if (!cancelled) setFetched({ id: inviteId, type, files: data.files ?? [] });
