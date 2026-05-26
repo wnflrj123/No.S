@@ -50,7 +50,12 @@ export default async function InvitePage({ params }: PageParams) {
         <DescriptionSection html={invite.description} />
         <CastingSection rounds={invite.rounds} roles={invite.roles ?? []} inviteId={invite.id} />
         <StaffSection staff={invite.staff ?? []} inviteId={invite.id} />
-        <RoundsSection rounds={invite.rounds} nowMs={nowMs} />
+        <RoundsSection
+          rounds={invite.rounds}
+          roles={invite.roles ?? []}
+          inviteId={invite.id}
+          nowMs={nowMs}
+        />
         <VenueSection venue={invite.venue} />
       </div>
       <ApplyCTA year={invite.year} round={invite.round} disabled={allClosed} />
