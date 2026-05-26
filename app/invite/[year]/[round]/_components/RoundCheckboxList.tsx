@@ -131,19 +131,17 @@ export default function RoundCheckboxList({ rounds, value, onChange, maxHeadcoun
                 <div className="text-sm font-medium">
                   {r.roundNo}회차 · {r.teamName}
                 </div>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span className="text-xs text-gray-500">
-                    {formatInTimeZone(new Date(r.startAtMs), KST, 'M월 d일(EEE) HH:mm', { locale: ko })}
-                  </span>
-                  {badge && (
-                    <span
-                      className={`text-[11px] font-medium px-2 py-0.5 rounded ${badge.className}`}
-                    >
-                      {badge.label}
-                    </span>
-                  )}
+                <div className="text-xs text-gray-500">
+                  {formatInTimeZone(new Date(r.startAtMs), KST, 'M월 d일(EEE) HH:mm', { locale: ko })}
                 </div>
               </div>
+              {badge && (
+                <span
+                  className={`shrink-0 text-[11px] font-medium px-2 py-0.5 rounded ${badge.className}`}
+                >
+                  {badge.label}
+                </span>
+              )}
               {closed && (
                 <span className="text-xs px-2 py-1 bg-gray-300 text-gray-700 rounded">마감</span>
               )}
