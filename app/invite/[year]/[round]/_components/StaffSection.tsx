@@ -7,11 +7,10 @@ interface Props {
 }
 
 /**
- * 제작진 소개 섹션. 공개 정보 페이지에서 캐스팅 섹션 아래에 표시.
- * 공연 프로그램북 감성의 "플레이빌" 스타일 — 직책과 이름을 점선 리더로 잇는다.
- * - 사진 있는 직책 → 정사각 헤드샷 그리드 (패널 위에 먼저)
- * - 사진 없는 직책 → 점선 리더 크레딧 패널
- * 제작진이 없으면 아무것도 렌더하지 않는다.
+ * 제작진 소개 섹션. 캐스팅 섹션과 같은 가운데 정렬 카드 무드로 통일.
+ * - 사진 있는 직책: 흰 rounded-2xl 카드. 직책명 가운데 + 헤드샷 그리드(grid-cols-3 sm:cols-4)
+ * - 사진 없는 직책: 흰 rounded-2xl 패널, 행 사이 hairline divider
+ * radius는 큰 컨테이너 rounded-2xl, 작은 사진 카드 rounded-2xl(원형 헤드샷)로 일관 유지.
  */
 export default function StaffSection({ staff, inviteId }: Props) {
   const groups = staff.filter(s => s.role.trim() && s.members.length > 0);
@@ -21,45 +20,58 @@ export default function StaffSection({ staff, inviteId }: Props) {
   const textGroups = groups.filter(g => !g.members.some(m => m.photoFile));
 
   return (
-    <section className="bg-gray-50 px-5 py-8">
-      <h2 className="text-lg font-bold text-gray-900">제작진</h2>
-      <p className="mt-1 text-xs text-gray-500">이 무대를 함께 만든 사람들</p>
+    <section className="bg-gray-50 px-5 py-10">
+      <header className="text-center mb-8">
+        <h2 className="text-xl font-bold text-gray-900 tracking-tight">제작진</h2>
+        <p className="mt-1.5 text-xs text-gray-500">이 무대를 함께 만든 사람들</p>
+      </header>
 
-      {/* 사진 있는 직책 — 헤드샷 그리드 */}
+      {/* 사진 있는 직책 — 각 직책을 흰 카드로 감쌈 */}
       {photoGroups.length > 0 && (
-        <div className="mt-5 space-y-5">
+        <div className="space-y-5">
           {photoGroups.map(group => (
-            <div key={group.id}>
-              <h3 className="mb-2.5 text-sm font-semibold text-gray-800">{group.role}</h3>
-              <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-                {group.members.map((m, i) => (
-                  <li key={i} className="text-center">
-                    <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-200 ring-1 ring-black/5">
-                      {m.photoFile ? (
-                        <CastingPhoto
-                          src={`/invites/${inviteId}/staff/${m.photoFile}`}
-                          alt={m.name}
-                          crop={m.photoCrop}
-                          sizes="(max-width: 640px) 33vw, 25vw"
-                        />
-                      ) : (
-                        <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-400">
-                          사진 없음
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-1.5 text-sm font-medium text-gray-900">{m.name}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <article
+              key={group.id}
+              className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
+            >
+              <div className="px-5 pt-6 text-center">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">
+                  {group.role}
+                </h3>
+              </div>
+              <div className="px-3 pb-5 pt-4">
+                <ul className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  {group.members.map((m, i) => (
+                    <li key={i} className="text-center">
+                      <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-200 ring-1 ring-black/5">
+                        {m.photoFile ? (
+                          <CastingPhoto
+                            src={`/invites/${inviteId}/staff/${m.photoFile}`}
+                            alt={m.name}
+                            crop={m.photoCrop}
+                            sizes="(max-width: 640px) 33vw, 25vw"
+                          />
+                        ) : (
+                          <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-400">
+                            사진 없음
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1.5 text-sm font-medium text-gray-900">{m.name}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </article>
           ))}
         </div>
       )}
 
-      {/* 사진 없는 직책 — 2열 크레딧 패널 (행 사이 hairline divider) */}
+      {/* 사진 없는 직책 — 흰 rounded-2xl 패널 */}
       {textGroups.length > 0 && (
-        <div className="mt-5 rounded-2xl border border-gray-200 bg-white px-5 shadow-sm">
+        <div
+          className={`${photoGroups.length > 0 ? 'mt-5' : ''} rounded-2xl border border-gray-200 bg-white px-5 shadow-sm`}
+        >
           <ul className="divide-y divide-gray-100">
             {textGroups.map(group => (
               <li
