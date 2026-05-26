@@ -35,25 +35,15 @@ export default function StaffSection({ staff, inviteId }: Props) {
         <p className="mt-3 text-xs text-gray-500 break-keep">이 무대를 함께 만든 사람들</p>
       </header>
 
-      {/* 사진 있는 직책 — 박스 없이, 큰 직책명 + ornament + 헤드샷 */}
+      {/* 사진 있는 직책 — 직책명 + 헤드샷. ornament 없이 담백하게 */}
       {photoGroups.length > 0 && (
-        <div className="space-y-12 mb-10">
+        <div className="space-y-10 mb-10">
           {photoGroups.map(group => (
             <div key={group.id} className="text-center">
-              <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight break-keep">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-800 tracking-tight break-keep">
                 {group.role}
               </h3>
-              {/* 다이아몬드 ornament divider */}
-              <div
-                aria-hidden
-                className="mt-4 flex items-center justify-center gap-2.5 text-[#0066B3]/30"
-              >
-                <span className="h-px w-10 bg-current" />
-                <span className="text-[9px] leading-none">◆</span>
-                <span className="h-px w-10 bg-current" />
-              </div>
-
-              <div className="mt-6 flex flex-wrap justify-center gap-4">
+              <div className="mt-4 flex flex-wrap justify-center gap-4">
                 {group.members.map((m, i) => (
                   <figure
                     key={i}

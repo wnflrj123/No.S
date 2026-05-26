@@ -38,7 +38,7 @@ export default function VenueSection({ venue }: { venue: Venue }) {
         </h2>
       </header>
 
-      <div className="max-w-xl mx-auto">
+      <div>
         <div className="text-base font-semibold text-gray-900 break-keep">{venue.name}</div>
         <div className="text-sm text-gray-600 mt-1 break-keep">{venue.address}</div>
         {venue.directions?.trim() && (

@@ -11,7 +11,7 @@ export default function ApplyCTA({ year, round, disabled }: Props) {
     <div
       className="fixed bottom-0 inset-x-0 z-20 p-4 bg-white/80 backdrop-blur-xl shadow-[0_-18px_40px_-10px_rgba(15,23,42,0.20),0_-3px_8px_-1px_rgba(15,23,42,0.12)] md:static md:px-5 md:pt-4 md:pb-16 md:bg-transparent md:backdrop-blur-none md:shadow-none"
     >
-      <div className="max-w-2xl mx-auto flex flex-row gap-2 md:flex-col">
+      <div className="max-w-3xl mx-auto flex flex-row gap-2 md:flex-col">
         {disabled ? (
           <button
             disabled
