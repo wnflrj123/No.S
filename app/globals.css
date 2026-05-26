@@ -30,6 +30,12 @@
 
 /* No.S uses a bright theme - no dark mode */
 
+/* Tailwind v4 preflight은 <button>의 cursor를 default로 두므로 활성 버튼에 pointer 복원 */
+button:not(:disabled),
+[role='button']:not(:disabled) {
+  cursor: pointer;
+}
+
 /* 초청 신청 관리 폼의 공용 입력 스타일 */
 .input {
   width: 100%;
