@@ -75,7 +75,8 @@ export async function upsertInvite(
   const ref = doc(db, INVITES_COLLECTION, id);
 
   const rounds: InviteRound[] = input.rounds.map(({ startAtMs, ...rest }) => ({
-    ...rest,
+    roundNo: rest.roundNo,
+    teamName: rest.teamName,
     // 새 형식으로 저장: 레거시 role/description 필드는 제거
     casting: rest.casting.map(c => ({
       roleId: c.roleId,
@@ -83,6 +84,10 @@ export async function upsertInvite(
       ...(c.photoFile ? { photoFile: c.photoFile } : {}),
     })),
     startAt: Timestamp.fromMillis(startAtMs),
+    // Firestore는 undefined를 거부하므로 값이 있을 때만 필드 포함
+    ...(typeof rest.seatCapacity === 'number' && rest.seatCapacity > 0
+      ? { seatCapacity: rest.seatCapacity }
+      : {}),
   }));
 
   // 제작진 정제: 빈 직책·빈 멤버 제거, photoFile 빈 값은 필드 자체를 생략

@@ -9,6 +9,8 @@ export interface RoundFormValue {
   startAtMs: number; // 시작 시각 (밀리초)
   teamName: string;
   casting: CastingEntry[];
+  /** 회차 신청 가능 좌석 수. 미입력(undefined) 시 잔여석 안내 비표시. */
+  seatCapacity?: number;
 }
 
 interface Props {
@@ -78,7 +80,7 @@ export default function RoundEditor({ value, onChange, roles, inviteId }: Props)
             </button>
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-2">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
             <FieldRow label="회차 번호">
               <input
                 type="number"
@@ -110,6 +112,20 @@ export default function RoundEditor({ value, onChange, roles, inviteId }: Props)
                 required
               />
             </FieldRow>
+            <FieldRow label="좌석 수" hint="비워두면 잔여석 안내 없음">
+              <input
+                type="number"
+                value={r.seatCapacity ?? ''}
+                onChange={e => {
+                  const v = e.target.value;
+                  update(i, { seatCapacity: v === '' ? undefined : Math.max(0, Number(v)) });
+                }}
+                min={0}
+                max={9999}
+                placeholder="예: 60"
+                className="input"
+              />
+            </FieldRow>
           </div>
 
           <div>
@@ -135,10 +151,11 @@ export default function RoundEditor({ value, onChange, roles, inviteId }: Props)
   );
 }
 
-function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
+function FieldRow({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <label className="block">
       <span className="text-xs font-medium text-gray-600">{label}</span>
+      {hint && <span className="text-[10px] text-gray-400 ml-1">({hint})</span>}
       <div className="mt-1">{children}</div>
     </label>
   );

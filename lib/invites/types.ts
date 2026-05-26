@@ -83,6 +83,11 @@ export interface InviteRound {
   startAt: Timestamp; // 회차 시작 시각
   teamName: string; // 예: "블루팀"
   casting: CastingEntry[];
+  /**
+   * 회차 신청 가능 좌석 수. 잔여 좌석 안내(절반·1/3 임계)에 사용.
+   * 미설정 시 잔여석 표기를 하지 않는다.
+   */
+  seatCapacity?: number;
 }
 
 export interface InviteStats {

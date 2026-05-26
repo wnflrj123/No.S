@@ -399,6 +399,7 @@ function migrateRolesAndCasting(invite: Invite): {
         roundNo: r.roundNo,
         startAtMs: r.startAt.toDate().getTime(),
         teamName: r.teamName,
+        seatCapacity: r.seatCapacity,
         casting: r.casting.map(c => ({
           roleId: c.roleId ?? '',
           actorName: c.actorName ?? '',
@@ -434,6 +435,7 @@ function migrateRolesAndCasting(invite: Invite): {
     roundNo: r.roundNo,
     startAtMs: r.startAt.toDate().getTime(),
     teamName: r.teamName,
+    seatCapacity: r.seatCapacity,
     casting: r.casting.map((c): CastingEntry => ({
       roleId: c.role ? nameToId.get(c.role) ?? '' : c.roleId ?? '',
       actorName: c.actorName ?? '', // 레거시 데이터에는 배우 이름이 없음 → 사용자가 다시 입력
