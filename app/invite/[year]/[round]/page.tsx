@@ -44,7 +44,7 @@ export default async function InvitePage({ params }: PageParams) {
     invite.rounds.every(r => r.startAt.toDate().getTime() <= nowMs);
 
   return (
-    <main className="text-gray-900 pb-28 md:pb-0">
+    <main className="bg-white text-gray-900 pb-28 md:pb-0">
       <Hero invite={invite} />
       <div className="md:max-w-3xl md:mx-auto">
         <DescriptionSection html={invite.description} />
