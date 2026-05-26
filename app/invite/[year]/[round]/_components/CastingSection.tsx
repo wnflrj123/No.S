@@ -55,38 +55,21 @@ export default function CastingSection({ rounds, roles, inviteId }: Props) {
               <div aria-hidden className="mt-6 mx-auto w-8 h-px bg-gray-200" />
             </div>
 
-            {/* 배우 카드 — flex-wrap + justify-center로 항상 가운데 */}
+            {/* 배우 카드 — 모든 카드 동일 고정 사이즈, 인원수 무관 항상 가운데 */}
             <div className="px-3 pb-7 pt-5">
-              {actors.length === 1 ? (
-                <div className="flex justify-center">
-                  <figure className="w-44 sm:w-52">
+              <div className="flex flex-wrap justify-center gap-3">
+                {actors.map((a, i) => (
+                  <figure key={i} className="w-[140px] sm:w-56">
                     <ActorPortrait
-                      actorName={actors[0].actorName}
-                      photoFile={actors[0].photoFile}
-                      photoCrop={actors[0].photoCrop}
+                      actorName={a.actorName}
+                      photoFile={a.photoFile}
+                      photoCrop={a.photoCrop}
                       roleName={role.name}
                       inviteId={inviteId}
                     />
                   </figure>
-                </div>
-              ) : (
-                <div className="flex flex-wrap justify-center gap-3">
-                  {actors.map((a, i) => (
-                    <figure
-                      key={i}
-                      className="w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)]"
-                    >
-                      <ActorPortrait
-                        actorName={a.actorName}
-                        photoFile={a.photoFile}
-                        photoCrop={a.photoCrop}
-                        roleName={role.name}
-                        inviteId={inviteId}
-                      />
-                    </figure>
-                  ))}
-                </div>
-              )}
+                ))}
+              </div>
             </div>
           </article>
         ))}
