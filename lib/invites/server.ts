@@ -489,21 +489,36 @@ export async function listRegistrationsServer(
 }
 
 /**
+ * settings/admins 문서를 60초 캐싱.
+ * 권한 변경은 거의 없으므로 캐시로 매 요청 Firestore read 1회 절약.
+ */
+const getAdminsConfig = unstable_cache(
+  async (): Promise<{ ownerUid?: string; uids?: string[] }> => {
+    const snap = await adminDb.collection('settings').doc('admins').get();
+    return snap.exists ? (snap.data() as { ownerUid?: string; uids?: string[] }) : {};
+  },
+  ['settings-admins'],
+  { revalidate: 60, tags: ['settings-admins'] },
+);
+
+/**
  * Firebase ID 토큰을 검증하고 Admin/Owner 여부를 확인한다.
  * settings/admins 문서의 ownerUid 또는 uids 배열에 포함된 사용자만 통과.
  * 반환: 인증된 admin의 uid (실패 시 null).
+ *
+ * token verify와 admins 설정 read는 비종속이므로 병렬 실행.
  */
 export async function verifyAdminToken(authHeader: string | null): Promise<string | null> {
   if (!authHeader?.startsWith('Bearer ')) return null;
   const token = authHeader.slice('Bearer '.length).trim();
   if (!token) return null;
   try {
-    const decoded = await adminAuth.verifyIdToken(token);
-    const settingsSnap = await adminDb.collection('settings').doc('admins').get();
-    if (!settingsSnap.exists) return null;
-    const data = settingsSnap.data() as { ownerUid?: string; uids?: string[] };
-    if (data.ownerUid === decoded.uid) return decoded.uid;
-    if (Array.isArray(data.uids) && data.uids.includes(decoded.uid)) return decoded.uid;
+    const [decoded, admins] = await Promise.all([
+      adminAuth.verifyIdToken(token),
+      getAdminsConfig(),
+    ]);
+    if (admins.ownerUid === decoded.uid) return decoded.uid;
+    if (Array.isArray(admins.uids) && admins.uids.includes(decoded.uid)) return decoded.uid;
     return null;
   } catch {
     return null;

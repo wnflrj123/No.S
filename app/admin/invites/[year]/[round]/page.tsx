@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { getAuth } from 'firebase/auth';
@@ -10,11 +11,47 @@ import { useAuth } from '@/lib/hooks/useAuth';
 import type { Invite, InviteRegistration, InviteSupporter } from '@/lib/invites/types';
 import StatsCards from '../../_components/StatsCards';
 import RegistrationsTable from '../../_components/RegistrationsTable';
-import AnswersDigest from '../../_components/AnswersDigest';
-import SponsorsTab from '../../_components/SponsorsTab';
 import BulkSmsPanel from '../../_components/BulkSmsPanel';
 
+// 기본 탭이 아닌 컴포넌트는 코드 스플리팅 — 초기 번들 축소.
+const AnswersDigest = dynamic(() => import('../../_components/AnswersDigest'), { ssr: false });
+const SponsorsTab = dynamic(() => import('../../_components/SponsorsTab'), { ssr: false });
+
 type Tab = 'all' | 'answers' | 'sponsors';
+
+interface DashboardCache {
+  invite: Invite | null;
+  registrations: InviteRegistration[];
+  supporters: InviteSupporter[];
+  cachedAt: number;
+}
+
+const CACHE_TTL_MS = 30 * 1000; // 30초 — 그 이후엔 stale 표시 후 refetch
+
+function cacheKey(year: string | number, round: string | number): string {
+  return `admin-dashboard:${year}-${round}`;
+}
+
+function readCache(year: string | number, round: string | number): DashboardCache | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(cacheKey(year, round));
+    if (!raw) return null;
+    return JSON.parse(raw) as DashboardCache;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(year: string | number, round: string | number, data: Omit<DashboardCache, 'cachedAt'>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const entry: DashboardCache = { ...data, cachedAt: Date.now() };
+    sessionStorage.setItem(cacheKey(year, round), JSON.stringify(entry));
+  } catch {
+    // 용량 초과 등 무시
+  }
+}
 
 export default function InviteAdminDetailPage() {
   const params = useParams<{ year: string; round: string }>();
@@ -26,13 +63,16 @@ export default function InviteAdminDetailPage() {
   const [regs, setRegs] = useState<InviteRegistration[]>([]);
   const [supporters, setSupporters] = useState<InviteSupporter[]>([]);
   const [regsLoading, setRegsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('all');
 
+  // 인증 완료 + 권한 없을 때만 로그인으로 보냄. canManage는 user 로드 후에야 의미가 있다.
   useEffect(() => {
     if (!loading && !user) router.push('/login');
   }, [loading, user, router]);
 
+  // SWR: sessionStorage 캐시가 있으면 즉시 화면에 표시하고, 백그라운드에서 fresh fetch.
   useEffect(() => {
     if (!user || !canManage) return;
     const y = Number(params.year);
@@ -41,10 +81,22 @@ export default function InviteAdminDetailPage() {
       setRegsLoading(false);
       return;
     }
-    let cancelled = false;
 
-    // 어드민 대시보드 번들 API로 invite/regs/supporters를 한 번에 fetch.
-    // 기존 3개 client SDK 호출을 1회 fetch + 서버 admin SDK 병렬 read로 대체.
+    // Step 1: 캐시 hit이면 즉시 화면에 그리기
+    const cached = readCache(y, r);
+    const hasFreshCache = cached && Date.now() - cached.cachedAt < CACHE_TTL_MS;
+    if (cached) {
+      setInvite(cached.invite);
+      setRegs(cached.registrations);
+      setSupporters(cached.supporters);
+      setRegsLoading(false);
+      // fresh 캐시는 fetch 자체를 생략 — 30초 내 재방문은 0 round-trip
+      if (hasFreshCache) return;
+      // stale 캐시: 화면은 띄우되 백그라운드로 갱신
+      setRefreshing(true);
+    }
+
+    let cancelled = false;
     (async () => {
       try {
         const idToken = await getAuth().currentUser?.getIdToken();
@@ -52,6 +104,7 @@ export default function InviteAdminDetailPage() {
           if (!cancelled) {
             setError('로그인 정보를 확인해주세요.');
             setRegsLoading(false);
+            setRefreshing(false);
           }
           return;
         }
@@ -59,7 +112,7 @@ export default function InviteAdminDetailPage() {
           headers: { Authorization: `Bearer ${idToken}` },
         });
         if (!res.ok) {
-          if (!cancelled) {
+          if (!cancelled && !cached) {
             setError('데이터를 불러오지 못했습니다.');
             setInvite(null);
           }
@@ -74,20 +127,24 @@ export default function InviteAdminDetailPage() {
         setInvite(data.invite);
         setRegs(data.registrations);
         setSupporters(data.supporters);
+        writeCache(y, r, data);
       } catch (err) {
         console.error('[admin dashboard] load failed', err);
-        if (!cancelled) setError('네트워크 오류가 발생했습니다.');
+        if (!cancelled && !cached) setError('네트워크 오류가 발생했습니다.');
       } finally {
-        if (!cancelled) setRegsLoading(false);
+        if (!cancelled) {
+          setRegsLoading(false);
+          setRefreshing(false);
+        }
       }
     })();
 
     return () => { cancelled = true; };
   }, [user, canManage, params.year, params.round]);
 
-  if (loading) return null;
-  if (!user) return null;
-  if (!canManage) {
+  // 인증 로딩 중에도 페이지 셸은 렌더 — blank screen 방지.
+  if (!loading && !user) return null;
+  if (!loading && user && !canManage) {
     return (
       <>
         <Header />
@@ -99,6 +156,8 @@ export default function InviteAdminDetailPage() {
     );
   }
 
+  const initialLoading = invite === undefined || regsLoading;
+
   return (
     <>
       <Header />
@@ -106,7 +165,12 @@ export default function InviteAdminDetailPage() {
         <header className="mb-6 flex items-center justify-between gap-3 flex-wrap">
           <div>
             <div className="text-xs text-gray-500">{params.year}년 {params.round}회</div>
-            <h1 className="text-2xl font-bold text-gray-900">{invite?.title ?? '신청자 관리'}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              {invite?.title ?? '신청자 관리'}
+              {refreshing && (
+                <span className="text-xs font-normal text-gray-400">갱신 중…</span>
+              )}
+            </h1>
           </div>
           <div className="flex items-center gap-3 text-sm">
             <Link
@@ -126,7 +190,7 @@ export default function InviteAdminDetailPage() {
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>
         )}
 
-        {invite === undefined || regsLoading ? (
+        {initialLoading ? (
           <p className="text-center text-gray-400 py-16">불러오는 중…</p>
         ) : invite === null ? (
           <div className="text-center py-16 bg-gray-50 rounded-xl">

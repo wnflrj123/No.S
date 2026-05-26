@@ -26,15 +26,13 @@ interface RouteParams {
  * 동호회 규모(신청자 100명 미만)에서는 응답 200~400ms 수준.
  */
 export async function GET(req: Request, { params }: RouteParams) {
-  const adminUid = await verifyAdminToken(req.headers.get('authorization'));
-  if (!adminUid) {
-    return NextResponse.json({ message: '인증이 필요합니다.' }, { status: 401 });
-  }
-
   const { year, round } = await params;
   const inviteId = inviteIdFrom(year, round);
 
-  const [invite, registrations, supporters] = await Promise.all([
+  // 인증 검증과 데이터 fetch를 동시에 kick off — 직렬 200~600ms 라운드트립 제거.
+  // 인증이 통과되면 미리 받아둔 데이터를 그대로 반환, 실패 시 데이터는 버린다.
+  const authPromise = verifyAdminToken(req.headers.get('authorization'));
+  const dataPromise = Promise.all([
     getInvite(year, round),
     listAllRegistrationsServer(inviteId).catch(err => {
       console.error('[admin dashboard] registrations fetch failed', err);
@@ -45,6 +43,13 @@ export async function GET(req: Request, { params }: RouteParams) {
       return [];
     }),
   ]);
+
+  const adminUid = await authPromise;
+  if (!adminUid) {
+    return NextResponse.json({ message: '인증이 필요합니다.' }, { status: 401 });
+  }
+
+  const [invite, registrations, supporters] = await dataPromise;
 
   if (!invite) {
     return NextResponse.json({ invite: null, registrations: [], supporters: [] });
