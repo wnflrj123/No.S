@@ -58,25 +58,19 @@ export default function StaffSection({ staff, inviteId }: Props) {
         </div>
       )}
 
-      {/* 사진 없는 직책 — 센터 스택 크레딧 패널 */}
+      {/* 사진 없는 직책 — 2열 크레딧 패널 (행 사이 hairline divider) */}
       {textGroups.length > 0 && (
-        <div className="mt-5 rounded-2xl border border-gray-200 bg-white px-5 py-7 shadow-sm">
-          <ul className="space-y-5">
+        <div className="mt-5 rounded-2xl border border-gray-200 bg-white px-5 shadow-sm">
+          <ul className="divide-y divide-gray-100">
             {textGroups.map(group => (
-              <li key={group.id} className="text-center">
-                {/* 직책 라벨 — 좌우 짧은 hairline 데코 */}
-                <div
-                  aria-hidden
-                  className="flex items-center justify-center gap-2 text-gray-400"
-                >
-                  <span className="h-px w-5 bg-current" />
-                  <span className="text-xs font-medium tracking-wider">{group.role}</span>
-                  <span className="h-px w-5 bg-current" />
-                </div>
-                {/* 이름 */}
-                <p className="mt-1.5 text-base font-semibold text-gray-900">
+              <li
+                key={group.id}
+                className="flex items-baseline justify-between gap-4 py-3.5"
+              >
+                <span className="shrink-0 text-sm text-gray-500">{group.role}</span>
+                <span className="text-right text-sm font-semibold text-gray-900">
                   {group.members.map(m => m.name).join(' · ')}
-                </p>
+                </span>
               </li>
             ))}
           </ul>
