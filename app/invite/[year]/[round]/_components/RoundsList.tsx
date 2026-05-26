@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { ko } from 'date-fns/locale';
-import type { ResolvedCasting } from './CastingTabs';
+import type { ResolvedCasting } from './casting-utils';
 import CastingPhoto from './CastingPhoto';
 import PhotoPlaceholder from './PhotoPlaceholder';
 
