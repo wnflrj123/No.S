@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { FiMenu, FiPlus, FiTrash2 } from 'react-icons/fi';
 import type { InviteStaff, InviteStaffMember } from '@/lib/invites/types';
+import usePhotoFiles from './usePhotoFiles';
 
 interface Props {
   value: InviteStaff[];
@@ -21,6 +22,9 @@ function emptyMember(): InviteStaffMember {
 }
 
 export default function StaffEditor({ value, onChange, inviteId }: Props) {
+  const photoFiles = usePhotoFiles(inviteId, 'staff');
+  const datalistId = `staff-files-${inviteId}`;
+
   // 드래그로 순서를 바꾸는 동안의 출발/도착 인덱스
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
@@ -75,8 +79,7 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
     <div className="space-y-3">
       <p className="text-xs text-gray-500">
         연출·분장·강사 등 제작진을 직책별로 추가하세요. 사진은 선택이며,{' '}
-        <code>/public/invites/{inviteId}/staff/</code> 폴더에 파일을 넣고 파일명만 입력합니다. (예:{' '}
-        <code>lee.jpg</code>)
+        <code>/public/invites/{inviteId}/staff/</code> 폴더에 파일을 넣은 뒤 입력칸에서 선택하면 됩니다. (직접 입력도 가능)
         <br />
         직책 카드 왼쪽 손잡이를 드래그하면 순서를 바꿀 수 있어요.
       </p>
@@ -160,9 +163,10 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
                   />
                   <input
                     type="text"
+                    list={datalistId}
                     value={member.photoFile ?? ''}
                     onChange={e => updateMember(si, mi, { photoFile: e.target.value })}
-                    placeholder="사진 파일명 (선택)"
+                    placeholder="사진 파일 선택 (선택)"
                     maxLength={100}
                     className="input"
                   />
@@ -197,6 +201,11 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
       >
         <FiPlus /> 제작진 추가
       </button>
+      <datalist id={datalistId}>
+        {photoFiles.map(f => (
+          <option key={f} value={f} />
+        ))}
+      </datalist>
     </div>
   );
 }

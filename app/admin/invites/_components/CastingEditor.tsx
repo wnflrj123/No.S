@@ -2,6 +2,7 @@
 
 import { FiPlus, FiTrash2 } from 'react-icons/fi';
 import type { CastingEntry, InviteRole } from '@/lib/invites/types';
+import usePhotoFiles from './usePhotoFiles';
 
 interface Props {
   value: CastingEntry[];
@@ -11,6 +12,9 @@ interface Props {
 }
 
 export default function CastingEditor({ value, onChange, roles, inviteId }: Props) {
+  const photoFiles = usePhotoFiles(inviteId, 'cast');
+  const datalistId = `cast-files-${inviteId}`;
+
   const update = (index: number, patch: Partial<CastingEntry>) => {
     onChange(value.map((c, i) => (i === index ? { ...c, ...patch } : c)));
   };
@@ -25,7 +29,7 @@ export default function CastingEditor({ value, onChange, roles, inviteId }: Prop
   return (
     <div className="space-y-2">
       <p className="text-xs text-gray-500">
-        사진은 <code>/public/invites/{inviteId}/cast/</code> 폴더에 파일을 추가한 후 파일명만 입력하세요. (예: <code>kim.jpg</code>)
+        사진은 <code>/public/invites/{inviteId}/cast/</code> 폴더에 파일을 넣은 뒤 입력칸에서 선택하세요. (직접 입력도 가능)
       </p>
       {roles.length === 0 && (
         <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
@@ -63,9 +67,10 @@ export default function CastingEditor({ value, onChange, roles, inviteId }: Prop
               />
               <input
                 type="text"
+                list={datalistId}
                 value={c.photoFile ?? ''}
                 onChange={e => update(i, { photoFile: e.target.value || undefined })}
-                placeholder="kim.jpg"
+                placeholder="사진 파일 선택"
                 maxLength={120}
                 className="input"
               />
@@ -89,6 +94,11 @@ export default function CastingEditor({ value, onChange, roles, inviteId }: Prop
       >
         <FiPlus /> 캐스팅 추가
       </button>
+      <datalist id={datalistId}>
+        {photoFiles.map(f => (
+          <option key={f} value={f} />
+        ))}
+      </datalist>
     </div>
   );
 }
