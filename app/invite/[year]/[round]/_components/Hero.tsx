@@ -28,7 +28,7 @@ export default function Hero({ invite }: { invite: Invite }) {
 
   return (
     <section className="px-5 md:px-8 pt-8 md:pt-14 pb-4 md:pb-8">
-      <div className="max-w-3xl mx-auto md:flex md:items-start md:gap-8">
+      <div className="max-w-4xl mx-auto md:flex md:items-start md:gap-8">
         {/* 포스터 — 모바일: 가운데 정렬 작은 thumbnail / 데스크탑: 좌측 thumbnail */}
         <div className="mx-auto md:mx-0 w-52 md:w-56 shrink-0">
           <PosterThumb

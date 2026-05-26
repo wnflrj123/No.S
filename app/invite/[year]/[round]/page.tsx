@@ -53,7 +53,7 @@ export default async function InvitePage({ params }: PageParams) {
         />
       )}
       <Hero invite={invite} />
-      <div className="md:max-w-3xl md:mx-auto">
+      <div className="md:max-w-4xl md:mx-auto">
         <DescriptionSection html={invite.description} />
         <CastingSection rounds={invite.rounds} roles={invite.roles ?? []} inviteId={invite.id} />
         <StaffSection staff={invite.staff ?? []} inviteId={invite.id} />
