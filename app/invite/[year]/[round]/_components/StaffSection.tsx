@@ -7,9 +7,9 @@ interface Props {
 }
 
 /**
- * 제작진 소개 섹션. 캐스팅과 같은 editorial programbook 무드.
- *  - 사진 있는 직책: 흰 카드 + 작은 영문 라벨(CREW) + 한글 직책명 + 헤드샷 그리드
- *  - 사진 없는 직책: 흰 패널 안에 행 사이 hairline divider + 직책-이름 2열
+ * 제작진 소개 섹션.
+ *  - 사진 있는 직책: box wrapper 없이 직책명 + 헤드샷 그리드만, 가운데 정렬
+ *  - 사진 없는 직책: 흰 패널(rounded-2xl) + 행 사이 hairline divider
  *  - 헤드샷은 flex-wrap + justify-center로 항상 가운데 정렬
  *  - 모든 텍스트에 break-keep로 한글 어색한 줄바꿈 방지
  */
@@ -32,55 +32,43 @@ export default function StaffSection({ staff, inviteId }: Props) {
         <p className="mt-2 text-xs text-gray-500 break-keep">이 무대를 함께 만든 사람들</p>
       </header>
 
-      {/* 사진 있는 직책 */}
+      {/* 사진 있는 직책 — 박스 없이 직책명 + 헤드샷 가운데 정렬 */}
       {photoGroups.length > 0 && (
-        <div className="space-y-6 mb-6">
+        <div className="space-y-8 mb-8">
           {photoGroups.map(group => (
-            <article
-              key={group.id}
-              className="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 border border-gray-100 overflow-hidden"
-            >
-              <div className="px-5 pt-7 text-center">
-                <p className="text-[10px] uppercase tracking-[0.25em] text-[#0066B3]/70 font-semibold">
-                  CREW
-                </p>
-                <h3 className="mt-2 text-xl sm:text-2xl font-bold text-gray-900 tracking-tight break-keep">
-                  {group.role}
-                </h3>
-                <div aria-hidden className="mt-5 mx-auto w-8 h-px bg-gray-200" />
-              </div>
-
-              <div className="px-3 pb-7 pt-5">
-                {group.members.length === 1 ? (
-                  <div className="flex justify-center">
-                    <figure className="w-28 sm:w-32">
+            <div key={group.id} className="text-center">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight break-keep mb-4">
+                {group.role}
+              </h3>
+              {group.members.length === 1 ? (
+                <div className="flex justify-center">
+                  <figure className="w-28 sm:w-32">
+                    <StaffHeadshot
+                      name={group.members[0].name}
+                      photoFile={group.members[0].photoFile}
+                      photoCrop={group.members[0].photoCrop}
+                      inviteId={inviteId}
+                    />
+                  </figure>
+                </div>
+              ) : (
+                <div className="flex flex-wrap justify-center gap-3">
+                  {group.members.map((m, i) => (
+                    <figure
+                      key={i}
+                      className="w-[calc(33.333%-8px)] sm:w-[calc(25%-9px)] max-w-[140px]"
+                    >
                       <StaffHeadshot
-                        name={group.members[0].name}
-                        photoFile={group.members[0].photoFile}
-                        photoCrop={group.members[0].photoCrop}
+                        name={m.name}
+                        photoFile={m.photoFile}
+                        photoCrop={m.photoCrop}
                         inviteId={inviteId}
                       />
                     </figure>
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap justify-center gap-3">
-                    {group.members.map((m, i) => (
-                      <figure
-                        key={i}
-                        className="w-[calc(33.333%-8px)] sm:w-[calc(25%-9px)] max-w-[140px]"
-                      >
-                        <StaffHeadshot
-                          name={m.name}
-                          photoFile={m.photoFile}
-                          photoCrop={m.photoCrop}
-                          inviteId={inviteId}
-                        />
-                      </figure>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </article>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -119,7 +107,7 @@ interface HeadshotProps {
 function StaffHeadshot({ name, photoFile, photoCrop, inviteId }: HeadshotProps) {
   return (
     <>
-      <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 ring-1 ring-black/10 shadow-md">
+      <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 ring-1 ring-black/5">
         {photoFile ? (
           <CastingPhoto
             src={`/invites/${inviteId}/staff/${photoFile}`}
