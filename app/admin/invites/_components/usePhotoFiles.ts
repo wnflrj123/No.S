@@ -2,35 +2,43 @@
 
 import { useEffect, useState } from 'react';
 
+interface FetchedFiles {
+  id: string;
+  type: string;
+  files: string[];
+}
+
+const INITIAL: FetchedFiles = { id: '', type: '', files: [] };
+
 /**
  * 관리자 폼에서 사진 파일명 자동완성(<datalist>) 용 디렉토리 목록 훅.
- * `public/invites/{inviteId}/{type}/` 의 이미지 파일명들을 비동기로 가져온다.
- * inviteId 형식이 "{year}-{round}" 가 아니거나 디렉토리가 없으면 빈 배열.
+ * `public/invites/{inviteId}/{type}/` 의 이미지 파일명들을 비동기로 가져와,
+ * 현재 inviteId·type 에 대해 fetch 된 결과만 반환한다. (prop 변경 직후엔 빈 배열)
+ *
+ * setState 는 비동기 콜백 안에서만 호출 (react-hooks/set-state-in-effect 회피).
  */
 export default function usePhotoFiles(
   inviteId: string,
   type: 'cast' | 'staff',
 ): string[] {
-  const [files, setFiles] = useState<string[]>([]);
+  const [fetched, setFetched] = useState<FetchedFiles>(INITIAL);
 
   useEffect(() => {
-    if (!/^\d+-\d+$/.test(inviteId)) {
-      setFiles([]);
-      return;
-    }
+    if (!/^\d+-\d+$/.test(inviteId)) return;
     let cancelled = false;
     fetch(`/api/invites/${inviteId}/photo-files?type=${type}`, { cache: 'no-store' })
       .then(r => (r.ok ? r.json() : { files: [] }))
       .then((data: { files?: string[] }) => {
-        if (!cancelled) setFiles(data.files ?? []);
+        if (!cancelled) setFetched({ id: inviteId, type, files: data.files ?? [] });
       })
       .catch(() => {
-        if (!cancelled) setFiles([]);
+        if (!cancelled) setFetched({ id: inviteId, type, files: [] });
       });
     return () => {
       cancelled = true;
     };
   }, [inviteId, type]);
 
-  return files;
+  // 현재 prop과 일치하는 결과만 반환 — inviteId·type 변경 직후엔 즉시 빈 배열로 비춤
+  return fetched.id === inviteId && fetched.type === type ? fetched.files : [];
 }
