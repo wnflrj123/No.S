@@ -1,5 +1,6 @@
 import type { InviteStaff } from '@/lib/invites/types';
 import CastingPhoto from './CastingPhoto';
+import PhotoPlaceholder from './PhotoPlaceholder';
 
 interface Props {
   staff: InviteStaff[];
@@ -43,9 +44,7 @@ export default function StaffSection({ staff, inviteId }: Props) {
                           sizes="(max-width: 640px) 33vw, 25vw"
                         />
                       ) : (
-                        <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-400">
-                          사진 없음
-                        </span>
+                        <PhotoPlaceholder name={m.name} size="sm" />
                       )}
                     </div>
                     <p className="mt-1.5 text-sm font-medium text-gray-900">{m.name}</p>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { ko } from 'date-fns/locale';
 import CastingPhoto from './CastingPhoto';
+import PhotoPlaceholder from './PhotoPlaceholder';
 
 const KST = 'Asia/Seoul';
 
@@ -75,20 +76,18 @@ export default function CastingTabs({ data, inviteId }: Props) {
             key={`${active.roundNo}-${i}`}
             className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200"
           >
-            {c.photoFile ? (
-              <div className="relative aspect-[3/4] bg-gray-100 overflow-hidden">
+            <div className="relative aspect-[3/4] overflow-hidden">
+              {c.photoFile ? (
                 <CastingPhoto
                   src={`/invites/${inviteId}/cast/${c.photoFile}`}
                   alt={`${c.roleName} - ${c.actorName}`}
                   crop={c.photoCrop}
                   sizes="(max-width: 640px) 50vw, 33vw"
                 />
-              </div>
-            ) : (
-              <div className="aspect-[3/4] bg-gray-100 flex items-center justify-center text-gray-300 text-xs">
-                사진 준비 중
-              </div>
-            )}
+              ) : (
+                <PhotoPlaceholder name={c.actorName || c.roleName} size="md" />
+              )}
+            </div>
             <div className="p-3">
               <div className="text-sm font-semibold text-gray-900">{c.roleName}</div>
               {c.actorName && (
