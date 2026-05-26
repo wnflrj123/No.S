@@ -32,8 +32,15 @@ export default function CastingEditor({ value, onChange, roles, inviteId }: Prop
   return (
     <div className="space-y-2">
       <p className="text-xs text-gray-500">
-        사진은 <code>/public/invites/{inviteId}/cast/</code> 폴더에 파일을 넣은 뒤 드롭다운에서 선택하세요. 폴더에 없는 파일은 먼저 추가해야 선택할 수 있어요.
+        사진은 <code>/public/invites/{inviteId}/cast/</code> 폴더에 파일을 넣은 뒤 드롭다운에서 선택하세요. 폴더에 없는 파일은 아래 버튼으로 업로드.
       </p>
+      <UploadPhotoButton
+        inviteId={inviteId}
+        type="cast"
+        onUploaded={() => refetchPhotoFiles()}
+        label="새 캐스팅 사진 업로드"
+        className="inline-flex items-center gap-1.5 self-start px-3 py-1.5 text-xs font-medium text-[#0066B3] bg-blue-50 hover:bg-blue-100 rounded-lg disabled:opacity-50"
+      />
       {roles.length === 0 && (
         <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
           ⚠️ 먼저 위쪽 &quot;배역&quot; 섹션에서 배역을 추가해주세요.
@@ -42,7 +49,7 @@ export default function CastingEditor({ value, onChange, roles, inviteId }: Prop
       <ul className="space-y-2">
         {value.map((c, i) => (
           <li key={i} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="grid sm:grid-cols-[1fr_1fr_1fr_auto_auto_auto] gap-2 items-start">
+            <div className="grid sm:grid-cols-[1fr_1fr_1fr_auto_auto] gap-2 items-start">
               <select
                 value={c.roleId}
                 onChange={e => update(i, { roleId: e.target.value })}
@@ -85,15 +92,6 @@ export default function CastingEditor({ value, onChange, roles, inviteId }: Prop
                   <option value={c.photoFile}>{c.photoFile} (폴더에 없음)</option>
                 )}
               </select>
-              <UploadPhotoButton
-                inviteId={inviteId}
-                type="cast"
-                onUploaded={({ filename }) => {
-                  update(i, { photoFile: filename, photoCrop: undefined });
-                  refetchPhotoFiles();
-                }}
-                title="로컬에서 사진 업로드"
-              />
               <button
                 type="button"
                 onClick={() => setCroppingIdx(i)}

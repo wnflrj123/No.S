@@ -83,10 +83,17 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
     <div className="space-y-3">
       <p className="text-xs text-gray-500">
         연출·분장·강사 등 제작진을 직책별로 추가하세요. 사진은 선택이며,{' '}
-        <code>/public/invites/{inviteId}/staff/</code> 폴더에 파일을 넣은 뒤 드롭다운에서 선택하면 됩니다. 폴더에 없는 파일은 먼저 추가해야 선택할 수 있어요.
+        <code>/public/invites/{inviteId}/staff/</code> 폴더에 파일을 넣은 뒤 드롭다운에서 선택하면 됩니다. 폴더에 없는 파일은 아래 버튼으로 업로드.
         <br />
         직책 카드 왼쪽 손잡이를 드래그하면 순서를 바꿀 수 있어요.
       </p>
+      <UploadPhotoButton
+        inviteId={inviteId}
+        type="staff"
+        onUploaded={() => refetchPhotoFiles()}
+        label="새 제작진 사진 업로드"
+        className="inline-flex items-center gap-1.5 self-start px-3 py-1.5 text-xs font-medium text-[#0066B3] bg-blue-50 hover:bg-blue-100 rounded-lg disabled:opacity-50"
+      />
 
       {value.length === 0 && (
         <p className="text-sm text-gray-500 text-center py-4 bg-gray-50 rounded-lg">
@@ -155,7 +162,7 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
 
             <ul className="space-y-2 pl-3 border-l-2 border-gray-200">
               {staff.members.map((member, mi) => (
-                <li key={mi} className="grid sm:grid-cols-[1fr_1fr_auto_auto_auto] gap-2 items-start">
+                <li key={mi} className="grid sm:grid-cols-[1fr_1fr_auto_auto] gap-2 items-start">
                   <input
                     type="text"
                     value={member.name}
@@ -183,15 +190,6 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
                       <option value={member.photoFile}>{member.photoFile} (폴더에 없음)</option>
                     )}
                   </select>
-                  <UploadPhotoButton
-                    inviteId={inviteId}
-                    type="staff"
-                    onUploaded={({ filename }) => {
-                      updateMember(si, mi, { photoFile: filename, photoCrop: undefined });
-                      refetchPhotoFiles();
-                    }}
-                    title="로컬에서 사진 업로드"
-                  />
                   <button
                     type="button"
                     onClick={() => setCropping({ si, mi })}

@@ -14,6 +14,8 @@ interface Props {
   title?: string;
   ariaLabel?: string;
   disabled?: boolean;
+  /** 아이콘 옆에 표시할 텍스트. 미지정 시 아이콘만 렌더. */
+  label?: string;
 }
 
 /**
@@ -29,6 +31,7 @@ export default function UploadPhotoButton({
   title,
   ariaLabel,
   disabled,
+  label,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -84,6 +87,7 @@ export default function UploadPhotoButton({
         aria-label={ariaLabel ?? '사진 업로드'}
       >
         {uploading ? <FiLoader className="animate-spin" /> : <FiUpload />}
+        {label && <span>{label}</span>}
       </button>
       <input
         ref={inputRef}
