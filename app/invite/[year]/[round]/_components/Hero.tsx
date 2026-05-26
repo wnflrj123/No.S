@@ -1,7 +1,7 @@
-import Image from 'next/image';
 import { formatInTimeZone } from 'date-fns-tz';
 import { ko } from 'date-fns/locale';
 import type { Invite } from '@/lib/invites/types';
+import PosterThumb from './PosterThumb';
 
 const KST = 'Asia/Seoul';
 
@@ -29,18 +29,14 @@ export default function Hero({ invite }: { invite: Invite }) {
   return (
     <section className="px-5 md:px-8 pt-6 md:pt-14 pb-4 md:pb-8">
       <div className="max-w-3xl mx-auto flex items-start gap-3 md:gap-8">
-        {/* 포스터 — 모바일/데스크탑 모두 좌측 thumbnail */}
+        {/* 포스터 — 클릭하면 모달로 크게 표시 */}
         <div className="w-24 md:w-56 shrink-0">
-          <div className="aspect-[3/4] relative overflow-hidden rounded-lg md:rounded-xl bg-gray-100 shadow-md">
-            <Image
-              src={invite.posterImageUrl}
-              alt={invite.title}
-              fill
-              priority
-              className="object-cover"
-              sizes="(min-width: 768px) 224px, 96px"
-            />
-          </div>
+          <PosterThumb
+            src={invite.posterImageUrl}
+            alt={invite.title}
+            sizes="(min-width: 768px) 224px, 96px"
+            priority
+          />
         </div>
 
         {/* 정보 영역 — 항상 좌측 정렬 */}
