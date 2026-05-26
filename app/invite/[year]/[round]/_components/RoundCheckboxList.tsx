@@ -29,9 +29,10 @@ interface SeatStatus {
 }
 
 /**
- * 잔여석 임계:
+ * 잔여석 임계 (실제 좌석 수는 노출하지 않음):
  *  - 잔여 ≤ 0 → '잔여석 없음' + 신청 차단(soldOut)
- *  - 잔여 ≤ 10 → '거의 마감' (경고, 신청 가능)
+ *  - 0 < 잔여 ≤ 10 → '거의 마감' (빨강 경고)
+ *  - 10 < 잔여 ≤ capacity/2 → '절반 이상 마감' (주황 안내)
  *  - 그 외 → 표시 안 함
  *
  * seatCapacity 미설정 시 어드민이 좌석 안내를 옵트인하지 않은 것 → 모든 표시 비활성.
@@ -60,6 +61,15 @@ function computeSeatStatus(
       badge: {
         label: '거의 마감',
         className: 'bg-red-100 text-red-700 border border-red-200',
+      },
+    };
+  }
+  if (remaining <= seatCapacity / 2) {
+    return {
+      soldOut: false,
+      badge: {
+        label: '절반 이상 마감',
+        className: 'bg-amber-100 text-amber-700 border border-amber-200',
       },
     };
   }
