@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { FiMenu, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { FiCrop, FiMenu, FiPlus, FiTrash2 } from 'react-icons/fi';
 import type { InviteStaff, InviteStaffMember } from '@/lib/invites/types';
 import usePhotoFiles from './usePhotoFiles';
 import UploadPhotoButton from './UploadPhotoButton';
+import CropEditor from './CropEditor';
 
 interface Props {
   value: InviteStaff[];
@@ -28,6 +29,9 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
   // 드래그로 순서를 바꾸는 동안의 출발/도착 인덱스
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+
+  // crop 중인 멤버 식별 (staff idx, member idx)
+  const [cropping, setCropping] = useState<{ si: number; mi: number } | null>(null);
 
   // patch에 없는 필드(id·role·members)는 spread로 보존된다.
   const updateStaff = (index: number, patch: Partial<InviteStaff>) => {
@@ -151,7 +155,7 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
 
             <ul className="space-y-2 pl-3 border-l-2 border-gray-200">
               {staff.members.map((member, mi) => (
-                <li key={mi} className="grid sm:grid-cols-[1fr_1fr_auto_auto] gap-2 items-start">
+                <li key={mi} className="grid sm:grid-cols-[1fr_1fr_auto_auto_auto] gap-2 items-start">
                   <input
                     type="text"
                     value={member.name}
@@ -163,7 +167,12 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
                   />
                   <select
                     value={member.photoFile ?? ''}
-                    onChange={e => updateMember(si, mi, { photoFile: e.target.value })}
+                    onChange={e =>
+                      updateMember(si, mi, {
+                        photoFile: e.target.value || undefined,
+                        photoCrop: undefined, // 사진 바뀌면 기존 crop 무효
+                      })
+                    }
                     className="input"
                   >
                     <option value="">사진 없음</option>
@@ -178,11 +187,33 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
                     inviteId={inviteId}
                     type="staff"
                     onUploaded={({ filename }) => {
-                      updateMember(si, mi, { photoFile: filename });
+                      updateMember(si, mi, { photoFile: filename, photoCrop: undefined });
                       refetchPhotoFiles();
                     }}
                     title="로컬에서 사진 업로드"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setCropping({ si, mi })}
+                    disabled={!member.photoFile}
+                    title={
+                      member.photoFile
+                        ? member.photoCrop
+                          ? '사진 자르기 (설정됨)'
+                          : '사진 자르기'
+                        : '사진을 먼저 선택하세요'
+                    }
+                    className={`px-2 py-2 rounded-lg flex items-center justify-center shrink-0 ${
+                      member.photoFile
+                        ? member.photoCrop
+                          ? 'text-[#0066B3] bg-blue-50 hover:bg-blue-100'
+                          : 'text-gray-600 hover:bg-gray-100'
+                        : 'text-gray-300 cursor-not-allowed'
+                    }`}
+                    aria-label="사진 자르기"
+                  >
+                    <FiCrop />
+                  </button>
                   <button
                     type="button"
                     onClick={() => removeMember(si, mi)}
@@ -214,6 +245,20 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
       >
         <FiPlus /> 제작진 추가
       </button>
+
+      {cropping && value[cropping.si]?.members[cropping.mi]?.photoFile && (
+        <CropEditor
+          src={`/invites/${inviteId}/staff/${value[cropping.si].members[cropping.mi].photoFile}`}
+          initialCrop={value[cropping.si].members[cropping.mi].photoCrop}
+          aspect={1}
+          aspectLabel="1:1 (정사각)"
+          onSave={crop => {
+            updateMember(cropping.si, cropping.mi, { photoCrop: crop ?? undefined });
+            setCropping(null);
+          }}
+          onClose={() => setCropping(null)}
+        />
+      )}
     </div>
   );
 }

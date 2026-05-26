@@ -1,5 +1,5 @@
-import Image from 'next/image';
 import type { InviteStaff } from '@/lib/invites/types';
+import CastingPhoto from './CastingPhoto';
 
 interface Props {
   staff: InviteStaff[];
@@ -36,12 +36,11 @@ export default function StaffSection({ staff, inviteId }: Props) {
                   <li key={i} className="text-center">
                     <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-200 ring-1 ring-black/5">
                       {m.photoFile ? (
-                        <Image
+                        <CastingPhoto
                           src={`/invites/${inviteId}/staff/${m.photoFile}`}
                           alt={m.name}
-                          fill
+                          crop={m.photoCrop}
                           sizes="(max-width: 640px) 33vw, 25vw"
-                          className="object-cover"
                         />
                       ) : (
                         <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-400">

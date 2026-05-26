@@ -48,6 +48,17 @@ export interface InviteStaffMember {
   name: string;
   /** 정적 파일명 (선택). 경로: /invites/{year}-{round}/staff/{photoFile} */
   photoFile?: string;
+  /**
+   * 사진 crop 메타데이터. react-easy-crop의 croppedArea 그대로
+   * (원본 이미지 기준 %, 0~100). 미설정 시 object-cover 기본 동작.
+   * StaffSection이 aspect-square로 표시하므로 1:1 비율 crop을 권장.
+   */
+  photoCrop?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
 }
 
 /**

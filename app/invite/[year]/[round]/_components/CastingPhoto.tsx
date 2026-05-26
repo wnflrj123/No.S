@@ -16,15 +16,28 @@ interface Props {
   sizes?: string;
 }
 
+function isValidCrop(crop: Crop | undefined): crop is Crop {
+  return (
+    !!crop &&
+    typeof crop.x === 'number' &&
+    typeof crop.y === 'number' &&
+    typeof crop.width === 'number' &&
+    typeof crop.height === 'number' &&
+    crop.width > 0 &&
+    crop.height > 0
+  );
+}
+
 /**
- * 캐스팅 사진 표시 컴포넌트.
- * - crop이 없으면: next/image fill + object-cover (기본 동작, 원본 비율 따라 가장자리 크롭)
- * - crop이 있으면: 원본 img를 절대 위치로 띄워서 crop 영역이 frame을 정확히 채우게 함.
+ * 캐스팅/제작진 사진 표시 컴포넌트. 부모 컨테이너가 적절한 aspect ratio +
+ * `relative overflow-hidden`을 가져야 한다.
  *
- * 부모 컨테이너가 aspect 3:4를 갖고 있어야 한다 (CastingTabs/RoundsList 모두 그렇게 설정).
+ * - crop 없음(또는 무효): next/image fill + object-cover (원본 비율 따라 자동 크롭)
+ * - crop 있음: 원본 img를 절대 위치로 띄워서 crop 영역이 frame을 정확히 채움
+ *   `data-cropped="true"` 속성으로 dev tools에서 적용 여부 확인 가능
  */
 export default function CastingPhoto({ src, alt, crop, sizes }: Props) {
-  if (!crop) {
+  if (!isValidCrop(crop)) {
     return (
       <Image
         src={src}
@@ -36,29 +49,27 @@ export default function CastingPhoto({ src, alt, crop, sizes }: Props) {
     );
   }
 
-  // crop 좌표는 react-easy-crop의 croppedArea — 원본 이미지 % 단위.
-  // frame이 3:4이고 crop도 3:4 aspect로 잡혔다고 가정 (CropEditor가 aspect 잠금).
-  // width = 100/crop.width * 100, left = -(crop.x/crop.width) * 100 ... 등으로 변환하면
-  // frame을 정확히 채우는 위치/크기로 원본을 배치할 수 있다.
-  const w = (100 / crop.width) * 100;
-  const left = -(crop.x / crop.width) * 100;
-  const top = -(crop.y / crop.height) * 100;
+  // crop 좌표 = react-easy-crop의 croppedArea (원본 이미지 % 단위).
+  // 부모 frame과 crop이 같은 aspect ratio여야 정확히 채워진다.
+  const widthPct = (100 / crop.width) * 100;
+  const leftPct = -(crop.x / crop.width) * 100;
+  const topPct = -(crop.y / crop.height) * 100;
 
   return (
-    <>
-      {/* eslint-disable-next-line @next/next/no-img-element -- crop 메타데이터 기반 정밀 위치/크기 제어. next/image의 fill mode와 호환되지 않음. */}
-      <img
-        src={src}
-        alt={alt}
-        style={{
-          position: 'absolute',
-          width: `${w}%`,
-          height: 'auto',
-          left: `${left}%`,
-          top: `${top}%`,
-          maxWidth: 'none',
-        }}
-      />
-    </>
+    // eslint-disable-next-line @next/next/no-img-element -- next/image fill mode와 호환 불가, crop 메타데이터로 정밀 위치/크기 제어
+    <img
+      src={src}
+      alt={alt}
+      data-cropped="true"
+      style={{
+        position: 'absolute',
+        width: `${widthPct}%`,
+        maxWidth: 'none',
+        height: 'auto',
+        maxHeight: 'none',
+        left: `${leftPct}%`,
+        top: `${topPct}%`,
+      }}
+    />
   );
 }

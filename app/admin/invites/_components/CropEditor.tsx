@@ -10,15 +10,24 @@ interface Props {
   /** crop 결과(원본 이미지 % 좌표). null = 사용자가 crop 제거(원래대로) */
   onSave: (crop: { x: number; y: number; width: number; height: number } | null) => void;
   onClose: () => void;
+  /** crop 비율 (기본 3:4). 표시 frame과 같게 맞춰야 정확히 채워진다. */
+  aspect?: number;
+  /** 모달 헤더에 표시할 비율 라벨 (기본 '3:4') */
+  aspectLabel?: string;
 }
-
-const ASPECT = 3 / 4;
 
 /**
  * 캐스팅 사진 자르기 모달. 3:4 비율 고정.
  * react-easy-crop의 croppedArea (% 좌표)를 그대로 onSave에 전달.
  */
-export default function CropEditor({ src, initialCrop, onSave, onClose }: Props) {
+export default function CropEditor({
+  src,
+  initialCrop,
+  onSave,
+  onClose,
+  aspect = 3 / 4,
+  aspectLabel = '3:4',
+}: Props) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPct, setCroppedAreaPct] = useState<Area | null>(
@@ -55,7 +64,7 @@ export default function CropEditor({ src, initialCrop, onSave, onClose }: Props)
         className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl"
       >
         <header className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="text-base font-semibold text-gray-900">사진 자르기 (3:4)</h3>
+          <h3 className="text-base font-semibold text-gray-900">사진 자르기 ({aspectLabel})</h3>
           <button
             type="button"
             onClick={onClose}
@@ -66,12 +75,15 @@ export default function CropEditor({ src, initialCrop, onSave, onClose }: Props)
           </button>
         </header>
 
-        <div className="relative w-full aspect-[3/4] bg-gray-900">
+        <div
+          className="relative w-full bg-gray-900"
+          style={{ aspectRatio: `${aspect}` }}
+        >
           <Cropper
             image={src}
             crop={crop}
             zoom={zoom}
-            aspect={ASPECT}
+            aspect={aspect}
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onCropComplete={onCropComplete}

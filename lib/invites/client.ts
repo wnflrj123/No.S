@@ -93,17 +93,21 @@ export async function upsertInvite(
       : {}),
   }));
 
-  // 제작진 정제: 빈 직책·빈 멤버 제거, photoFile 빈 값은 필드 자체를 생략
+  // 제작진 정제: 빈 직책·빈 멤버 제거, photoFile/photoCrop은 photoFile 있을 때만 저장
   const staff: InviteStaff[] = (input.staff ?? [])
     .map(s => ({
       id: s.id,
       role: s.role.trim(),
       members: s.members
         .filter(m => m.name.trim())
-        .map(m => ({
-          name: m.name.trim(),
-          ...(m.photoFile && m.photoFile.trim() ? { photoFile: m.photoFile.trim() } : {}),
-        })),
+        .map(m => {
+          const hasPhoto = !!(m.photoFile && m.photoFile.trim());
+          return {
+            name: m.name.trim(),
+            ...(hasPhoto ? { photoFile: m.photoFile!.trim() } : {}),
+            ...(hasPhoto && m.photoCrop ? { photoCrop: m.photoCrop } : {}),
+          };
+        }),
     }))
     .filter(s => s.role && s.members.length > 0);
 
