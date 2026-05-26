@@ -8,7 +8,6 @@
 // 서버 전용. firebase-admin을 import하므로 클라이언트 컴포넌트에서 이 파일을 import하면
 // Next.js 빌드 단계에서 자연스럽게 차단된다.
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
-import { revalidateTag, unstable_cache } from 'next/cache';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import type { Invite, InviteRegistration, RegisterPayload, RoundSelection } from './types';
 import {
@@ -239,7 +238,7 @@ export async function createRegistration(
 
   // 잔여석 캐시 무효화 — apply 페이지 다음 진입부터 새 카운트 반영.
   try {
-    revalidateTag(roundHeadcountsTag(invite.id), 'default');
+    invalidateRoundHeadcounts(invite.id);
   } catch {
     // dev 환경 등 revalidateTag 미지원 시 무시 (캐시 자체가 안 켜졌을 수 있음)
   }
@@ -304,7 +303,7 @@ export async function deleteRegistration(regId: string): Promise<boolean> {
 
   if (wasActive) {
     try {
-      revalidateTag(roundHeadcountsTag(data.inviteId), 'default');
+      invalidateRoundHeadcounts(data.inviteId);
     } catch {
       // 캐시 미지원 환경 무시
     }
@@ -323,11 +322,26 @@ export async function lookupActiveRegistration(
   return findActiveDuplicate(inviteId, name, phone);
 }
 
-function roundHeadcountsTag(inviteId: string): string {
-  return `round-headcounts:${inviteId}`;
-}
+/**
+ * 회차별 active 신청 인원의 합계 (잔여석 안내용).
+ *
+ * 모듈-레벨 메모리 캐시: invite별 60초 TTL. 같은 Node 프로세스 내에서만 공유되며
+ * 프로세스 재시작 시 사라진다. Next.js의 unstable_cache/revalidateTag는 환경별로
+ * 동작이 불안정한 사례가 있어 의도적으로 단순 in-memory 캐시 사용.
+ */
+const roundHeadcountsCache = new Map<
+  string,
+  { data: Record<number, number>; expiresAt: number }
+>();
+const ROUND_HEADCOUNTS_TTL_MS = 60 * 1000;
 
-async function computeRoundHeadcounts(inviteId: string): Promise<Record<number, number>> {
+export async function aggregateRoundHeadcounts(
+  inviteId: string,
+): Promise<Record<number, number>> {
+  const now = Date.now();
+  const cached = roundHeadcountsCache.get(inviteId);
+  if (cached && cached.expiresAt > now) return cached.data;
+
   const snap = await adminDb
     .collection(REGISTRATIONS_COLLECTION)
     .where('inviteId', '==', inviteId)
@@ -340,34 +354,13 @@ async function computeRoundHeadcounts(inviteId: string): Promise<Record<number, 
       result[sel.roundNo] = (result[sel.roundNo] ?? 0) + sel.headcount;
     }
   }
+  roundHeadcountsCache.set(inviteId, { data: result, expiresAt: now + ROUND_HEADCOUNTS_TTL_MS });
   return result;
-}
-
-/**
- * 회차별 active 신청 인원의 합계 (잔여석 안내용).
- *
- * apply 페이지 진입마다 전체 registration을 스캔하므로 invite별로 60초 캐싱.
- * register/delete/supersede 직후 `invalidateRoundHeadcounts(inviteId)`로 무효화.
- *
- * unstable_cache 태그는 wrapper 생성 시점에 결정되므로 invite별로 동적 wrapper 생성.
- * Next.js 내부적으로 cache key(키 = `agg-rh:${inviteId}`)에 따라 결과를 dedupe하므로
- * 같은 inviteId로 여러 번 wrap 해도 동일 캐시 entry를 공유한다.
- */
-export function aggregateRoundHeadcounts(inviteId: string): Promise<Record<number, number>> {
-  const cached = unstable_cache(
-    () => computeRoundHeadcounts(inviteId),
-    [`agg-rh:${inviteId}`],
-    {
-      revalidate: 60,
-      tags: [roundHeadcountsTag(inviteId)],
-    },
-  );
-  return cached();
 }
 
 /** register/delete/supersede 직후 호출하여 잔여석 캐시를 무효화. */
 export function invalidateRoundHeadcounts(inviteId: string): void {
-  revalidateTag(roundHeadcountsTag(inviteId), 'default');
+  roundHeadcountsCache.delete(inviteId);
 }
 
 /**
@@ -489,17 +482,24 @@ export async function listRegistrationsServer(
 }
 
 /**
- * settings/admins 문서를 60초 캐싱.
- * 권한 변경은 거의 없으므로 캐시로 매 요청 Firestore read 1회 절약.
+ * settings/admins 문서를 모듈-레벨 메모리에 60초 캐싱.
+ * 권한 변경은 거의 없으므로 매 요청 Firestore read 1회 절약.
  */
-const getAdminsConfig = unstable_cache(
-  async (): Promise<{ ownerUid?: string; uids?: string[] }> => {
-    const snap = await adminDb.collection('settings').doc('admins').get();
-    return snap.exists ? (snap.data() as { ownerUid?: string; uids?: string[] }) : {};
-  },
-  ['settings-admins'],
-  { revalidate: 60, tags: ['settings-admins'] },
-);
+let adminsConfigCache:
+  | { data: { ownerUid?: string; uids?: string[] }; expiresAt: number }
+  | null = null;
+const ADMINS_CONFIG_TTL_MS = 60 * 1000;
+
+async function getAdminsConfig(): Promise<{ ownerUid?: string; uids?: string[] }> {
+  const now = Date.now();
+  if (adminsConfigCache && adminsConfigCache.expiresAt > now) {
+    return adminsConfigCache.data;
+  }
+  const snap = await adminDb.collection('settings').doc('admins').get();
+  const data = snap.exists ? (snap.data() as { ownerUid?: string; uids?: string[] }) : {};
+  adminsConfigCache = { data, expiresAt: now + ADMINS_CONFIG_TTL_MS };
+  return data;
+}
 
 /**
  * Firebase ID 토큰을 검증하고 Admin/Owner 여부를 확인한다.
