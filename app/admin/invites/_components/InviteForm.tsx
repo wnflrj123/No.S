@@ -7,6 +7,7 @@ import RoundEditor, { type RoundFormValue } from './RoundEditor';
 import RolesEditor from './RolesEditor';
 import StaffEditor from './StaffEditor';
 import SponsorAccountEditor from './SponsorAccountEditor';
+import UploadPhotoButton from './UploadPhotoButton';
 import { upsertInvite, type InviteWriteInput } from '@/lib/invites/client';
 import {
   OPTIONAL_FIELD_LABELS,
@@ -187,33 +188,49 @@ export default function InviteForm({ initial, createdBy, onSaved }: Props) {
           />
         </FieldRow>
         <FieldRow label="포스터 이미지 경로" required>
-          <input
-            type="text"
-            value={form.posterImageUrl}
-            onChange={e => update('posterImageUrl', e.target.value)}
-            placeholder={`/invites/${inviteIdPreview}/poster.jpg`}
-            maxLength={200}
-            className="input"
-            required
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={form.posterImageUrl}
+              onChange={e => update('posterImageUrl', e.target.value)}
+              placeholder={`/invites/${inviteIdPreview}/poster.jpg`}
+              maxLength={200}
+              className="input flex-1"
+              required
+            />
+            <UploadPhotoButton
+              inviteId={inviteIdPreview}
+              type="poster"
+              onUploaded={({ url }) => update('posterImageUrl', url)}
+              title="로컬에서 포스터 업로드"
+            />
+          </div>
           <p className="text-xs text-gray-500 mt-1">
-            <code>/public</code> 폴더 기준 경로 또는 외부 URL
+            <code>/public</code> 폴더 기준 경로 또는 외부 URL · 우측 아이콘으로 로컬 파일 업로드
           </p>
         </FieldRow>
         <FieldRow
           label="배경 이미지 경로 (선택)"
           hint="공개 정보 페이지에 옅게 깔리는 배경. 비워두면 사용 안 함."
         >
-          <input
-            type="text"
-            value={form.backgroundImageUrl ?? ''}
-            onChange={e => update('backgroundImageUrl', e.target.value)}
-            placeholder={`/invites/${inviteIdPreview}/background.jpg`}
-            maxLength={200}
-            className="input"
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={form.backgroundImageUrl ?? ''}
+              onChange={e => update('backgroundImageUrl', e.target.value)}
+              placeholder={`/invites/${inviteIdPreview}/background.jpg`}
+              maxLength={200}
+              className="input flex-1"
+            />
+            <UploadPhotoButton
+              inviteId={inviteIdPreview}
+              type="background"
+              onUploaded={({ url }) => update('backgroundImageUrl', url)}
+              title="로컬에서 배경 이미지 업로드"
+            />
+          </div>
           <p className="text-xs text-gray-500 mt-1">
-            <code>/public</code> 폴더 기준 경로 또는 외부 URL
+            <code>/public</code> 폴더 기준 경로 또는 외부 URL · 우측 아이콘으로 로컬 파일 업로드
           </p>
         </FieldRow>
         <label className="flex items-center gap-2 mt-3">

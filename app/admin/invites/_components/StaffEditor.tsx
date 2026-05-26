@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { FiMenu, FiPlus, FiTrash2 } from 'react-icons/fi';
 import type { InviteStaff, InviteStaffMember } from '@/lib/invites/types';
 import usePhotoFiles from './usePhotoFiles';
+import UploadPhotoButton from './UploadPhotoButton';
 
 interface Props {
   value: InviteStaff[];
@@ -22,7 +23,7 @@ function emptyMember(): InviteStaffMember {
 }
 
 export default function StaffEditor({ value, onChange, inviteId }: Props) {
-  const photoFiles = usePhotoFiles(inviteId, 'staff');
+  const { files: photoFiles, refetch: refetchPhotoFiles } = usePhotoFiles(inviteId, 'staff');
 
   // 드래그로 순서를 바꾸는 동안의 출발/도착 인덱스
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -150,7 +151,7 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
 
             <ul className="space-y-2 pl-3 border-l-2 border-gray-200">
               {staff.members.map((member, mi) => (
-                <li key={mi} className="grid sm:grid-cols-[1fr_1fr_auto] gap-2 items-start">
+                <li key={mi} className="grid sm:grid-cols-[1fr_1fr_auto_auto] gap-2 items-start">
                   <input
                     type="text"
                     value={member.name}
@@ -173,6 +174,15 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
                       <option value={member.photoFile}>{member.photoFile} (폴더에 없음)</option>
                     )}
                   </select>
+                  <UploadPhotoButton
+                    inviteId={inviteId}
+                    type="staff"
+                    onUploaded={({ filename }) => {
+                      updateMember(si, mi, { photoFile: filename });
+                      refetchPhotoFiles();
+                    }}
+                    title="로컬에서 사진 업로드"
+                  />
                   <button
                     type="button"
                     onClick={() => removeMember(si, mi)}

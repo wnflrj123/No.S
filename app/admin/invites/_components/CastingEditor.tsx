@@ -5,6 +5,7 @@ import { FiCrop, FiPlus, FiTrash2 } from 'react-icons/fi';
 import type { CastingEntry, InviteRole } from '@/lib/invites/types';
 import usePhotoFiles from './usePhotoFiles';
 import CropEditor from './CropEditor';
+import UploadPhotoButton from './UploadPhotoButton';
 
 interface Props {
   value: CastingEntry[];
@@ -14,7 +15,7 @@ interface Props {
 }
 
 export default function CastingEditor({ value, onChange, roles, inviteId }: Props) {
-  const photoFiles = usePhotoFiles(inviteId, 'cast');
+  const { files: photoFiles, refetch: refetchPhotoFiles } = usePhotoFiles(inviteId, 'cast');
   const [croppingIdx, setCroppingIdx] = useState<number | null>(null);
 
   const update = (index: number, patch: Partial<CastingEntry>) => {
@@ -41,7 +42,7 @@ export default function CastingEditor({ value, onChange, roles, inviteId }: Prop
       <ul className="space-y-2">
         {value.map((c, i) => (
           <li key={i} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="grid sm:grid-cols-[1fr_1fr_1fr_auto_auto] gap-2 items-start">
+            <div className="grid sm:grid-cols-[1fr_1fr_1fr_auto_auto_auto] gap-2 items-start">
               <select
                 value={c.roleId}
                 onChange={e => update(i, { roleId: e.target.value })}
@@ -84,6 +85,15 @@ export default function CastingEditor({ value, onChange, roles, inviteId }: Prop
                   <option value={c.photoFile}>{c.photoFile} (폴더에 없음)</option>
                 )}
               </select>
+              <UploadPhotoButton
+                inviteId={inviteId}
+                type="cast"
+                onUploaded={({ filename }) => {
+                  update(i, { photoFile: filename, photoCrop: undefined });
+                  refetchPhotoFiles();
+                }}
+                title="로컬에서 사진 업로드"
+              />
               <button
                 type="button"
                 onClick={() => setCroppingIdx(i)}
