@@ -20,9 +20,16 @@ export default function StaffSection({ staff, inviteId }: Props) {
 
   return (
     <section className="bg-gray-50 px-5 py-10">
-      <header className="text-center mb-8">
-        <h2 className="text-lg font-bold text-gray-900 break-keep">제작진</h2>
-        <p className="mt-1 text-xs text-gray-500 break-keep">이 무대를 함께 만든 사람들</p>
+      <header className="text-center mb-12">
+        <div className="inline-flex items-center gap-3 text-[#0066B3]/50">
+          <span aria-hidden className="h-px w-10 sm:w-14 bg-current" />
+          <span className="text-[10px] uppercase tracking-[0.4em] font-bold">CREW</span>
+          <span aria-hidden className="h-px w-10 sm:w-14 bg-current" />
+        </div>
+        <h2 className="mt-4 text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight break-keep">
+          제작진
+        </h2>
+        <p className="mt-3 text-xs text-gray-500 break-keep">이 무대를 함께 만든 사람들</p>
       </header>
 
       {/* 사진 있는 직책 — 박스 없음, 직책명 + 헤드샷 그리드 */}
