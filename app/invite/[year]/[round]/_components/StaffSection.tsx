@@ -58,27 +58,25 @@ export default function StaffSection({ staff, inviteId }: Props) {
         </div>
       )}
 
-      {/* 사진 없는 직책 — 플레이빌 점선 리더 패널 */}
+      {/* 사진 없는 직책 — 센터 스택 크레딧 패널 */}
       {textGroups.length > 0 && (
-        <div className="mt-5 rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
-          {/* 프로그램북 장식 */}
-          <div className="mb-1.5 flex items-center justify-center gap-2 text-[#0066B3]/40">
-            <span className="h-px w-8 bg-current" />
-            <span className="text-xs leading-none">✦</span>
-            <span className="h-px w-8 bg-current" />
-          </div>
-
-          <ul>
+        <div className="mt-5 rounded-2xl border border-gray-200 bg-white px-5 py-7 shadow-sm">
+          <ul className="space-y-5">
             {textGroups.map(group => (
-              <li key={group.id} className="flex items-baseline gap-2 py-2">
-                <span className="shrink-0 text-sm text-gray-500">{group.role}</span>
-                <span
+              <li key={group.id} className="text-center">
+                {/* 직책 라벨 — 좌우 짧은 hairline 데코 */}
+                <div
                   aria-hidden
-                  className="min-w-6 flex-1 -translate-y-1 border-b border-gray-300"
-                />
-                <span className="text-right text-sm font-semibold text-gray-900">
+                  className="flex items-center justify-center gap-2 text-gray-400"
+                >
+                  <span className="h-px w-5 bg-current" />
+                  <span className="text-xs font-medium tracking-wider">{group.role}</span>
+                  <span className="h-px w-5 bg-current" />
+                </div>
+                {/* 이름 */}
+                <p className="mt-1.5 text-base font-semibold text-gray-900">
                   {group.members.map(m => m.name).join(' · ')}
-                </span>
+                </p>
               </li>
             ))}
           </ul>
