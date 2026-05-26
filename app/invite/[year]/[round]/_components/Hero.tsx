@@ -34,7 +34,6 @@ export default function Hero({ invite }: { invite: Invite }) {
           <PosterThumb
             src={invite.posterImageUrl}
             alt={invite.title}
-            sizes="(min-width: 768px) 224px, 208px"
             priority
           />
         </div>

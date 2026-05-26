@@ -1,23 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 
 interface Props {
   src: string;
   alt: string;
-  /** next/image sizes attr — 외곽 너비에 맞춰 부모가 결정 */
-  sizes?: string;
-  /** above-the-fold면 true */
+  /** above-the-fold면 true → eager load + fetchpriority=high */
   priority?: boolean;
 }
 
 /**
- * 포스터 thumbnail. 클릭하면 fullscreen 모달로 확대 표시.
+ * 포스터 thumbnail. 원본 비율 그대로 표시 (크롭 없음).
+ * 클릭하면 fullscreen 모달로 확대.
  * - ESC 또는 backdrop 클릭으로 닫힘
  * - 모달 열린 동안 body 스크롤 잠금
+ *
+ * next/image 대신 native img 사용: 컨테이너 고정 비율 없이 이미지 원본 비율대로
+ * 표시하기 위함. 포스터 크기가 작아 next/image 최적화 이점이 미미.
  */
-export default function PosterThumb({ src, alt, sizes, priority }: Props) {
+export default function PosterThumb({ src, alt, priority }: Props) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -40,15 +41,15 @@ export default function PosterThumb({ src, alt, sizes, priority }: Props) {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="포스터 크게 보기"
-        className="block w-full aspect-[3/4] relative overflow-hidden rounded-lg md:rounded-xl bg-gray-100 shadow-md cursor-zoom-in transition-transform hover:scale-[1.015] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0066B3]"
+        className="block w-full overflow-hidden rounded-lg md:rounded-xl bg-gray-100 shadow-md cursor-zoom-in transition-transform hover:scale-[1.015] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0066B3]"
       >
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element -- 원본 비율 그대로 표시. */}
+        <img
           src={src}
           alt={alt}
-          fill
-          priority={priority}
-          className="object-cover"
-          sizes={sizes}
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'auto'}
+          className="block w-full h-auto"
         />
       </button>
 
@@ -68,7 +69,7 @@ export default function PosterThumb({ src, alt, sizes, priority }: Props) {
           >
             ×
           </button>
-          {/* eslint-disable-next-line @next/next/no-img-element -- 사용자 액션 후 1회 로드, 원본 비율 그대로 표시하기 위해 next/image의 fill mode 대신 native img 사용 */}
+          {/* eslint-disable-next-line @next/next/no-img-element -- 사용자 액션 후 1회 로드, 원본 비율 그대로. */}
           <img
             src={src}
             alt={alt}
