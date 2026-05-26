@@ -44,7 +44,14 @@ export default async function InvitePage({ params }: PageParams) {
     invite.rounds.every(r => r.startAt.toDate().getTime() <= nowMs);
 
   return (
-    <main className="bg-white text-gray-900 pb-28 md:pb-0">
+    <main className="relative isolate text-gray-900 pb-28 md:pb-0">
+      {invite.backgroundImageUrl && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-center opacity-20"
+          style={{ backgroundImage: `url('${invite.backgroundImageUrl}')` }}
+        />
+      )}
       <Hero invite={invite} />
       <div className="md:max-w-3xl md:mx-auto">
         <DescriptionSection html={invite.description} />

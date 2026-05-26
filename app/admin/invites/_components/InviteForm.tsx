@@ -31,6 +31,7 @@ const DEFAULT_INVITE: Omit<InviteWriteInput, 'rounds'> & { rounds: RoundFormValu
   subtitle: '',
   description: '',
   posterImageUrl: '',
+  backgroundImageUrl: '',
   venue: { name: '', address: '', directions: '', mapLinks: {} },
   roles: [],
   staff: [],
@@ -98,6 +99,7 @@ export default function InviteForm({ initial, createdBy, onSaved }: Props) {
         ...form,
         overline: form.overline?.trim() || undefined,
         subtitle: form.subtitle?.trim() || undefined,
+        backgroundImageUrl: form.backgroundImageUrl?.trim() || undefined,
         thanksMessage: form.thanksMessage?.trim() || undefined,
         disabledFields: form.disabledFields ?? [],
         disableWallSupport: form.disableWallSupport ?? false,
@@ -193,6 +195,22 @@ export default function InviteForm({ initial, createdBy, onSaved }: Props) {
             maxLength={200}
             className="input"
             required
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            <code>/public</code> 폴더 기준 경로 또는 외부 URL
+          </p>
+        </FieldRow>
+        <FieldRow
+          label="배경 이미지 경로 (선택)"
+          hint="공개 정보 페이지에 옅게 깔리는 배경. 비워두면 사용 안 함."
+        >
+          <input
+            type="text"
+            value={form.backgroundImageUrl ?? ''}
+            onChange={e => update('backgroundImageUrl', e.target.value)}
+            placeholder={`/invites/${inviteIdPreview}/background.jpg`}
+            maxLength={200}
+            className="input"
           />
           <p className="text-xs text-gray-500 mt-1">
             <code>/public</code> 폴더 기준 경로 또는 외부 URL
@@ -363,6 +381,7 @@ function toForm(invite: Invite | null): typeof DEFAULT_INVITE {
     subtitle: invite.subtitle ?? '',
     description: invite.description,
     posterImageUrl: invite.posterImageUrl,
+    backgroundImageUrl: invite.backgroundImageUrl ?? '',
     venue: invite.venue,
     roles,
     staff: invite.staff ?? [],

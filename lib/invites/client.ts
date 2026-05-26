@@ -32,6 +32,7 @@ export interface InviteWriteInput {
   subtitle?: string;
   description: string;
   posterImageUrl: string;
+  backgroundImageUrl?: string;
   venue: Invite['venue'];
   roles: Invite['roles'];
   /** 제작진. 폼에서 항상 배열로 전달되지만 호환을 위해 optional. */
@@ -120,6 +121,7 @@ export async function upsertInvite(
       subtitle: input.subtitle || '',
       description: input.description,
       posterImageUrl: input.posterImageUrl,
+      backgroundImageUrl: input.backgroundImageUrl || '',
       venue: input.venue,
       roles: input.roles,
       staff,
@@ -143,6 +145,7 @@ export async function upsertInvite(
       subtitle: input.subtitle || '',
       description: input.description,
       posterImageUrl: input.posterImageUrl,
+      backgroundImageUrl: input.backgroundImageUrl || '',
       venue: input.venue,
       roles: input.roles,
       staff,

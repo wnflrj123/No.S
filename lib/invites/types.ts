@@ -143,6 +143,8 @@ export interface Invite {
   subtitle?: string;
   description: string; // HTML (TipTap)
   posterImageUrl: string; // 정적 경로 또는 외부 URL
+  /** 공개 정보 페이지에 옅게 깔리는 배경 이미지. 옵션. */
+  backgroundImageUrl?: string;
   venue: Venue;
   roles: InviteRole[]; // 배역 마스터 (공연 전체 공통). 레거시 데이터는 폼 저장 시 자동 채워짐
   /** 제작진. 선택 필드 — staff 없는 기존 공연 데이터와 호환. */
