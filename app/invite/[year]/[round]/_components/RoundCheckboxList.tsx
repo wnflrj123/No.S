@@ -10,6 +10,10 @@ export interface FormRound {
   roundNo: number;
   teamName: string;
   startAtMs: number;
+  /** 회차 좌석 수. 미설정 시 잔여석 안내 비표시. */
+  seatCapacity?: number;
+  /** 회차의 현재 active 신청 인원 합. seatCapacity와 함께 사용. */
+  booked?: number;
 }
 
 interface Props {
@@ -17,6 +21,47 @@ interface Props {
   value: Record<number, number>; // roundNo -> headcount
   onChange: (next: Record<number, number>) => void;
   maxHeadcount: number;
+}
+
+interface SeatHint {
+  label: string;
+  className: string;
+}
+
+/**
+ * 잔여석 비율 임계:
+ *  - 잔여 ≤ 0 → 빨강 ('거의 마감')
+ *  - 잔여 ≤ 1/3 → 빨강 ('얼마 안 남았어요')
+ *  - 1/3 < 잔여 ≤ 1/2 → 주황 ('잔여 N석')
+ *  - 잔여 > 1/2 → 표시 안 함
+ */
+function computeSeatHint(
+  seatCapacity: number | undefined,
+  booked: number | undefined,
+): SeatHint | null {
+  if (!seatCapacity || seatCapacity <= 0) return null;
+  const used = booked ?? 0;
+  const remaining = seatCapacity - used;
+  if (remaining <= 0) {
+    return {
+      label: '거의 마감',
+      className: 'bg-red-100 text-red-700 border border-red-200',
+    };
+  }
+  const ratio = remaining / seatCapacity;
+  if (ratio <= 1 / 3) {
+    return {
+      label: `잔여 ${remaining}석 · 얼마 안 남았어요`,
+      className: 'bg-red-100 text-red-700 border border-red-200',
+    };
+  }
+  if (ratio <= 1 / 2) {
+    return {
+      label: `잔여 ${remaining}석`,
+      className: 'bg-amber-100 text-amber-700 border border-amber-200',
+    };
+  }
+  return null;
 }
 
 export default function RoundCheckboxList({ rounds, value, onChange, maxHeadcount }: Props) {
@@ -40,6 +85,7 @@ export default function RoundCheckboxList({ rounds, value, onChange, maxHeadcoun
       {rounds.map(r => {
         const closed = r.startAtMs <= nowMs;
         const selected = (value[r.roundNo] ?? 0) > 0;
+        const hint = closed ? null : computeSeatHint(r.seatCapacity, r.booked);
         return (
           <li
             key={r.roundNo}
@@ -66,6 +112,13 @@ export default function RoundCheckboxList({ rounds, value, onChange, maxHeadcoun
                 <div className="text-xs text-gray-500">
                   {formatInTimeZone(new Date(r.startAtMs), KST, 'M월 d일(EEE) HH:mm', { locale: ko })}
                 </div>
+                {hint && (
+                  <span
+                    className={`inline-block mt-1.5 text-[11px] font-medium px-2 py-0.5 rounded ${hint.className}`}
+                  >
+                    {hint.label}
+                  </span>
+                )}
               </div>
               {closed && (
                 <span className="text-xs px-2 py-1 bg-gray-300 text-gray-700 rounded">마감</span>

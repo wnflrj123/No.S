@@ -312,6 +312,28 @@ export async function lookupActiveRegistration(
 }
 
 /**
+ * 회차별 active 신청 인원의 합계를 반환한다 (잔여석 안내용).
+ * 신청자가 없는 회차는 결과에 포함되지 않으니, 호출 측에서 `?? 0`으로 처리한다.
+ */
+export async function aggregateRoundHeadcounts(
+  inviteId: string,
+): Promise<Record<number, number>> {
+  const snap = await adminDb
+    .collection(REGISTRATIONS_COLLECTION)
+    .where('inviteId', '==', inviteId)
+    .get();
+  const result: Record<number, number> = {};
+  for (const docSnap of snap.docs) {
+    const data = docSnap.data() as Omit<InviteRegistration, 'id'>;
+    if ((data.status ?? 'active') !== 'active') continue;
+    for (const sel of data.roundSelections) {
+      result[sel.roundNo] = (result[sel.roundNo] ?? 0) + sel.headcount;
+    }
+  }
+  return result;
+}
+
+/**
  * Admin이 현장 후원자를 삭제. inviteSupporters 컬렉션 hard delete.
  */
 export async function deleteSupporter(supporterId: string): Promise<boolean> {

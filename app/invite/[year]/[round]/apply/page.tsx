@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getInvite } from '@/lib/invites/server';
+import { aggregateRoundHeadcounts, getInvite, inviteIdFrom } from '@/lib/invites/server';
 import ApplyForm from '../_components/ApplyForm';
 
 export const dynamic = 'force-dynamic';
@@ -11,7 +11,10 @@ interface PageParams {
 
 export default async function ApplyPage({ params }: PageParams) {
   const { year, round } = await params;
-  const invite = await getInvite(year, round);
+  const [invite, bookedByRound] = await Promise.all([
+    getInvite(year, round),
+    aggregateRoundHeadcounts(inviteIdFrom(year, round)),
+  ]);
   if (!invite || !invite.isPublished) notFound();
 
   // eslint-disable-next-line react-hooks/purity -- 서버 컴포넌트는 요청마다 새 인스턴스
@@ -67,6 +70,8 @@ export default async function ApplyPage({ params }: PageParams) {
             roundNo: r.roundNo,
             teamName: r.teamName,
             startAtMs: r.startAt.toDate().getTime(),
+            seatCapacity: r.seatCapacity,
+            booked: bookedByRound[r.roundNo] ?? 0,
           })),
           disabledFields: invite.disabledFields,
         }}
