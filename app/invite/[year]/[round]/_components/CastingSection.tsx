@@ -12,11 +12,13 @@ interface Props {
 /**
  * 캐스팅 섹션 — editorial programbook 무드.
  *  - 각 배역 = 흰 rounded-2xl 카드 (구분 명확)
- *  - 작은 영문 라벨(ROLE) + 큰 한글 배역명 + 설명 + hairline 데코 + 배우 카드 그리드
- *  - 배우 카드는 flex-wrap + justify-center로 어떤 인원수든 항상 가운데 정렬
- *  - 1명: 큰 단독 카드 / 2명+: 모바일 2-up·데스크탑 3-up 자동 분배
+ *  - 배우 카드는 인원수와 무관하게 모두 동일 고정 사이즈(`ACTOR_CARD_W`)
+ *  - flex-wrap + justify-center로 1명·2명·3명+ 항상 가운데 정렬
+ *  - 모바일 ~2-up, 데스크탑 ~3-up 자연스럽게 분배
  *  - 모든 텍스트에 break-keep로 한글 어색한 줄바꿈 방지
  */
+// 1-cast/2-cast/N-cast 모두 동일하게 — 사이즈 유일 진실원천
+const ACTOR_CARD_W = 'w-[140px] sm:w-56';
 export default function CastingSection({ rounds, roles, inviteId }: Props) {
   const data = groupCastByRole(rounds, roles);
   if (data.length === 0) return null;
@@ -59,7 +61,7 @@ export default function CastingSection({ rounds, roles, inviteId }: Props) {
             <div className="px-3 pb-7 pt-5">
               <div className="flex flex-wrap justify-center gap-3">
                 {actors.map((a, i) => (
-                  <figure key={i} className="w-[140px] sm:w-56">
+                  <figure key={i} className={ACTOR_CARD_W}>
                     <ActorPortrait
                       actorName={a.actorName}
                       photoFile={a.photoFile}

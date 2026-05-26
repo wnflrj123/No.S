@@ -35,7 +35,11 @@ export default function StaffSection({ staff, inviteId }: Props) {
               </h3>
               <div className="flex flex-wrap justify-center gap-3">
                 {group.members.map((m, i) => (
-                  <figure key={i} className="w-24 sm:w-28">
+                  <figure
+                    key={i}
+                    // 원본 grid-cols-3 sm:grid-cols-4 + gap-3과 동일한 폭
+                    className="w-[calc(33.333%-8px)] sm:w-[calc(25%-9px)]"
+                  >
                     <StaffHeadshot
                       name={m.name}
                       photoFile={m.photoFile}
