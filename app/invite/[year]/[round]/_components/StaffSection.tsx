@@ -7,9 +7,12 @@ interface Props {
 }
 
 /**
- * 제작진 소개 섹션.
- *  - 사진 있는 직책: 그 어떤 box wrapper도 없이, 직책명(h3) + 헤드샷 그리드. 가운데 정렬만.
- *  - 사진 없는 직책: 흰 패널(rounded-2xl) + 행 사이 hairline divider
+ * 제작진 소개 섹션 — 캐스팅과 같은 Editorial Programbook Luxe 톤.
+ *  - 따뜻한 cream/ivory 섹션 배경
+ *  - 직책명·이름 typography 격상 (h3 text-2xl/3xl, name text-base)
+ *  - 직책마다 다이아몬드 ◆ ornament divider
+ *  - 헤드샷 카드는 box wrapping 없이 가운데 정렬만
+ *  - 사진 없는 직책은 ivory tint 패널 + 부드러운 luxe shadow
  */
 export default function StaffSection({ staff, inviteId }: Props) {
   const groups = staff.filter(s => s.role.trim() && s.members.length > 0);
@@ -19,7 +22,7 @@ export default function StaffSection({ staff, inviteId }: Props) {
   const textGroups = groups.filter(g => !g.members.some(m => m.photoFile));
 
   return (
-    <section className="bg-gray-50 px-5 py-10">
+    <section className="relative px-5 py-14 bg-gradient-to-b from-[#FAF7F2] via-white to-[#FAF7F2] overflow-hidden">
       <header className="text-center mb-12">
         <div className="inline-flex items-center gap-3 text-[#0066B3]/50">
           <span aria-hidden className="h-px w-10 sm:w-14 bg-current" />
@@ -32,20 +35,29 @@ export default function StaffSection({ staff, inviteId }: Props) {
         <p className="mt-3 text-xs text-gray-500 break-keep">이 무대를 함께 만든 사람들</p>
       </header>
 
-      {/* 사진 있는 직책 — 박스 없음, 직책명 + 헤드샷 그리드 */}
+      {/* 사진 있는 직책 — 박스 없이, 큰 직책명 + ornament + 헤드샷 */}
       {photoGroups.length > 0 && (
-        <div className="space-y-8 mb-8">
+        <div className="space-y-12 mb-10">
           {photoGroups.map(group => (
             <div key={group.id} className="text-center">
-              <h3 className="mb-4 text-sm font-semibold text-gray-800 break-keep">
+              <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight break-keep">
                 {group.role}
               </h3>
-              <div className="flex flex-wrap justify-center gap-3">
+              {/* 다이아몬드 ornament divider */}
+              <div
+                aria-hidden
+                className="mt-4 flex items-center justify-center gap-2.5 text-[#0066B3]/30"
+              >
+                <span className="h-px w-10 bg-current" />
+                <span className="text-[9px] leading-none">◆</span>
+                <span className="h-px w-10 bg-current" />
+              </div>
+
+              <div className="mt-6 flex flex-wrap justify-center gap-4">
                 {group.members.map((m, i) => (
                   <figure
                     key={i}
-                    // 원본 grid-cols-3 sm:grid-cols-4 + gap-3과 동일한 폭
-                    className="w-[calc(33.333%-8px)] sm:w-[calc(25%-9px)]"
+                    className="w-[calc(33.333%-11px)] sm:w-[calc(25%-12px)]"
                   >
                     <StaffHeadshot
                       name={m.name}
@@ -61,19 +73,19 @@ export default function StaffSection({ staff, inviteId }: Props) {
         </div>
       )}
 
-      {/* 사진 없는 직책 — 흰 패널, 가로 꽉 차게 */}
+      {/* 사진 없는 직책 — ivory tint 패널 + luxe shadow */}
       {textGroups.length > 0 && (
-        <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 border border-gray-100 px-5">
+        <div className="bg-white/95 rounded-2xl shadow-[0_10px_40px_-15px_rgba(15,23,42,0.10)] ring-1 ring-[#E8DFCC]/50 overflow-hidden">
           <ul className="divide-y divide-gray-100">
             {textGroups.map(group => (
               <li
                 key={group.id}
-                className="flex items-baseline justify-between gap-4 py-4"
+                className="flex items-baseline justify-between gap-4 px-5 py-4"
               >
-                <span className="shrink-0 text-xs tracking-wider text-gray-500 font-medium break-keep">
+                <span className="shrink-0 text-sm tracking-wider text-gray-500 font-semibold break-keep">
                   {group.role}
                 </span>
-                <span className="text-right text-sm font-semibold text-gray-900 break-keep">
+                <span className="text-right text-base font-semibold text-gray-900 tracking-tight break-keep">
                   {group.members.map(m => m.name).join(' · ')}
                 </span>
               </li>
@@ -95,13 +107,13 @@ interface HeadshotProps {
 function StaffHeadshot({ name, photoFile, photoCrop, inviteId }: HeadshotProps) {
   return (
     <>
-      <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-200 ring-1 ring-black/5">
+      <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 ring-1 ring-black/10 shadow-md transition-transform duration-300 ease-out hover:scale-[1.02]">
         {photoFile ? (
           <CastingPhoto
             src={`/invites/${inviteId}/staff/${photoFile}`}
             alt={name}
             crop={photoCrop}
-            sizes="(max-width: 640px) 25vw, 15vw"
+            sizes="(max-width: 640px) 33vw, 25vw"
           />
         ) : (
           <span className="absolute inset-0 flex items-center justify-center text-[10px] text-gray-400 break-keep">
@@ -109,7 +121,7 @@ function StaffHeadshot({ name, photoFile, photoCrop, inviteId }: HeadshotProps) 
           </span>
         )}
       </div>
-      <figcaption className="mt-1.5 text-sm font-medium text-gray-900 text-center break-keep">
+      <figcaption className="mt-2.5 text-sm sm:text-base font-semibold text-gray-900 text-center tracking-tight break-keep">
         {name}
       </figcaption>
     </>
