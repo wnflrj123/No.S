@@ -74,7 +74,7 @@ export default function StaffSection({ staff, inviteId }: Props) {
                 <span className="shrink-0 text-sm text-gray-500">{group.role}</span>
                 <span
                   aria-hidden
-                  className="min-w-6 flex-1 -translate-y-1 border-b border-dotted border-gray-300"
+                  className="min-w-6 flex-1 -translate-y-1 border-b border-gray-300"
                 />
                 <span className="text-right text-sm font-semibold text-gray-900">
                   {group.members.map(m => m.name).join(' · ')}
