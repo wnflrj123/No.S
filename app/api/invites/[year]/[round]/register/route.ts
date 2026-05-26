@@ -3,6 +3,7 @@ import {
   createRegistration,
   findActiveDuplicate,
   getInvite,
+  inviteIdFrom,
   validateRegistrationPayload,
 } from '@/lib/invites/server';
 import type { InviteRegistration, RegisterPayload } from '@/lib/invites/types';
@@ -18,7 +19,17 @@ interface RouteParams {
 export async function POST(req: Request, { params }: RouteParams) {
   const { year, round } = await params;
 
-  const invite = await getInvite(year, round);
+  // body는 req에서, invite는 Firestore에서 — 둘 다 비종속이라 병렬화.
+  // 중복(same name+phone active) 조회는 payload의 name/phone이 필요해서 본문 파싱 후로 미룬다.
+  const inviteId = inviteIdFrom(year, round);
+  const [invite, payloadResult] = await Promise.all([
+    getInvite(year, round),
+    req
+      .json()
+      .then(p => ({ ok: true as const, payload: p as unknown }))
+      .catch(() => ({ ok: false as const })),
+  ]);
+
   if (!invite || !invite.isPublished) {
     return NextResponse.json(
       { message: '존재하지 않거나 공개되지 않은 공연입니다.' },
@@ -26,12 +37,10 @@ export async function POST(req: Request, { params }: RouteParams) {
     );
   }
 
-  let payload: unknown;
-  try {
-    payload = await req.json();
-  } catch {
+  if (!payloadResult.ok) {
     return NextResponse.json({ message: '잘못된 요청 본문입니다.' }, { status: 400 });
   }
+  const payload = payloadResult.payload;
 
   const validation = validateRegistrationPayload(payload, invite, new Date());
   if (!validation.ok) {
@@ -45,7 +54,7 @@ export async function POST(req: Request, { params }: RouteParams) {
     const typed = payload as RegisterPayload;
 
     // 중복(같은 이름+전화번호 active) 체크
-    const existing = await findActiveDuplicate(invite.id, typed.name, typed.phone);
+    const existing = await findActiveDuplicate(inviteId, typed.name, typed.phone);
     if (existing && !typed.confirmSupersede) {
       return NextResponse.json(
         {
@@ -56,7 +65,8 @@ export async function POST(req: Request, { params }: RouteParams) {
       );
     }
 
-    const { id, token } = await createRegistration(invite, typed, existing?.id);
+    // 기존 객체를 그대로 넘겨 createRegistration 내부의 추가 read를 제거.
+    const { id, token } = await createRegistration(invite, typed, existing ?? undefined);
 
     // 신청 완료 자동 LMS 발송. after()로 응답 후 background에서 안전하게 처리.
     // Vercel serverless 환경에서 응답 직후 컨테이너 동결로 fire-and-forget이 끊기는 문제를 회피.

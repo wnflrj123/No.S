@@ -30,12 +30,18 @@ export async function POST(req: Request, { params }: RouteParams) {
     return NextResponse.json({ message: '휴대폰 번호 형식이 올바르지 않습니다.' }, { status: 400 });
   }
 
-  const invite = await getInvite(year, round);
+  // invite 단건 read와 registration lookup은 서로 비종속 — 병렬화로 응답 시간 절반.
+  // invite 미존재여도 reg query 자체는 inviteId 필터로 무해하다.
+  const inviteId = inviteIdFrom(year, round);
+  const [invite, reg] = await Promise.all([
+    getInvite(year, round),
+    lookupActiveRegistration(inviteId, name, phone),
+  ]);
+
   if (!invite || !invite.isPublished) {
     return NextResponse.json({ found: false, message: '공연을 찾을 수 없습니다.' }, { status: 404 });
   }
 
-  const reg = await lookupActiveRegistration(inviteIdFrom(year, round), name, phone);
   if (!reg) {
     return NextResponse.json({ found: false });
   }

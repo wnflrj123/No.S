@@ -8,6 +8,7 @@
 // 서버 전용. firebase-admin을 import하므로 클라이언트 컴포넌트에서 이 파일을 import하면
 // Next.js 빌드 단계에서 자연스럽게 차단된다.
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { revalidateTag, unstable_cache } from 'next/cache';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import type { Invite, InviteRegistration, RegisterPayload, RoundSelection } from './types';
 import {
@@ -170,14 +171,16 @@ export async function findActiveDuplicate(
 
 /**
  * 검증된 페이로드로 신청 문서를 생성하고 invite.stats를 갱신한다.
- * 같은 이름·휴대폰의 active 중복이 있으면 함께 superseded로 표시하고 stats를 보정한다.
+ * 같은 이름·휴대폰의 active 중복(`supersede`)이 있으면 함께 superseded로 표시하고
+ * stats를 보정한다.
  *
- * @param supersedeId — 미리 조회한 중복 active registration의 id (있으면 supersede 처리)
+ * @param supersede — 호출자가 이미 `findActiveDuplicate`로 조회한 기존 active registration.
+ *                   전달되면 내부에서 다시 get 하지 않고 그대로 사용 (라운드트립 절약).
  */
 export async function createRegistration(
   invite: Invite,
   payload: RegisterPayload,
-  supersedeId?: string,
+  supersede?: InviteRegistration,
 ): Promise<{ id: string; token: string }> {
   const token = generateAccessToken();
   const now = Timestamp.now();
@@ -216,29 +219,30 @@ export async function createRegistration(
   });
 
   // 같은 이름·휴대폰의 기존 active 신청을 superseded로 변경하고 stats를 차감한다.
-  if (supersedeId) {
-    const oldRef = adminDb.collection(REGISTRATIONS_COLLECTION).doc(supersedeId);
-    const oldSnap = await oldRef.get();
-    if (oldSnap.exists) {
-      const oldData = oldSnap.data() as Omit<InviteRegistration, 'id'>;
-      const oldStatus = oldData.status ?? 'active';
-      if (oldStatus === 'active') {
-        const oldHc = totalHeadcount(oldData.roundSelections);
-        batch.update(oldRef, {
-          status: 'superseded',
-          supersededAt: now,
-          supersededByRegId: regRef.id,
-        });
-        batch.update(inviteRef, {
-          'stats.totalRegistrations': FieldValue.increment(-1),
-          'stats.totalHeadcount': FieldValue.increment(-oldHc),
-          ...(oldData.isSponsor ? { 'stats.totalSponsors': FieldValue.increment(-1) } : {}),
-        });
-      }
-    }
+  // 외부에서 이미 조회한 데이터를 그대로 사용 — 추가 read 없음.
+  if (supersede && (supersede.status ?? 'active') === 'active') {
+    const oldRef = adminDb.collection(REGISTRATIONS_COLLECTION).doc(supersede.id);
+    const oldHc = totalHeadcount(supersede.roundSelections);
+    batch.update(oldRef, {
+      status: 'superseded',
+      supersededAt: now,
+      supersededByRegId: regRef.id,
+    });
+    batch.update(inviteRef, {
+      'stats.totalRegistrations': FieldValue.increment(-1),
+      'stats.totalHeadcount': FieldValue.increment(-oldHc),
+      ...(supersede.isSponsor ? { 'stats.totalSponsors': FieldValue.increment(-1) } : {}),
+    });
   }
 
   await batch.commit();
+
+  // 잔여석 캐시 무효화 — apply 페이지 다음 진입부터 새 카운트 반영.
+  try {
+    revalidateTag(roundHeadcountsTag(invite.id), 'default');
+  } catch {
+    // dev 환경 등 revalidateTag 미지원 시 무시 (캐시 자체가 안 켜졌을 수 있음)
+  }
 
   return { id: regRef.id, token };
 }
@@ -297,6 +301,14 @@ export async function deleteRegistration(regId: string): Promise<boolean> {
     });
   }
   await batch.commit();
+
+  if (wasActive) {
+    try {
+      revalidateTag(roundHeadcountsTag(data.inviteId), 'default');
+    } catch {
+      // 캐시 미지원 환경 무시
+    }
+  }
   return true;
 }
 
@@ -311,13 +323,11 @@ export async function lookupActiveRegistration(
   return findActiveDuplicate(inviteId, name, phone);
 }
 
-/**
- * 회차별 active 신청 인원의 합계를 반환한다 (잔여석 안내용).
- * 신청자가 없는 회차는 결과에 포함되지 않으니, 호출 측에서 `?? 0`으로 처리한다.
- */
-export async function aggregateRoundHeadcounts(
-  inviteId: string,
-): Promise<Record<number, number>> {
+function roundHeadcountsTag(inviteId: string): string {
+  return `round-headcounts:${inviteId}`;
+}
+
+async function computeRoundHeadcounts(inviteId: string): Promise<Record<number, number>> {
   const snap = await adminDb
     .collection(REGISTRATIONS_COLLECTION)
     .where('inviteId', '==', inviteId)
@@ -331,6 +341,55 @@ export async function aggregateRoundHeadcounts(
     }
   }
   return result;
+}
+
+/**
+ * 회차별 active 신청 인원의 합계 (잔여석 안내용).
+ *
+ * apply 페이지 진입마다 전체 registration을 스캔하므로 invite별로 60초 캐싱.
+ * register/delete/supersede 직후 `invalidateRoundHeadcounts(inviteId)`로 무효화.
+ *
+ * unstable_cache 태그는 wrapper 생성 시점에 결정되므로 invite별로 동적 wrapper 생성.
+ * Next.js 내부적으로 cache key(키 = `agg-rh:${inviteId}`)에 따라 결과를 dedupe하므로
+ * 같은 inviteId로 여러 번 wrap 해도 동일 캐시 entry를 공유한다.
+ */
+export function aggregateRoundHeadcounts(inviteId: string): Promise<Record<number, number>> {
+  const cached = unstable_cache(
+    () => computeRoundHeadcounts(inviteId),
+    [`agg-rh:${inviteId}`],
+    {
+      revalidate: 60,
+      tags: [roundHeadcountsTag(inviteId)],
+    },
+  );
+  return cached();
+}
+
+/** register/delete/supersede 직후 호출하여 잔여석 캐시를 무효화. */
+export function invalidateRoundHeadcounts(inviteId: string): void {
+  revalidateTag(roundHeadcountsTag(inviteId), 'default');
+}
+
+/**
+ * inviteSupporters 컬렉션을 inviteId 기준으로 조회 (createdAt 내림차순).
+ * admin SDK 사용 — 클라이언트 SDK 라운드트립을 대체할 어드민 대시보드 번들 API에서 호출.
+ */
+export async function listSupportersServer(
+  inviteId: string,
+): Promise<import('./types').InviteSupporter[]> {
+  const snap = await adminDb
+    .collection(SUPPORTERS_COLLECTION)
+    .where('inviteId', '==', inviteId)
+    .get();
+  const list = snap.docs.map(d => ({
+    id: d.id,
+    ...(d.data() as Omit<import('./types').InviteSupporter, 'id'>),
+  }));
+  return list.sort((a, b) => {
+    const am = a.createdAt?.toMillis?.() ?? 0;
+    const bm = b.createdAt?.toMillis?.() ?? 0;
+    return bm - am;
+  });
 }
 
 /**
@@ -369,6 +428,28 @@ export async function findRegistrationByToken(token: string): Promise<InviteRegi
   if (q.empty) return null;
   const doc = q.docs[0];
   return { id: doc.id, ...(doc.data() as Omit<InviteRegistration, 'id'>) };
+}
+
+/**
+ * 어드민 대시보드용: 한 invite의 모든 registration을 반환 (superseded 포함).
+ * createdAt 내림차순.
+ */
+export async function listAllRegistrationsServer(
+  inviteId: string,
+): Promise<InviteRegistration[]> {
+  const snap = await adminDb
+    .collection(REGISTRATIONS_COLLECTION)
+    .where('inviteId', '==', inviteId)
+    .get();
+  const list = snap.docs.map(d => ({
+    id: d.id,
+    ...(d.data() as Omit<InviteRegistration, 'id'>),
+  }));
+  return list.sort((a, b) => {
+    const am = a.createdAt?.toMillis?.() ?? 0;
+    const bm = b.createdAt?.toMillis?.() ?? 0;
+    return bm - am;
+  });
 }
 
 export type BulkSmsTarget = 'all' | 'round' | 'sponsors';

@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { getAuth } from 'firebase/auth';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { getInviteClient, listRegistrations, listSupporters } from '@/lib/invites/client';
 import type { Invite, InviteRegistration, InviteSupporter } from '@/lib/invites/types';
 import StatsCards from '../../_components/StatsCards';
 import RegistrationsTable from '../../_components/RegistrationsTable';
@@ -37,41 +37,50 @@ export default function InviteAdminDetailPage() {
     if (!user || !canManage) return;
     const y = Number(params.year);
     const r = Number(params.round);
-    const id = `${y}-${r}`;
+    if (!y || !r) {
+      setRegsLoading(false);
+      return;
+    }
     let cancelled = false;
 
-    // 두 쿼리를 독립적으로 처리: invite 로드와 신청자 조회가 서로 영향 주지 않도록.
-    // listRegistrations 실패가 invite 미존재로 오인되는 사고 방지.
-    const loadInvite = (!y || !r)
-      ? Promise.resolve(null)
-      : getInviteClient(y, r).catch(err => {
-          console.error('[admin invite] load failed', err);
-          return null;
+    // 어드민 대시보드 번들 API로 invite/regs/supporters를 한 번에 fetch.
+    // 기존 3개 client SDK 호출을 1회 fetch + 서버 admin SDK 병렬 read로 대체.
+    (async () => {
+      try {
+        const idToken = await getAuth().currentUser?.getIdToken();
+        if (!idToken) {
+          if (!cancelled) {
+            setError('로그인 정보를 확인해주세요.');
+            setRegsLoading(false);
+          }
+          return;
+        }
+        const res = await fetch(`/api/admin/invites/${y}/${r}/dashboard`, {
+          headers: { Authorization: `Bearer ${idToken}` },
         });
-    const loadRegs = (!y || !r)
-      ? Promise.resolve([] as InviteRegistration[])
-      : listRegistrations(id).catch(err => {
-          console.error('[admin regs] load failed', err);
-          if (!cancelled) setError('신청자 목록을 불러오지 못했습니다.');
-          return [] as InviteRegistration[];
-        });
-    const loadSupporters = (!y || !r)
-      ? Promise.resolve([] as InviteSupporter[])
-      : listSupporters(id).catch(err => {
-          console.error('[admin supporters] load failed', err);
-          return [] as InviteSupporter[];
-        });
-
-    Promise.all([loadInvite, loadRegs, loadSupporters])
-      .then(([inv, rs, sp]) => {
+        if (!res.ok) {
+          if (!cancelled) {
+            setError('데이터를 불러오지 못했습니다.');
+            setInvite(null);
+          }
+          return;
+        }
+        const data = (await res.json()) as {
+          invite: Invite | null;
+          registrations: InviteRegistration[];
+          supporters: InviteSupporter[];
+        };
         if (cancelled) return;
-        setInvite(inv);
-        setRegs(rs);
-        setSupporters(sp);
-      })
-      .finally(() => {
+        setInvite(data.invite);
+        setRegs(data.registrations);
+        setSupporters(data.supporters);
+      } catch (err) {
+        console.error('[admin dashboard] load failed', err);
+        if (!cancelled) setError('네트워크 오류가 발생했습니다.');
+      } finally {
         if (!cancelled) setRegsLoading(false);
-      });
+      }
+    })();
 
     return () => { cancelled = true; };
   }, [user, canManage, params.year, params.round]);
