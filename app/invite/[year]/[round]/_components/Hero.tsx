@@ -30,11 +30,11 @@ export default function Hero({ invite }: { invite: Invite }) {
     <section className="px-5 md:px-8 pt-8 md:pt-14 pb-4 md:pb-8">
       <div className="max-w-3xl mx-auto md:flex md:items-start md:gap-8">
         {/* 포스터 — 모바일: 가운데 정렬 작은 thumbnail / 데스크탑: 좌측 thumbnail */}
-        <div className="mx-auto md:mx-0 w-40 md:w-56 shrink-0">
+        <div className="mx-auto md:mx-0 w-44 md:w-56 shrink-0">
           <PosterThumb
             src={invite.posterImageUrl}
             alt={invite.title}
-            sizes="(min-width: 768px) 224px, 160px"
+            sizes="(min-width: 768px) 224px, 176px"
             priority
           />
         </div>
