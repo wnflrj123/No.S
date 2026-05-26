@@ -23,45 +23,47 @@ interface Props {
   maxHeadcount: number;
 }
 
-interface SeatHint {
-  label: string;
-  className: string;
+interface SeatStatus {
+  soldOut: boolean;
+  badge: { label: string; className: string } | null;
 }
 
 /**
- * 잔여석 비율 임계:
- *  - 잔여 ≤ 0 → 빨강 ('거의 마감')
- *  - 잔여 ≤ 1/3 → 빨강 ('얼마 안 남았어요')
- *  - 1/3 < 잔여 ≤ 1/2 → 주황 ('잔여 N석')
- *  - 잔여 > 1/2 → 표시 안 함
+ * 잔여석 임계:
+ *  - 잔여 ≤ 0 → '잔여석 없음' + 신청 차단(soldOut)
+ *  - 잔여 ≤ 10 → '거의 마감' (경고, 신청 가능)
+ *  - 그 외 → 표시 안 함
+ *
+ * seatCapacity 미설정 시 어드민이 좌석 안내를 옵트인하지 않은 것 → 모든 표시 비활성.
  */
-function computeSeatHint(
+const SOLD_OUT_THRESHOLD = 0;
+const ALMOST_FULL_THRESHOLD = 10;
+
+function computeSeatStatus(
   seatCapacity: number | undefined,
   booked: number | undefined,
-): SeatHint | null {
-  if (!seatCapacity || seatCapacity <= 0) return null;
-  const used = booked ?? 0;
-  const remaining = seatCapacity - used;
-  if (remaining <= 0) {
+): SeatStatus {
+  if (!seatCapacity || seatCapacity <= 0) return { soldOut: false, badge: null };
+  const remaining = seatCapacity - (booked ?? 0);
+  if (remaining <= SOLD_OUT_THRESHOLD) {
     return {
-      label: '거의 마감',
-      className: 'bg-red-100 text-red-700 border border-red-200',
+      soldOut: true,
+      badge: {
+        label: '잔여석 없음',
+        className: 'bg-red-100 text-red-700 border border-red-200',
+      },
     };
   }
-  const ratio = remaining / seatCapacity;
-  if (ratio <= 1 / 3) {
+  if (remaining <= ALMOST_FULL_THRESHOLD) {
     return {
-      label: `잔여 ${remaining}석 · 얼마 안 남았어요`,
-      className: 'bg-red-100 text-red-700 border border-red-200',
+      soldOut: false,
+      badge: {
+        label: '거의 마감',
+        className: 'bg-red-100 text-red-700 border border-red-200',
+      },
     };
   }
-  if (ratio <= 1 / 2) {
-    return {
-      label: `잔여 ${remaining}석`,
-      className: 'bg-amber-100 text-amber-700 border border-amber-200',
-    };
-  }
-  return null;
+  return { soldOut: false, badge: null };
 }
 
 export default function RoundCheckboxList({ rounds, value, onChange, maxHeadcount }: Props) {
@@ -85,22 +87,32 @@ export default function RoundCheckboxList({ rounds, value, onChange, maxHeadcoun
       {rounds.map(r => {
         const closed = r.startAtMs <= nowMs;
         const selected = (value[r.roundNo] ?? 0) > 0;
-        const hint = closed ? null : computeSeatHint(r.seatCapacity, r.booked);
+        const { soldOut, badge } = closed
+          ? { soldOut: false, badge: null }
+          : computeSeatStatus(r.seatCapacity, r.booked);
+        // 매진이지만 편집 모드 등으로 이미 선택돼 있다면 그대로 유지 가능.
+        // 새 선택만 차단하기 위해 selected=false 일 때만 disabled 처리.
+        const blockNewSelection = soldOut && !selected;
+        const checkboxDisabled = closed || blockNewSelection;
         return (
           <li
             key={r.roundNo}
             className={`p-3 border rounded-xl ${
-              closed
+              closed || blockNewSelection
                 ? 'bg-gray-100 border-gray-200 text-gray-400'
                 : selected
                 ? 'border-[#0066B3] bg-blue-50'
                 : 'bg-white border-gray-200'
             }`}
           >
-            <label className="flex items-center gap-3 cursor-pointer select-none">
+            <label
+              className={`flex items-center gap-3 select-none ${
+                checkboxDisabled ? 'cursor-not-allowed' : 'cursor-pointer'
+              }`}
+            >
               <input
                 type="checkbox"
-                disabled={closed}
+                disabled={checkboxDisabled}
                 checked={selected}
                 onChange={() => toggle(r.roundNo)}
                 className="w-5 h-5"
@@ -112,11 +124,11 @@ export default function RoundCheckboxList({ rounds, value, onChange, maxHeadcoun
                 <div className="text-xs text-gray-500">
                   {formatInTimeZone(new Date(r.startAtMs), KST, 'M월 d일(EEE) HH:mm', { locale: ko })}
                 </div>
-                {hint && (
+                {badge && (
                   <span
-                    className={`inline-block mt-1.5 text-[11px] font-medium px-2 py-0.5 rounded ${hint.className}`}
+                    className={`inline-block mt-1.5 text-[11px] font-medium px-2 py-0.5 rounded ${badge.className}`}
                   >
-                    {hint.label}
+                    {badge.label}
                   </span>
                 )}
               </div>
