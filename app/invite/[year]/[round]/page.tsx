@@ -48,7 +48,7 @@ export default async function InvitePage({ params }: PageParams) {
       {invite.backgroundImageUrl && (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-bottom opacity-20"
+          className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-bottom opacity-40"
           style={{ backgroundImage: `url('${invite.backgroundImageUrl}')` }}
         />
       )}
