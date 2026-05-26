@@ -23,7 +23,6 @@ function emptyMember(): InviteStaffMember {
 
 export default function StaffEditor({ value, onChange, inviteId }: Props) {
   const photoFiles = usePhotoFiles(inviteId, 'staff');
-  const datalistId = `staff-files-${inviteId}`;
 
   // 드래그로 순서를 바꾸는 동안의 출발/도착 인덱스
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -79,7 +78,7 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
     <div className="space-y-3">
       <p className="text-xs text-gray-500">
         연출·분장·강사 등 제작진을 직책별로 추가하세요. 사진은 선택이며,{' '}
-        <code>/public/invites/{inviteId}/staff/</code> 폴더에 파일을 넣은 뒤 입력칸에서 선택하면 됩니다. (직접 입력도 가능)
+        <code>/public/invites/{inviteId}/staff/</code> 폴더에 파일을 넣은 뒤 드롭다운에서 선택하면 됩니다. 폴더에 없는 파일은 먼저 추가해야 선택할 수 있어요.
         <br />
         직책 카드 왼쪽 손잡이를 드래그하면 순서를 바꿀 수 있어요.
       </p>
@@ -161,15 +160,19 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
                     className="input"
                     required
                   />
-                  <input
-                    type="text"
-                    list={datalistId}
+                  <select
                     value={member.photoFile ?? ''}
                     onChange={e => updateMember(si, mi, { photoFile: e.target.value })}
-                    placeholder="사진 파일 선택 (선택)"
-                    maxLength={100}
                     className="input"
-                  />
+                  >
+                    <option value="">사진 없음</option>
+                    {photoFiles.map(f => (
+                      <option key={f} value={f}>{f}</option>
+                    ))}
+                    {member.photoFile && !photoFiles.includes(member.photoFile) && (
+                      <option value={member.photoFile}>{member.photoFile} (폴더에 없음)</option>
+                    )}
+                  </select>
                   <button
                     type="button"
                     onClick={() => removeMember(si, mi)}
@@ -201,11 +204,6 @@ export default function StaffEditor({ value, onChange, inviteId }: Props) {
       >
         <FiPlus /> 제작진 추가
       </button>
-      <datalist id={datalistId}>
-        {photoFiles.map(f => (
-          <option key={f} value={f} />
-        ))}
-      </datalist>
     </div>
   );
 }

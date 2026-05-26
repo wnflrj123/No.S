@@ -13,7 +13,6 @@ interface Props {
 
 export default function CastingEditor({ value, onChange, roles, inviteId }: Props) {
   const photoFiles = usePhotoFiles(inviteId, 'cast');
-  const datalistId = `cast-files-${inviteId}`;
 
   const update = (index: number, patch: Partial<CastingEntry>) => {
     onChange(value.map((c, i) => (i === index ? { ...c, ...patch } : c)));
@@ -29,7 +28,7 @@ export default function CastingEditor({ value, onChange, roles, inviteId }: Prop
   return (
     <div className="space-y-2">
       <p className="text-xs text-gray-500">
-        사진은 <code>/public/invites/{inviteId}/cast/</code> 폴더에 파일을 넣은 뒤 입력칸에서 선택하세요. (직접 입력도 가능)
+        사진은 <code>/public/invites/{inviteId}/cast/</code> 폴더에 파일을 넣은 뒤 드롭다운에서 선택하세요. 폴더에 없는 파일은 먼저 추가해야 선택할 수 있어요.
       </p>
       {roles.length === 0 && (
         <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
@@ -65,15 +64,19 @@ export default function CastingEditor({ value, onChange, roles, inviteId }: Prop
                 className="input"
                 required
               />
-              <input
-                type="text"
-                list={datalistId}
+              <select
                 value={c.photoFile ?? ''}
                 onChange={e => update(i, { photoFile: e.target.value || undefined })}
-                placeholder="사진 파일 선택"
-                maxLength={120}
                 className="input"
-              />
+              >
+                <option value="">사진 없음</option>
+                {photoFiles.map(f => (
+                  <option key={f} value={f}>{f}</option>
+                ))}
+                {c.photoFile && !photoFiles.includes(c.photoFile) && (
+                  <option value={c.photoFile}>{c.photoFile} (폴더에 없음)</option>
+                )}
+              </select>
               <button
                 type="button"
                 onClick={() => remove(i)}
@@ -94,11 +97,6 @@ export default function CastingEditor({ value, onChange, roles, inviteId }: Prop
       >
         <FiPlus /> 캐스팅 추가
       </button>
-      <datalist id={datalistId}>
-        {photoFiles.map(f => (
-          <option key={f} value={f} />
-        ))}
-      </datalist>
     </div>
   );
 }
