@@ -66,7 +66,7 @@ export default function CastingSection({ rounds, roles, inviteId }: Props) {
                 {/* 로마 숫자 — programbook act number 느낌 */}
                 <div
                   aria-hidden
-                  className="text-3xl sm:text-4xl font-bold text-[#0066B3]/25 tracking-[0.15em] leading-none"
+                  className="text-xl sm:text-2xl font-bold text-[#0066B3]/30 tracking-[0.15em] leading-none"
                 >
                   {romanize(idx + 1)}
                 </div>
@@ -86,7 +86,7 @@ export default function CastingSection({ rounds, roles, inviteId }: Props) {
                 </div>
 
                 {role.description && (
-                  <p className="mt-4 text-sm text-gray-600 leading-relaxed max-w-md mx-auto whitespace-pre-line break-keep italic">
+                  <p className="mt-4 text-sm text-gray-600 leading-relaxed max-w-md sm:max-w-xl mx-auto whitespace-pre-line break-keep italic">
                     {role.description}
                   </p>
                 )}
