@@ -93,7 +93,7 @@ export default function CastingSection({ rounds, roles, inviteId }: Props) {
               </div>
 
               {/* 배우 카드 그리드 */}
-              <div className="pb-6 pt-6">
+              <div className="pb-6 pt-6 px-3 sm:px-0">
                 <div className="flex flex-wrap justify-center gap-3">
                   {actors.map((a, i) => (
                     <figure key={i} className={ACTOR_CARD_W}>
