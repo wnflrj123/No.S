@@ -397,6 +397,39 @@ export async function deleteSupporter(supporterId: string): Promise<boolean> {
 }
 
 /**
+ * Admin이 신청자 후원 금액을 설정. amount = null 또는 0 이면 필드 제거.
+ */
+export async function setSponsorAmount(regId: string, amount: number | null): Promise<boolean> {
+  const ref = adminDb.collection(REGISTRATIONS_COLLECTION).doc(regId);
+  const snap = await ref.get();
+  if (!snap.exists) return false;
+  if (amount === null || amount <= 0) {
+    await ref.update({ sponsorAmount: FieldValue.delete() });
+  } else {
+    await ref.update({ sponsorAmount: Math.floor(amount) });
+  }
+  return true;
+}
+
+/**
+ * Admin이 현장 후원자 금액을 설정. amount = null 또는 0 이면 필드 제거.
+ */
+export async function setSupporterAmount(
+  supporterId: string,
+  amount: number | null,
+): Promise<boolean> {
+  const ref = adminDb.collection(SUPPORTERS_COLLECTION).doc(supporterId);
+  const snap = await ref.get();
+  if (!snap.exists) return false;
+  if (amount === null || amount <= 0) {
+    await ref.update({ amount: FieldValue.delete() });
+  } else {
+    await ref.update({ amount: Math.floor(amount) });
+  }
+  return true;
+}
+
+/**
  * 후원자 wall용 외부 supporter를 추가한다. (이름만 기록)
  */
 export async function addSupporter(inviteId: string, name: string): Promise<{ id: string }> {

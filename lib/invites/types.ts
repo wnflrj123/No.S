@@ -134,6 +134,8 @@ export interface InviteSupporter {
   inviteId: string;
   name: string;
   createdAt: Timestamp;
+  /** 관리자 입력 후원 금액(원). 선택. */
+  amount?: number;
 }
 
 export const OPTIONAL_FIELD_LABELS: Record<OptionalFieldKey, string> = {
@@ -199,6 +201,8 @@ export interface InviteRegistration {
   accessToken: string; // 32자
   isSponsor: boolean;
   sponsorCheckedAt?: Timestamp;
+  /** 관리자 입력 후원 금액(원). 선택. isSponsor=false면 의미 없음. */
+  sponsorAmount?: number;
   createdAt: Timestamp;
 
   /**

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { getAuth } from 'firebase/auth';
 import { FiTrash2 } from 'react-icons/fi';
@@ -22,10 +22,13 @@ export default function RegistrationsTable({
   onSponsorChanged,
 }: Props) {
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [pendingDelete, setPendingDelete] = useState<InviteRegistration | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const PAGE_SIZE = 20;
 
   const handleToggleSponsor = async (reg: InviteRegistration) => {
     const next = !reg.isSponsor;
@@ -68,6 +71,15 @@ export default function RegistrationsTable({
       r => r.name.toLowerCase().includes(q) || r.phone.includes(q),
     );
   }, [registrations, search]);
+
+  // 검색·데이터 변경 시 1페이지로
+  useEffect(() => {
+    setPage(1);
+  }, [search, registrations.length]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const clampedPage = Math.min(page, pageCount);
+  const pageItems = filtered.slice((clampedPage - 1) * PAGE_SIZE, clampedPage * PAGE_SIZE);
 
   const handleConfirmDelete = async () => {
     if (!pendingDelete) return;
@@ -125,13 +137,14 @@ export default function RegistrationsTable({
               <th className="px-3 py-2 font-medium">휴대폰</th>
               <th className="px-3 py-2 font-medium">회차+인원</th>
               <th className="px-3 py-2 font-medium">총 인원</th>
+              <th className="px-3 py-2 font-medium">응원배우</th>
               <th className="px-3 py-2 font-medium">후원</th>
               <th className="px-3 py-2 font-medium">신청일시</th>
               <th className="px-3 py-2 font-medium"></th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map(r => {
+            {pageItems.map(r => {
               const totalHc = r.roundSelections.reduce((s, x) => s + x.headcount, 0);
               const createdAt = r.createdAt.toDate();
               const status = r.status ?? 'active';
@@ -154,6 +167,14 @@ export default function RegistrationsTable({
                     {r.roundSelections.map(s => `${s.roundNo}회(${s.headcount})`).join(', ')}
                   </td>
                   <td className={superseded ? 'px-3 py-2' : 'px-3 py-2 text-gray-700'}>{totalHc}명</td>
+                  <td
+                    className={`px-3 py-2 max-w-[10rem] truncate ${
+                      superseded ? '' : 'text-gray-700'
+                    }`}
+                    title={r.supportingActors ?? ''}
+                  >
+                    {r.supportingActors?.trim() || '-'}
+                  </td>
                   <td className="px-3 py-2">
                     <button
                       type="button"
@@ -191,6 +212,31 @@ export default function RegistrationsTable({
       </div>
       {filtered.length === 0 && (
         <p className="text-center text-gray-500 py-8">검색 결과가 없습니다.</p>
+      )}
+
+      {pageCount > 1 && (
+        <div className="mt-3 flex items-center justify-center gap-3 text-sm">
+          <button
+            type="button"
+            disabled={clampedPage <= 1}
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            이전
+          </button>
+          <span className="text-gray-600">
+            {clampedPage} / {pageCount}
+            <span className="text-xs text-gray-400 ml-2">({filtered.length}건)</span>
+          </span>
+          <button
+            type="button"
+            disabled={clampedPage >= pageCount}
+            onClick={() => setPage(p => Math.min(pageCount, p + 1))}
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            다음
+          </button>
+        </div>
       )}
 
       {pendingDelete && (

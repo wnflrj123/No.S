@@ -23,6 +23,7 @@ interface SponsorRow {
   phone?: string;
   checkedAt: Date | null;
   source: 'registration' | 'wall';
+  amount?: number;
 }
 
 export default function SponsorsTab({
@@ -47,6 +48,7 @@ export default function SponsorsTab({
       phone: r.phone,
       checkedAt: r.sponsorCheckedAt ? r.sponsorCheckedAt.toDate() : null,
       source: 'registration' as const,
+      amount: r.sponsorAmount,
     }));
 
   const fromSupporters: SponsorRow[] = supporters.map(s => ({
@@ -55,6 +57,7 @@ export default function SponsorsTab({
     name: s.name,
     checkedAt: s.createdAt?.toDate?.() ?? null,
     source: 'wall' as const,
+    amount: s.amount,
   }));
 
   const all = [...fromRegs, ...fromSupporters].sort((a, b) => {
@@ -164,6 +167,13 @@ export default function SponsorsTab({
                   )}
                 </div>
               </div>
+              <AmountField
+                year={year}
+                round={round}
+                id={s.id}
+                source={s.source}
+                initial={s.amount}
+              />
             </li>
           ))}
         </ul>
@@ -217,6 +227,100 @@ export default function SponsorsTab({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * 후원 금액 입력 필드. 변경 후 blur 또는 Enter로 저장.
+ * - source 'registration' → PATCH registrations/{id} { sponsorAmount }
+ * - source 'wall'         → PATCH supporter/{id} { amount }
+ * 빈 값/0 은 null로 저장 (필드 제거).
+ */
+function AmountField({
+  year,
+  round,
+  id,
+  source,
+  initial,
+}: {
+  year: number;
+  round: number;
+  id: string;
+  source: 'registration' | 'wall';
+  initial: number | undefined;
+}) {
+  const initialStr = initial && initial > 0 ? String(initial) : '';
+  const [value, setValue] = useState(initialStr);
+  const [saved, setSaved] = useState(initialStr);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const formatted = (() => {
+    const n = Number(saved);
+    if (!saved || Number.isNaN(n) || n <= 0) return null;
+    return n.toLocaleString('ko-KR');
+  })();
+
+  const commit = async () => {
+    const trimmed = value.replace(/[^\d]/g, '');
+    if (trimmed === saved) return; // 변경 없음
+    setSaving(true);
+    setErr(null);
+    try {
+      const idToken = await getAuth().currentUser?.getIdToken();
+      if (!idToken) {
+        setErr('로그인 정보를 다시 확인해주세요.');
+        return;
+      }
+      const amount = trimmed ? Number(trimmed) : null;
+      const url =
+        source === 'registration'
+          ? `/api/invites/${year}/${round}/registrations/${id}`
+          : `/api/invites/${year}/${round}/supporter/${id}`;
+      const body =
+        source === 'registration' ? { sponsorAmount: amount } : { amount };
+      const res = await fetch(url, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setErr(data?.message ?? '저장 실패');
+        return;
+      }
+      setSaved(trimmed);
+      setValue(trimmed);
+    } catch {
+      setErr('네트워크 오류');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="mt-2 flex items-center gap-2 text-xs">
+      <span className="text-gray-500 shrink-0">금액</span>
+      <input
+        type="text"
+        inputMode="numeric"
+        value={value}
+        onChange={e => setValue(e.target.value.replace(/[^\d]/g, ''))}
+        onBlur={commit}
+        onKeyDown={e => {
+          if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
+        }}
+        placeholder="0"
+        className="flex-1 min-w-0 px-2 py-1 border border-gray-300 rounded bg-white text-right tabular-nums focus:outline-none focus:border-[#0066B3]"
+        disabled={saving}
+      />
+      <span className="text-gray-500 shrink-0">원</span>
+      {saving && <span className="text-gray-400">…</span>}
+      {!saving && formatted && (
+        <span className="text-gray-400 shrink-0">{formatted}원</span>
+      )}
+      {err && <span className="text-red-500 shrink-0">{err}</span>}
     </div>
   );
 }
