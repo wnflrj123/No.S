@@ -4,6 +4,7 @@ import { getInvite } from '@/lib/invites/server';
 import Hero from './_components/Hero';
 import DescriptionSection from './_components/DescriptionSection';
 import RoundsSection from './_components/RoundsSection';
+import CastingScheduleSection from './_components/CastingScheduleSection';
 import VenueSection from './_components/VenueSection';
 import CastingSection from './_components/CastingSection';
 import StaffSection from './_components/StaffSection';
@@ -62,6 +63,11 @@ export default async function InvitePage({ params }: PageParams) {
           roles={invite.roles ?? []}
           inviteId={invite.id}
           nowMs={nowMs}
+        />
+        <CastingScheduleSection
+          rounds={invite.rounds}
+          roles={invite.roles ?? []}
+          inviteId={invite.id}
         />
         <VenueSection venue={invite.venue} />
       </div>
