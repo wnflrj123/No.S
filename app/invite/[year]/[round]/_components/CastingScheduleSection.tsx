@@ -11,9 +11,12 @@ interface Props {
 
 /**
  * 회차별 캐스팅 스케줄 — Editorial Programbook Luxe.
- * - cream paper + 이중 hairline 프레임 + 4 코너 filigree ornament
+ * - cream paper + 단일 ring + 안전 영역에 위치한 4 코너 filigree
+ *   (이전 이중 프레임은 코너 ornament와 충돌해 모서리가 잘려 보이는 문제로 제거)
  * - 표 헤더는 색 블록 대신 ◆ 핀스트라이프와 small-caps 라벨로 정제
- * - 토=blue / 일=rose 전통 스케줄표 컨벤션은 유지하되 채도 낮춰 종이톤과 조화
+ * - 날짜·시각·요일 컬러는 팀명(블루/레드)을 따름 — 본 동호회는 같은 요일에
+ *   블루·레드가 섞이므로(예: 토 점심=블루, 토 저녁=레드) 요일 기반 컬러는
+ *   의미 충돌을 일으켜 팀 컬러로 매핑하는 편이 정확함
  * - 행 클릭 시 해당 회차 캐스팅 모달 (RoundsList와 동일한 CastingModal 재사용)
  */
 export default function CastingScheduleSection({ rounds, roles, inviteId }: Props) {
@@ -87,17 +90,13 @@ export default function CastingScheduleSection({ rounds, roles, inviteId }: Prop
         className="relative max-w-3xl mx-auto bg-[#FDFBF6] rounded-2xl shadow-[0_18px_60px_-25px_rgba(15,23,42,0.18)] ring-1 ring-[#E8DFCC]/70 animate-fade-in-up"
         style={{ animationDelay: '120ms', animationFillMode: 'both' }}
       >
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-3 rounded-[14px] ring-1 ring-[#0066B3]/15"
-        />
+        {/* 4 코너 filigree — 안전 영역에 배치 (충분한 inset + 카드 패딩) */}
+        <CornerFiligree className="absolute top-3.5 left-3.5" />
+        <CornerFiligree className="absolute top-3.5 right-3.5 -scale-x-100" />
+        <CornerFiligree className="absolute bottom-3.5 left-3.5 -scale-y-100" />
+        <CornerFiligree className="absolute bottom-3.5 right-3.5 -scale-100" />
 
-        <CornerFiligree className="absolute top-2.5 left-2.5" />
-        <CornerFiligree className="absolute top-2.5 right-2.5 -scale-x-100" />
-        <CornerFiligree className="absolute bottom-2.5 left-2.5 -scale-y-100" />
-        <CornerFiligree className="absolute bottom-2.5 right-2.5 -scale-100" />
-
-        <div className="relative px-2 sm:px-5 py-6 sm:py-8">
+        <div className="relative px-4 sm:px-7 pt-9 sm:pt-11 pb-8 sm:pb-10">
           <CastingScheduleTable
             rows={tableRows}
             displayRoleNames={displayRoleNames}
@@ -109,23 +108,24 @@ export default function CastingScheduleSection({ rounds, roles, inviteId }: Prop
   );
 }
 
+/**
+ * 정제된 코너 filigree — 메인 곡선 1줄 + 보조 곡선 1줄 + 꼭짓점 닷 1개.
+ * 이전 버전은 path가 너무 많아 작은 사이즈에서 뭉개졌음.
+ */
 function CornerFiligree({ className = '' }: { className?: string }) {
   return (
     <svg
       aria-hidden
-      viewBox="0 0 36 36"
-      className={`pointer-events-none w-7 h-7 sm:w-9 sm:h-9 text-[#0066B3]/35 ${className}`}
+      viewBox="0 0 32 32"
+      className={`pointer-events-none w-6 h-6 sm:w-8 sm:h-8 text-[#0066B3]/45 ${className}`}
       fill="none"
       stroke="currentColor"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="M2 18 C2 9 9 2 18 2" strokeWidth="1" />
-      <path d="M2 26 C7 26 11 22 11 17" strokeWidth="0.7" opacity="0.55" />
-      <path d="M8 8 L12 4" strokeWidth="0.7" opacity="0.5" />
-      <circle cx="2" cy="2" r="1.3" fill="currentColor" stroke="none" />
-      <circle cx="18" cy="2" r="0.9" fill="currentColor" stroke="none" opacity="0.55" />
-      <circle cx="2" cy="18" r="0.9" fill="currentColor" stroke="none" opacity="0.55" />
+      <path d="M3 17 C3 9 9 3 17 3" strokeWidth="0.9" />
+      <path d="M3 24 C8 24 13 19 13 14" strokeWidth="0.7" opacity="0.55" />
+      <circle cx="3" cy="3" r="1.2" fill="currentColor" stroke="none" />
     </svg>
   );
 }
