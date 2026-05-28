@@ -26,12 +26,20 @@ export default function AnswersDigest({ registrations, year, round }: Props) {
     [activeRegs],
   );
 
-  const actors = useMemo(
-    () =>
-      activeRegs
-        .filter(r => r.supportingActors?.trim())
-        .map(r => ({ name: r.name, msg: r.supportingActors! })),
-    [activeRegs],
+  // 응원하는 배우는 사람이 적은 답변 전체를 하나의 키로 묶어 빈도 집계.
+  // 공백/쉼표 등으로 분리하지 않음 — 표기 차이는 별개 키로 카운트.
+  const actorRanking = useMemo(() => {
+    const counter = new Map<string, number>();
+    for (const r of activeRegs) {
+      const text = (r.supportingActors ?? '').trim();
+      if (!text) continue;
+      counter.set(text, (counter.get(text) ?? 0) + 1);
+    }
+    return Array.from(counter.entries()).sort((a, b) => b[1] - a[1]);
+  }, [activeRegs]);
+  const actorTotal = useMemo(
+    () => actorRanking.reduce((s, [, c]) => s + c, 0),
+    [actorRanking],
   );
 
   const prefix = year && round ? `${year}-${round}_` : '';
@@ -53,15 +61,18 @@ export default function AnswersDigest({ registrations, year, round }: Props) {
         )}
       </DigestCard>
 
-      <DigestCard title={`응원하는 배우 (${actors.length})`} filename={`${prefix}응원하는배우`}>
-        {actors.length === 0 ? (
-          <p className="text-sm text-gray-500">아직 응원하는 배우가 없습니다.</p>
+      <DigestCard
+        title={`응원하는 배우 (${actorTotal})`}
+        filename={`${prefix}응원하는배우`}
+      >
+        {actorRanking.length === 0 ? (
+          <p className="text-sm text-gray-500">아직 언급된 배우가 없습니다.</p>
         ) : (
-          <ul className="space-y-3">
-            {actors.map((a, i) => (
-              <li key={i}>
-                <div className="text-xs text-gray-500">{a.name}</div>
-                <div className="text-sm text-gray-800 whitespace-pre-line">{a.msg}</div>
+          <ul className="space-y-1">
+            {actorRanking.map(([name, cnt]) => (
+              <li key={name} className="flex items-start justify-between gap-3 text-sm">
+                <span className="text-gray-800 whitespace-pre-line break-words">{name}</span>
+                <span className="text-[#0066B3] font-semibold shrink-0 tabular-nums">{cnt}</span>
               </li>
             ))}
           </ul>
