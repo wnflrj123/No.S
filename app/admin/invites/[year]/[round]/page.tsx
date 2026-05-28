@@ -223,7 +223,13 @@ export default function InviteAdminDetailPage() {
                   }
                 />
               )}
-              {tab === 'answers' && <AnswersDigest registrations={regs} />}
+              {tab === 'answers' && (
+                <AnswersDigest
+                  registrations={regs}
+                  year={Number(params.year)}
+                  round={Number(params.round)}
+                />
+              )}
               {tab === 'sponsors' && (
                 <SponsorsTab
                   registrations={regs}

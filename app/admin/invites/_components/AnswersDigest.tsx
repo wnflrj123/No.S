@@ -1,13 +1,15 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { InviteRegistration } from '@/lib/invites/types';
 
 interface Props {
   registrations: InviteRegistration[];
+  year?: number;
+  round?: number;
 }
 
-export default function AnswersDigest({ registrations }: Props) {
+export default function AnswersDigest({ registrations, year, round }: Props) {
   // 취소된(superseded) 신청은 항목별 답변 집계에서 제외
   const activeRegs = useMemo(
     () => registrations.filter(r => (r.status ?? 'active') === 'active'),
@@ -24,23 +26,19 @@ export default function AnswersDigest({ registrations }: Props) {
     [activeRegs],
   );
 
-  const actorRanking = useMemo(() => {
-    const counter = new Map<string, number>();
-    for (const r of activeRegs) {
-      const text = (r.supportingActors ?? '').trim();
-      if (!text) continue;
-      for (const raw of text.split(/[,/\s]+/)) {
-        const name = raw.trim();
-        if (!name) continue;
-        counter.set(name, (counter.get(name) ?? 0) + 1);
-      }
-    }
-    return Array.from(counter.entries()).sort((a, b) => b[1] - a[1]);
-  }, [activeRegs]);
+  const actors = useMemo(
+    () =>
+      activeRegs
+        .filter(r => r.supportingActors?.trim())
+        .map(r => ({ name: r.name, msg: r.supportingActors! })),
+    [activeRegs],
+  );
+
+  const prefix = year && round ? `${year}-${round}_` : '';
 
   return (
     <div className="grid md:grid-cols-2 gap-4">
-      <DigestCard title={`응원 메시지 (${cheers.length})`}>
+      <DigestCard title={`응원 메시지 (${cheers.length})`} filename={`${prefix}응원메시지`}>
         {cheers.length === 0 ? (
           <p className="text-sm text-gray-500">아직 메시지가 없습니다.</p>
         ) : (
@@ -55,25 +53,26 @@ export default function AnswersDigest({ registrations }: Props) {
         )}
       </DigestCard>
 
-      <DigestCard title={`응원하는 배우 (언급 빈도)`}>
-        {actorRanking.length === 0 ? (
-          <p className="text-sm text-gray-500">아직 언급된 배우가 없습니다.</p>
+      <DigestCard title={`응원하는 배우 (${actors.length})`} filename={`${prefix}응원하는배우`}>
+        {actors.length === 0 ? (
+          <p className="text-sm text-gray-500">아직 응원하는 배우가 없습니다.</p>
         ) : (
-          <ul className="space-y-1">
-            {actorRanking.map(([name, cnt]) => (
-              <li key={name} className="flex items-center justify-between text-sm">
-                <span className="text-gray-800">{name}</span>
-                <span className="text-[#0066B3] font-semibold">{cnt}</span>
+          <ul className="space-y-3">
+            {actors.map((a, i) => (
+              <li key={i}>
+                <div className="text-xs text-gray-500">{a.name}</div>
+                <div className="text-sm text-gray-800 whitespace-pre-line">{a.msg}</div>
               </li>
             ))}
           </ul>
         )}
-        <p className="text-xs text-gray-400 mt-3">
-          쉼표·공백·슬래시로 분리해 단순 빈도 카운트. 자유 텍스트라 표기 차이는 별개로 집계됩니다.
-        </p>
       </DigestCard>
 
-      <DigestCard title={`좌석 요청사항 (${seats.length})`} className="md:col-span-2">
+      <DigestCard
+        title={`좌석 요청사항 (${seats.length})`}
+        filename={`${prefix}좌석요청사항`}
+        className="md:col-span-2"
+      >
         {seats.length === 0 ? (
           <p className="text-sm text-gray-500">없습니다.</p>
         ) : (
@@ -95,14 +94,69 @@ function DigestCard({
   title,
   children,
   className = '',
+  filename,
 }: {
   title: string;
   children: React.ReactNode;
   className?: string;
+  filename?: string;
 }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const handleExport = async () => {
+    if (!cardRef.current || busy) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      const { toPng } = await import('html-to-image');
+      const dataUrl = await toPng(cardRef.current, {
+        backgroundColor: '#ffffff',
+        pixelRatio: 2,
+        cacheBust: true,
+        filter: (node) => {
+          if (node instanceof HTMLElement && node.dataset.exportHide === 'true') return false;
+          return true;
+        },
+      });
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `${filename ?? title}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : '이미지 저장에 실패했습니다.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
-    <div className={`p-4 bg-white border border-gray-200 rounded-xl ${className}`}>
-      <h3 className="text-sm font-bold mb-3 text-gray-900">{title}</h3>
+    <div ref={cardRef} className={`p-4 bg-white border border-gray-200 rounded-xl ${className}`}>
+      <div className="flex items-center justify-between mb-3 gap-2">
+        <h3 className="text-sm font-bold text-gray-900">{title}</h3>
+        {filename && (
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={busy}
+            data-export-hide="true"
+            className="text-[11px] text-gray-500 hover:text-[#0066B3] underline shrink-0 disabled:opacity-50"
+          >
+            {busy ? '저장중…' : '🖼️ 이미지 저장'}
+          </button>
+        )}
+      </div>
+      {err && (
+        <div
+          data-export-hide="true"
+          className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700"
+        >
+          {err}
+        </div>
+      )}
       {children}
     </div>
   );

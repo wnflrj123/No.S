@@ -24,6 +24,7 @@ interface SponsorRow {
   checkedAt: Date | null;
   source: 'registration' | 'wall';
   amount?: number;
+  cheerMessage?: string;
 }
 
 export default function SponsorsTab({
@@ -49,6 +50,7 @@ export default function SponsorsTab({
       checkedAt: r.sponsorCheckedAt ? r.sponsorCheckedAt.toDate() : null,
       source: 'registration' as const,
       amount: r.sponsorAmount,
+      cheerMessage: r.cheerMessage,
     }));
 
   const fromSupporters: SponsorRow[] = supporters.map(s => ({
@@ -141,6 +143,11 @@ export default function SponsorsTab({
                   {s.checkedAt && (
                     <div className="text-xs text-gray-500 mt-1">
                       {s.source === 'wall' ? '응원 시각' : '후원 체크'}: {format(s.checkedAt, 'M월 d일 HH:mm')}
+                    </div>
+                  )}
+                  {s.cheerMessage?.trim() && (
+                    <div className="mt-2 p-2 bg-white/70 border border-white rounded-md text-xs text-gray-700 whitespace-pre-line leading-relaxed">
+                      💬 {s.cheerMessage}
                     </div>
                   )}
                 </div>
@@ -255,6 +262,7 @@ function AmountField({
   const [saved, setSaved] = useState(initialStr);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [editing, setEditing] = useState(!initialStr);
 
   const formatted = (() => {
     const n = Number(saved);
@@ -292,12 +300,32 @@ function AmountField({
       }
       setSaved(trimmed);
       setValue(trimmed);
+      if (trimmed) setEditing(false);
     } catch {
       setErr('네트워크 오류');
     } finally {
       setSaving(false);
     }
   };
+
+  if (!editing && formatted) {
+    return (
+      <div className="mt-2 flex items-center gap-2 text-xs">
+        <span className="text-gray-500 shrink-0">금액</span>
+        <span className="flex-1 font-semibold text-gray-800 tabular-nums">
+          {formatted}원
+        </span>
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="text-[11px] text-gray-500 hover:text-[#0066B3] underline shrink-0"
+        >
+          수정
+        </button>
+        {err && <span className="text-red-500 shrink-0">{err}</span>}
+      </div>
+    );
+  }
 
   return (
     <div className="mt-2 flex items-center gap-2 text-xs">
@@ -314,12 +342,10 @@ function AmountField({
         placeholder="0"
         className="flex-1 min-w-0 px-2 py-1 border border-gray-300 rounded bg-white text-right tabular-nums focus:outline-none focus:border-[#0066B3]"
         disabled={saving}
+        autoFocus={!!saved}
       />
       <span className="text-gray-500 shrink-0">원</span>
       {saving && <span className="text-gray-400">…</span>}
-      {!saving && formatted && (
-        <span className="text-gray-400 shrink-0">{formatted}원</span>
-      )}
       {err && <span className="text-red-500 shrink-0">{err}</span>}
     </div>
   );
