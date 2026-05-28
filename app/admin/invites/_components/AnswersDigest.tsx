@@ -64,7 +64,7 @@ export default function AnswersDigest({ registrations, year, round }: Props) {
       </DigestCard>
 
       <DigestCard
-        title={`응원하는 배우 · 티켓파워 (총 ${actorTotal}명)`}
+        title={`응원하는 배우 (${actorTotal})`}
         filename={`${prefix}응원하는배우`}
       >
         {actorRanking.length === 0 ? (
@@ -74,7 +74,7 @@ export default function AnswersDigest({ registrations, year, round }: Props) {
             {actorRanking.map(([name, cnt]) => (
               <li key={name} className="flex items-start justify-between gap-3 text-sm">
                 <span className="text-gray-800 whitespace-pre-line break-words">{name}</span>
-                <span className="text-[#0066B3] font-semibold shrink-0 tabular-nums">{cnt}명</span>
+                <span className="text-[#0066B3] font-semibold shrink-0 tabular-nums">{cnt}</span>
               </li>
             ))}
           </ul>
