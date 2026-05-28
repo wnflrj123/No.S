@@ -26,14 +26,16 @@ export default function AnswersDigest({ registrations, year, round }: Props) {
     [activeRegs],
   );
 
-  // 응원하는 배우는 사람이 적은 답변 전체를 하나의 키로 묶어 빈도 집계.
+  // 응원하는 배우는 사람이 적은 답변 전체를 하나의 키로 묶어 티켓파워(총 신청 인원수) 합산.
   // 공백/쉼표 등으로 분리하지 않음 — 표기 차이는 별개 키로 카운트.
   const actorRanking = useMemo(() => {
     const counter = new Map<string, number>();
     for (const r of activeRegs) {
       const text = (r.supportingActors ?? '').trim();
       if (!text) continue;
-      counter.set(text, (counter.get(text) ?? 0) + 1);
+      const headcount = (r.roundSelections ?? []).reduce((s, sel) => s + (sel.headcount ?? 0), 0);
+      if (headcount <= 0) continue;
+      counter.set(text, (counter.get(text) ?? 0) + headcount);
     }
     return Array.from(counter.entries()).sort((a, b) => b[1] - a[1]);
   }, [activeRegs]);
@@ -62,7 +64,7 @@ export default function AnswersDigest({ registrations, year, round }: Props) {
       </DigestCard>
 
       <DigestCard
-        title={`응원하는 배우 (${actorTotal})`}
+        title={`응원하는 배우 · 티켓파워 (총 ${actorTotal}명)`}
         filename={`${prefix}응원하는배우`}
       >
         {actorRanking.length === 0 ? (
@@ -72,7 +74,7 @@ export default function AnswersDigest({ registrations, year, round }: Props) {
             {actorRanking.map(([name, cnt]) => (
               <li key={name} className="flex items-start justify-between gap-3 text-sm">
                 <span className="text-gray-800 whitespace-pre-line break-words">{name}</span>
-                <span className="text-[#0066B3] font-semibold shrink-0 tabular-nums">{cnt}</span>
+                <span className="text-[#0066B3] font-semibold shrink-0 tabular-nums">{cnt}명</span>
               </li>
             ))}
           </ul>
