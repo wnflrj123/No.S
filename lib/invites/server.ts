@@ -559,6 +559,23 @@ export async function verifyAdminToken(authHeader: string | null): Promise<strin
 }
 
 /**
+ * Firebase ID 토큰을 검증한다 (역할 무관, 로그인 여부만 확인).
+ * 일반 회원에게만 공개하는 API에서 사용.
+ * 반환: 인증된 사용자의 uid (실패 시 null).
+ */
+export async function verifyUserToken(authHeader: string | null): Promise<string | null> {
+  if (!authHeader?.startsWith('Bearer ')) return null;
+  const token = authHeader.slice('Bearer '.length).trim();
+  if (!token) return null;
+  try {
+    const decoded = await adminAuth.verifyIdToken(token);
+    return decoded.uid;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * 토큰의 registration을 후원자로 표시한다. 동시 호출에도 카운트가 1번만 증가하도록
  * runTransaction으로 read→check→write를 원자화한다.
  * 반환: 처리 성공 여부 (토큰이 없으면 false).

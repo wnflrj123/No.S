@@ -164,7 +164,14 @@ export default function InviteAdminDetailPage() {
             <div className="text-xs text-gray-500">{params.year}년 {params.round}회</div>
             <h1 className="text-2xl font-bold text-gray-900">{invite?.title ?? '신청자 관리'}</h1>
           </div>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-2 text-sm flex-wrap justify-end">
+            <Link
+              href={`/cheers/${params.year}/${params.round}`}
+              target="_blank"
+              className="px-3 py-1.5 bg-white border border-[#0066B3] text-[#0066B3] rounded-lg font-medium hover:bg-[#0066B3]/5"
+            >
+              💌 배우 응원 페이지
+            </Link>
             <Link
               href={`/invite/${params.year}/${params.round}/wall`}
               target="_blank"
