@@ -206,7 +206,7 @@ export default function CheersForActors({
             <span aria-hidden className="h-6 w-px bg-gray-200" />
             <Stat label="신청 좌석" value={totalSeats} unit="석" />
             <span aria-hidden className="h-6 w-px bg-gray-200" />
-            <Stat label="응원 메시지" value={totalMessages} unit="개" />
+            <Stat label="응원" value={totalMessages} unit="개" />
           </div>
         )}
 
