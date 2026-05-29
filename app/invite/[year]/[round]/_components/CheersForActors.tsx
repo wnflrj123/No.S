@@ -582,11 +582,17 @@ function CheerCard({
         <span className="font-medium text-gray-800">{item.name}</span>
         {item.isSponsor && (
           <span
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-[#FFE082] to-[#FFB74D] text-[#7B3F00] text-[10px] font-bold ring-1 ring-[#F59E0B]/30"
+            className="inline-flex items-center gap-1.5 px-2 py-[3px] rounded-md bg-amber-100/70 text-amber-800 text-[10px] font-semibold tracking-[0.08em]"
             title="이번 공연 후원자"
           >
-            <span aria-hidden>💐</span>
-            <span>후원자</span>
+            <svg
+              viewBox="0 0 16 16"
+              className="w-2.5 h-2.5 fill-current"
+              aria-hidden
+            >
+              <path d="M8 1l1.9 4.6L14.7 6 11 9.2l1.1 4.8L8 11.6 3.9 14l1.1-4.8L1.3 6l4.8-.4z" />
+            </svg>
+            후원
           </span>
         )}
       </div>
