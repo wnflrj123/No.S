@@ -22,6 +22,8 @@ interface VipEntry {
   seatRequests?: string;
   /** 관리자가 입력한 후원 메모(꽃다발·케이크 등 현물 후원 내역). */
   memo?: string;
+  /** 관리자가 입력한 후원 금액(원). 0 또는 미입력 시 미노출. */
+  amount?: number;
   createdAtMs: number;
 }
 
@@ -63,6 +65,7 @@ export default function VipAllocationTab({ invite, registrations, supporters = [
           companions: r.companions?.trim() || undefined,
           seatRequests: r.seatRequests?.trim() || undefined,
           memo: r.sponsorMemo?.trim() || undefined,
+          amount: r.sponsorAmount && r.sponsorAmount > 0 ? r.sponsorAmount : undefined,
           createdAtMs: r.createdAt?.toMillis?.() ?? 0,
         });
         byRound.set(sel.roundNo, list);
@@ -120,8 +123,9 @@ export default function VipAllocationTab({ invite, registrations, supporters = [
         for (const e of b.entries) {
           let row = `  - ${e.name} (${e.headcount}석)`;
           if (e.companions) row += ` · 동반: ${e.companions}`;
-          if (e.seatRequests) row += ` · 요청: ${e.seatRequests}`;
+          if (e.amount) row += ` · 금액: ${e.amount.toLocaleString('ko-KR')}원`;
           if (e.memo) row += ` · 메모: ${e.memo}`;
+          if (e.seatRequests) row += ` · 요청: ${e.seatRequests}`;
           lines.push(row);
         }
       }
@@ -293,6 +297,12 @@ function RoundBlock({ bucket, expanded }: { bucket: RoundBucket; expanded: boole
                     <div className="mt-1 text-xs text-gray-600">
                       <span className="text-gray-400 mr-1">동반</span>
                       {e.companions}
+                    </div>
+                  )}
+                  {e.amount && (
+                    <div className="mt-1 text-xs text-gray-500">
+                      <span className="text-gray-400 mr-1">금액</span>
+                      <span className="tabular-nums">{e.amount.toLocaleString('ko-KR')}원</span>
                     </div>
                   )}
                   {e.memo && (
