@@ -295,23 +295,16 @@ function RoundBlock({ bucket, expanded }: { bucket: RoundBucket; expanded: boole
                       {e.companions}
                     </div>
                   )}
-                  {(e.seatRequests || e.memo) && (
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {e.seatRequests && (
-                        <span className="text-xs px-2 py-1 rounded-md bg-amber-50 text-amber-800 ring-1 ring-amber-200/60">
-                          <span className="font-semibold mr-1">좌석 요청</span>
-                          {e.seatRequests}
-                        </span>
-                      )}
-                      {e.memo && (
-                        <span
-                          className="text-xs px-2 py-1 rounded-md bg-rose-50 text-rose-800 ring-1 ring-rose-200/60"
-                          title="후원 메모(현물·서비스)"
-                        >
-                          <span className="font-semibold mr-1">💝 후원</span>
-                          {e.memo}
-                        </span>
-                      )}
+                  {e.memo && (
+                    <div className="mt-1 text-xs text-gray-600">
+                      <span className="text-gray-400 mr-1">메모</span>
+                      {e.memo}
+                    </div>
+                  )}
+                  {e.seatRequests && (
+                    <div className="mt-1.5 inline-block text-xs px-2 py-1 rounded-md bg-amber-50 text-amber-800 ring-1 ring-amber-200/60">
+                      <span className="font-semibold mr-1">좌석 요청</span>
+                      {e.seatRequests}
                     </div>
                   )}
                 </div>
