@@ -20,6 +20,8 @@ interface VipEntry {
   headcount: number;
   companions?: string;
   seatRequests?: string;
+  /** 관리자가 입력한 후원 메모(꽃다발·케이크 등 현물 후원 내역). */
+  memo?: string;
   createdAtMs: number;
 }
 
@@ -60,6 +62,7 @@ export default function VipAllocationTab({ invite, registrations, supporters = [
           headcount: sel.headcount,
           companions: r.companions?.trim() || undefined,
           seatRequests: r.seatRequests?.trim() || undefined,
+          memo: r.sponsorMemo?.trim() || undefined,
           createdAtMs: r.createdAt?.toMillis?.() ?? 0,
         });
         byRound.set(sel.roundNo, list);
@@ -118,6 +121,7 @@ export default function VipAllocationTab({ invite, registrations, supporters = [
           let row = `  - ${e.name} (${e.headcount}석)`;
           if (e.companions) row += ` · 동반: ${e.companions}`;
           if (e.seatRequests) row += ` · 요청: ${e.seatRequests}`;
+          if (e.memo) row += ` · 메모: ${e.memo}`;
           lines.push(row);
         }
       }
@@ -291,10 +295,23 @@ function RoundBlock({ bucket, expanded }: { bucket: RoundBucket; expanded: boole
                       {e.companions}
                     </div>
                   )}
-                  {e.seatRequests && (
-                    <div className="mt-1 text-xs px-2 py-1 inline-block rounded-md bg-amber-50 text-amber-800 ring-1 ring-amber-200/60">
-                      <span className="font-semibold mr-1">좌석 요청</span>
-                      {e.seatRequests}
+                  {(e.seatRequests || e.memo) && (
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {e.seatRequests && (
+                        <span className="text-xs px-2 py-1 rounded-md bg-amber-50 text-amber-800 ring-1 ring-amber-200/60">
+                          <span className="font-semibold mr-1">좌석 요청</span>
+                          {e.seatRequests}
+                        </span>
+                      )}
+                      {e.memo && (
+                        <span
+                          className="text-xs px-2 py-1 rounded-md bg-rose-50 text-rose-800 ring-1 ring-rose-200/60"
+                          title="후원 메모(현물·서비스)"
+                        >
+                          <span className="font-semibold mr-1">💝 후원</span>
+                          {e.memo}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
