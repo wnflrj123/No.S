@@ -17,8 +17,9 @@ import BulkSmsPanel from '../../_components/BulkSmsPanel';
 // 기본 탭이 아닌 컴포넌트는 코드 스플리팅 — 초기 번들 축소.
 const AnswersDigest = dynamic(() => import('../../_components/AnswersDigest'), { ssr: false });
 const SponsorsTab = dynamic(() => import('../../_components/SponsorsTab'), { ssr: false });
+const VipAllocationTab = dynamic(() => import('../../_components/VipAllocationTab'), { ssr: false });
 
-type Tab = 'all' | 'answers' | 'sponsors';
+type Tab = 'all' | 'answers' | 'sponsors' | 'vip';
 
 /**
  * dashboard API는 firebase-admin Timestamp를 JSON으로 직렬화하면서
@@ -216,6 +217,9 @@ export default function InviteAdminDetailPage() {
               <TabButton active={tab === 'sponsors'} onClick={() => setTab('sponsors')}>
                 후원자 ({regs.filter(r => r.isSponsor && (r.status ?? 'active') === 'active').length + supporters.length})
               </TabButton>
+              <TabButton active={tab === 'vip'} onClick={() => setTab('vip')}>
+                VIP 배치
+              </TabButton>
             </nav>
 
             <section className="mt-6">
@@ -245,6 +249,13 @@ export default function InviteAdminDetailPage() {
                   round={Number(params.round)}
                   onSupporterAdded={s => setSupporters(prev => [s, ...prev])}
                   onSupporterDeleted={id => setSupporters(prev => prev.filter(x => x.id !== id))}
+                />
+              )}
+              {tab === 'vip' && (
+                <VipAllocationTab
+                  invite={invite}
+                  registrations={regs}
+                  supporters={supporters}
                 />
               )}
             </section>
