@@ -40,6 +40,8 @@ interface RoundBucket {
 export default function VipAllocationTab({ invite, registrations, supporters = [] }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
+  // 'all' → 회차 전체 펼침. 숫자 → 해당 회차만 큰 상세 뷰.
+  const [selectedRoundNo, setSelectedRoundNo] = useState<number | 'all'>('all');
 
   const buckets = useMemo<RoundBucket[]>(() => {
     const activeSponsors = registrations.filter(
@@ -88,12 +90,25 @@ export default function VipAllocationTab({ invite, registrations, supporters = [
     [registrations],
   );
 
-  const handleCopyAll = async () => {
+  const visibleBuckets =
+    selectedRoundNo === 'all'
+      ? buckets
+      : buckets.filter(b => b.roundNo === selectedRoundNo);
+
+  /**
+   * 현재 표시 중인(전체 또는 선택 회차) 명단을 텍스트 라인으로 빌드.
+   * 'all'일 때만 헤더에 전체 합계 + 현장 후원자 메모를 포함.
+   */
+  const buildCopyText = (forAll: boolean) => {
     const lines: string[] = [];
-    lines.push(`[${invite.year}년 ${invite.round}회 ${invite.title}] VIP 좌석 배치`);
-    lines.push(`총 VIP ${totalVipSeats}석 / ${totalVipPeople}건 신청`);
+    if (forAll) {
+      lines.push(`[${invite.year}년 ${invite.round}회 ${invite.title}] VIP 좌석 배치`);
+      lines.push(`총 VIP ${totalVipSeats}석 / ${totalVipPeople}건 신청`);
+    } else {
+      lines.push(`[${invite.year}년 ${invite.round}회 ${invite.title}] VIP 좌석 배치 — 회차별`);
+    }
     lines.push('');
-    for (const b of buckets) {
+    for (const b of visibleBuckets) {
       const date = formatInTimeZone(b.startAtMs, KST, 'M월 d일(EEE) HH:mm', { locale: ko });
       lines.push(`■ ${b.roundNo}회차 · ${b.teamName} · ${date} — VIP ${b.totalSeats}석`);
       if (b.entries.length === 0) {
@@ -108,11 +123,15 @@ export default function VipAllocationTab({ invite, registrations, supporters = [
       }
       lines.push('');
     }
-    if (supporters.length > 0) {
+    if (forAll && supporters.length > 0) {
       lines.push(`* 현장 후원자 ${supporters.length}명은 회차 정보 없음 (당일 도착 순 배치)`);
     }
+    return lines.join('\n');
+  };
+
+  const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(lines.join('\n'));
+      await navigator.clipboard.writeText(buildCopyText(selectedRoundNo === 'all'));
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
@@ -122,10 +141,10 @@ export default function VipAllocationTab({ invite, registrations, supporters = [
 
   return (
     <div ref={containerRef}>
-      <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
+      {/* 상단 요약 + 복사 */}
+      <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
         <div className="text-xs text-gray-500 leading-relaxed">
-          신청자 후원자분들과 동반 인원을 회차별로 정리한 명단이에요.
-          <br />당일 VIP석 배치 참고용으로 사용해주세요. 신청 인원이 많은 그룹 순으로 정렬됩니다.
+          후원자 + 동반인 명단입니다. 인원 많은 그룹 우선 정렬.
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <div className="px-3 py-1.5 rounded-lg bg-[#0066B3]/5 text-[#0066B3] text-xs font-bold tabular-nums">
@@ -133,27 +152,59 @@ export default function VipAllocationTab({ invite, registrations, supporters = [
           </div>
           <button
             type="button"
-            onClick={handleCopyAll}
+            onClick={handleCopy}
             className="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-xs font-medium hover:bg-gray-800"
+            title={selectedRoundNo === 'all' ? '전체 명단 복사' : '선택한 회차만 복사'}
           >
-            {copied ? '복사됨 ✓' : '전체 복사'}
+            {copied
+              ? '복사됨 ✓'
+              : selectedRoundNo === 'all'
+                ? '전체 복사'
+                : `${selectedRoundNo}회차 복사`}
           </button>
         </div>
       </div>
 
+      {/* 회차 선택 pills */}
+      {buckets.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-1.5">
+          <RoundPill
+            active={selectedRoundNo === 'all'}
+            onClick={() => setSelectedRoundNo('all')}
+          >
+            <span>전체</span>
+            <span className="opacity-70 tabular-nums">{totalVipSeats}석</span>
+          </RoundPill>
+          {buckets.map(b => (
+            <RoundPill
+              key={b.roundNo}
+              active={selectedRoundNo === b.roundNo}
+              onClick={() => setSelectedRoundNo(b.roundNo)}
+            >
+              <span className="font-bold">{b.roundNo}회차</span>
+              <span className="opacity-70">{b.teamName}</span>
+              <span className="ml-0.5 px-1.5 py-0.5 rounded text-[10px] bg-white/30 tabular-nums">
+                {b.totalSeats}석
+              </span>
+            </RoundPill>
+          ))}
+        </div>
+      )}
+
+      {/* 본문 */}
       {totalVipPeople === 0 ? (
         <p className="text-center text-gray-500 py-16 bg-gray-50 rounded-xl">
           아직 후원 체크된 신청자가 없습니다.
         </p>
       ) : (
         <div className="space-y-4">
-          {buckets.map(b => (
-            <RoundBlock key={b.roundNo} bucket={b} />
+          {visibleBuckets.map(b => (
+            <RoundBlock key={b.roundNo} bucket={b} expanded={selectedRoundNo !== 'all'} />
           ))}
         </div>
       )}
 
-      {supporters.length > 0 && (
+      {supporters.length > 0 && selectedRoundNo === 'all' && (
         <p className="mt-4 px-4 py-3 rounded-xl bg-pink-50 border border-pink-200 text-xs text-pink-800 leading-relaxed">
           💡 현장 후원자 <strong>{supporters.length}명</strong>은 회차 정보가 없어요.
           당일 도착 순으로 배치해주세요.
@@ -163,21 +214,54 @@ export default function VipAllocationTab({ invite, registrations, supporters = [
   );
 }
 
-function RoundBlock({ bucket }: { bucket: RoundBucket }) {
+function RoundPill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors ${
+        active
+          ? 'bg-[#0066B3] text-white shadow-sm'
+          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function RoundBlock({ bucket, expanded }: { bucket: RoundBucket; expanded: boolean }) {
   const date = formatInTimeZone(bucket.startAtMs, KST, 'M월 d일(EEE) HH:mm', { locale: ko });
 
   return (
     <section className="rounded-xl border border-gray-200 overflow-hidden bg-white">
-      <header className="px-4 py-3 bg-gradient-to-r from-[#0066B3]/8 to-transparent border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
+      <header
+        className={`${
+          expanded ? 'px-5 py-4' : 'px-4 py-3'
+        } bg-gradient-to-r from-[#0066B3]/8 to-transparent border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap`}
+      >
         <div className="min-w-0">
-          <div className="text-sm font-bold text-gray-900">
+          <div className={`font-bold text-gray-900 ${expanded ? 'text-base' : 'text-sm'}`}>
             {bucket.roundNo}회차 · {bucket.teamName}
           </div>
           <div className="text-xs text-gray-500 mt-0.5">{date}</div>
         </div>
         <div className="text-right shrink-0">
           <div className="text-[10px] text-gray-500 uppercase tracking-wider">VIP 좌석</div>
-          <div className="text-lg font-bold text-[#0066B3] tabular-nums leading-tight">
+          <div
+            className={`font-bold text-[#0066B3] tabular-nums leading-tight ${
+              expanded ? 'text-2xl' : 'text-lg'
+            }`}
+          >
             {bucket.totalSeats}
             <span className="text-xs font-medium text-gray-500 ml-0.5">석</span>
           </div>
@@ -191,7 +275,10 @@ function RoundBlock({ bucket }: { bucket: RoundBucket }) {
       ) : (
         <ul className="divide-y divide-gray-100">
           {bucket.entries.map(e => (
-            <li key={`${e.registrationId}-${bucket.roundNo}`} className="px-4 py-3">
+            <li
+              key={`${e.registrationId}-${bucket.roundNo}`}
+              className={expanded ? 'px-5 py-3.5' : 'px-4 py-3'}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
