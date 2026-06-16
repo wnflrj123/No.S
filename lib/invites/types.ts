@@ -136,6 +136,11 @@ export interface InviteSupporter {
   createdAt: Timestamp;
   /** 관리자 입력 후원 금액(원). 선택. */
   amount?: number;
+  /**
+   * 관리자 메모. 금액이 아닌 형태(꽃다발/케이크/음료 등)의 후원 내용을 기록.
+   * 선택. 빈 문자열 저장 시 필드 제거.
+   */
+  memo?: string;
 }
 
 export const OPTIONAL_FIELD_LABELS: Record<OptionalFieldKey, string> = {
@@ -203,6 +208,11 @@ export interface InviteRegistration {
   sponsorCheckedAt?: Timestamp;
   /** 관리자 입력 후원 금액(원). 선택. isSponsor=false면 의미 없음. */
   sponsorAmount?: number;
+  /**
+   * 관리자 메모. 금액 외 형태(물품·서비스 등)의 후원 내용을 기록.
+   * 선택. isSponsor=false면 의미 없음. 빈 문자열 저장 시 필드 제거.
+   */
+  sponsorMemo?: string;
   createdAt: Timestamp;
 
   /**

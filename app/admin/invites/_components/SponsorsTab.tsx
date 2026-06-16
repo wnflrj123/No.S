@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { getAuth } from 'firebase/auth';
 import { FiPlus, FiTrash2 } from 'react-icons/fi';
 import type { InviteRegistration, InviteSupporter } from '@/lib/invites/types';
-import { MAX_NAME_LENGTH } from '@/lib/invites/constants';
+import { MAX_NAME_LENGTH, MAX_SPONSOR_MEMO_LENGTH } from '@/lib/invites/constants';
 
 interface Props {
   registrations: InviteRegistration[];
@@ -24,6 +24,7 @@ interface SponsorRow {
   checkedAt: Date | null;
   source: 'registration' | 'wall';
   amount?: number;
+  memo?: string;
   cheerMessage?: string;
 }
 
@@ -50,6 +51,7 @@ export default function SponsorsTab({
       checkedAt: r.sponsorCheckedAt ? r.sponsorCheckedAt.toDate() : null,
       source: 'registration' as const,
       amount: r.sponsorAmount,
+      memo: r.sponsorMemo,
       cheerMessage: r.cheerMessage,
     }));
 
@@ -60,6 +62,7 @@ export default function SponsorsTab({
     checkedAt: s.createdAt?.toDate?.() ?? null,
     source: 'wall' as const,
     amount: s.amount,
+    memo: s.memo,
   }));
 
   const all = [...fromRegs, ...fromSupporters].sort((a, b) => {
@@ -180,6 +183,13 @@ export default function SponsorsTab({
                 id={s.id}
                 source={s.source}
                 initial={s.amount}
+              />
+              <MemoField
+                year={year}
+                round={round}
+                id={s.id}
+                source={s.source}
+                initial={s.memo}
               />
             </li>
           ))}
@@ -347,6 +357,125 @@ function AmountField({
       <span className="text-gray-500 shrink-0">원</span>
       {saving && <span className="text-gray-400">…</span>}
       {err && <span className="text-red-500 shrink-0">{err}</span>}
+    </div>
+  );
+}
+
+/**
+ * 후원 메모 입력 필드. 금액이 아닌 형태(꽃다발·케이크·음료 등) 후원 내역을 기록.
+ * - source 'registration' → PATCH registrations/{id} { sponsorMemo }
+ * - source 'wall'         → PATCH supporter/{id} { memo }
+ * 빈 값은 null로 저장 (필드 제거).
+ */
+function MemoField({
+  year,
+  round,
+  id,
+  source,
+  initial,
+}: {
+  year: number;
+  round: number;
+  id: string;
+  source: 'registration' | 'wall';
+  initial: string | undefined;
+}) {
+  const initialStr = initial ?? '';
+  const [value, setValue] = useState(initialStr);
+  const [saved, setSaved] = useState(initialStr);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [editing, setEditing] = useState(!initialStr);
+
+  const commit = async () => {
+    const trimmed = value.trim();
+    if (trimmed === saved.trim()) {
+      // 변경 없으면 종료. 빈 입력이고 기존도 비었으면 그대로 편집 모드 유지.
+      if (trimmed) setEditing(false);
+      return;
+    }
+    if (trimmed.length > MAX_SPONSOR_MEMO_LENGTH) {
+      setErr(`${MAX_SPONSOR_MEMO_LENGTH}자 이내`);
+      return;
+    }
+    setSaving(true);
+    setErr(null);
+    try {
+      const idToken = await getAuth().currentUser?.getIdToken();
+      if (!idToken) {
+        setErr('로그인 정보를 다시 확인해주세요.');
+        return;
+      }
+      const memo = trimmed ? trimmed : null;
+      const url =
+        source === 'registration'
+          ? `/api/invites/${year}/${round}/registrations/${id}`
+          : `/api/invites/${year}/${round}/supporter/${id}`;
+      const body = source === 'registration' ? { sponsorMemo: memo } : { memo };
+      const res = await fetch(url, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setErr(data?.message ?? '저장 실패');
+        return;
+      }
+      setSaved(trimmed);
+      setValue(trimmed);
+      if (trimmed) setEditing(false);
+    } catch {
+      setErr('네트워크 오류');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!editing && saved.trim()) {
+    return (
+      <div className="mt-2 flex items-start gap-2 text-xs">
+        <span className="text-gray-500 shrink-0 mt-0.5">메모</span>
+        <div className="flex-1 text-gray-800 whitespace-pre-line break-words leading-relaxed">
+          {saved}
+        </div>
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="text-[11px] text-gray-500 hover:text-[#0066B3] underline shrink-0 mt-0.5"
+        >
+          수정
+        </button>
+        {err && <span className="text-red-500 shrink-0 mt-0.5">{err}</span>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-2 flex items-start gap-2 text-xs">
+      <span className="text-gray-500 shrink-0 mt-1.5">메모</span>
+      <textarea
+        value={value}
+        onChange={e => setValue(e.target.value.slice(0, MAX_SPONSOR_MEMO_LENGTH))}
+        onBlur={commit}
+        onKeyDown={e => {
+          // Cmd/Ctrl+Enter로 저장. 일반 Enter는 줄바꿈 유지.
+          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+            (e.currentTarget as HTMLTextAreaElement).blur();
+          }
+          if (e.key === 'Escape') {
+            setValue(saved);
+            (e.currentTarget as HTMLTextAreaElement).blur();
+          }
+        }}
+        placeholder="예: 꽃다발 1개 / 케이크 후원 / 음료 박스"
+        rows={2}
+        maxLength={MAX_SPONSOR_MEMO_LENGTH}
+        className="flex-1 min-w-0 px-2 py-1 border border-gray-300 rounded bg-white focus:outline-none focus:border-[#0066B3] resize-y leading-relaxed"
+        disabled={saving}
+      />
+      {saving && <span className="text-gray-400 shrink-0 mt-1.5">…</span>}
+      {err && <span className="text-red-500 shrink-0 mt-1.5">{err}</span>}
     </div>
   );
 }

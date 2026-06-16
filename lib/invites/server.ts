@@ -15,6 +15,7 @@ import {
   MAX_HEADCOUNT,
   MAX_NAME_LENGTH,
   MAX_ROUND_SELECTIONS,
+  MAX_SPONSOR_MEMO_LENGTH,
   MAX_TEXT_LENGTH,
   MIN_HEADCOUNT,
   PHONE_REGEX,
@@ -407,6 +408,48 @@ export async function setSponsorAmount(regId: string, amount: number | null): Pr
     await ref.update({ sponsorAmount: FieldValue.delete() });
   } else {
     await ref.update({ sponsorAmount: Math.floor(amount) });
+  }
+  return true;
+}
+
+/**
+ * Admin이 신청자 후원 메모를 설정. memo = null 또는 빈 문자열이면 필드 제거.
+ * 길이 초과 시 에러.
+ */
+export async function setSponsorMemo(regId: string, memo: string | null): Promise<boolean> {
+  const ref = adminDb.collection(REGISTRATIONS_COLLECTION).doc(regId);
+  const snap = await ref.get();
+  if (!snap.exists) return false;
+  const trimmed = typeof memo === 'string' ? memo.trim() : '';
+  if (trimmed.length > MAX_SPONSOR_MEMO_LENGTH) {
+    throw new Error('MEMO_TOO_LONG');
+  }
+  if (!trimmed) {
+    await ref.update({ sponsorMemo: FieldValue.delete() });
+  } else {
+    await ref.update({ sponsorMemo: trimmed });
+  }
+  return true;
+}
+
+/**
+ * Admin이 현장 후원자 메모를 설정. memo = null 또는 빈 문자열이면 필드 제거.
+ */
+export async function setSupporterMemo(
+  supporterId: string,
+  memo: string | null,
+): Promise<boolean> {
+  const ref = adminDb.collection(SUPPORTERS_COLLECTION).doc(supporterId);
+  const snap = await ref.get();
+  if (!snap.exists) return false;
+  const trimmed = typeof memo === 'string' ? memo.trim() : '';
+  if (trimmed.length > MAX_SPONSOR_MEMO_LENGTH) {
+    throw new Error('MEMO_TOO_LONG');
+  }
+  if (!trimmed) {
+    await ref.update({ memo: FieldValue.delete() });
+  } else {
+    await ref.update({ memo: trimmed });
   }
   return true;
 }

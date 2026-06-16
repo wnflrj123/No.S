@@ -12,6 +12,9 @@ export const ACCESS_TOKEN_LENGTH = 32;
 export const MAX_TEXT_LENGTH = 500;
 export const MAX_NAME_LENGTH = 50;
 
+// 후원 메모(관리자 전용) max length — 물품·서비스 후원 내역 메모용
+export const MAX_SPONSOR_MEMO_LENGTH = 300;
+
 // 회차당 인원수 범위
 export const MIN_HEADCOUNT = 1;
 export const MAX_HEADCOUNT = 20;
