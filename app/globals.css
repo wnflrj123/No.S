@@ -436,3 +436,97 @@ body {
   animation: celebrationSparkle 0.7s ease-in-out infinite;
   display: inline-block;
 }
+
+/* ─── 송년 공연 히어로 숫자 카운트업 (/yearend) ───────────────
+ * --yearend-a(천 단위 앞자리)와 --yearend-b(뒤 세 자리)를 0부터 최종값까지 한 번 올린다.
+ * 최종값은 요소의 inline style로 주입되고, 애니메이션은 from(0)만 정의해 끝나면 최종값이 남는다.
+ * 커스텀 속성 등록 미지원 브라우저·모션 줄이기 설정에서는 처음부터 최종 숫자가 보인다. */
+@property --yearend-a {
+  syntax: '<integer>';
+  inherits: false;
+  initial-value: 0;
+}
+@property --yearend-b {
+  syntax: '<integer>';
+  inherits: false;
+  initial-value: 0;
+}
+@counter-style yearend-pad3 {
+  system: extends decimal;
+  pad: 3 "0";
+}
+@keyframes yearendCount {
+  from { --yearend-a: 0; --yearend-b: 0; }
+}
+.yearend-count {
+  counter-reset: yearend-a var(--yearend-a) yearend-b var(--yearend-b);
+  animation: yearendCount 1.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+.yearend-count::after {
+  content: counter(yearend-a) "," counter(yearend-b, yearend-pad3);
+}
+
+
+/* 히어로 눈 — 위에서 천천히 내려오는 작은 눈송이. 위치·속도는 요소 inline style(--x, --d, --delay, --s)로 준다 */
+@keyframes yearendSnow {
+  from { transform: translate3d(0, -12px, 0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  to { transform: translate3d(var(--drift, 20px), var(--fall, 900px), 0); opacity: 0; }
+}
+.yearend-snow {
+  position: absolute;
+  top: 0;
+  left: var(--x);
+  width: var(--s);
+  height: var(--s);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.85);
+  filter: blur(0.5px);
+  animation: yearendSnow var(--d) linear var(--delay) infinite;
+}
+
+/* 송년 공연 본문 배경 — 옅고 듬성듬성한 눈송이 무늬 (220px 타일에 눈송이 2개) */
+.yearend-snowfield {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cg fill='none' stroke='%2385B8FF' stroke-width='1.5' stroke-linecap='round' opacity='0.25'%3E%3Cg transform='translate(28 30)'%3E%3Cpath d='M0-9V9M-7.8-4.5L7.8 4.5M-7.8 4.5L7.8-4.5M-2.5-6.5L0-4L2.5-6.5M-2.5 6.5L0 4L2.5 6.5'/%3E%3C/g%3E%3Cg transform='translate(102 92) scale(0.7)'%3E%3Cpath d='M0-9V9M-7.8-4.5L7.8 4.5M-7.8 4.5L7.8-4.5'/%3E%3C/g%3E%3C/g%3E%3Cg fill='%2385B8FF' opacity='0.25'%3E%3Ccircle cx='86' cy='22' r='1.8'/%3E%3Ccircle cx='38' cy='112' r='1.4'/%3E%3Ccircle cx='124' cy='48' r='1.2'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 220px 220px;
+}
+
+/* 송년 공연 스크롤 등장 — 화면에 들어올 때 살짝 떠오르며 나타난다.
+ * 스크롤 연동 애니메이션(animation-timeline) 지원 브라우저에서만 동작하고, 나머지는 처음부터 보인다. */
+@keyframes yearendReveal {
+  from { opacity: 0; transform: translateY(28px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+/* 모션 줄이기 설정에서는 움직임 없이 투명도만 바뀌는 페이드로 대신한다 */
+@keyframes yearendFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@supports (animation-timeline: view()) {
+  .yearend-reveal {
+    animation: yearendReveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 40%;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .yearend-reveal {
+      animation-name: yearendFade;
+    }
+  }
+}
+
+/* 히어로 전구 가랜드 — 전구마다 다른 지연으로 은은하게 깜빡인다 */
+@keyframes yearendTwinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+.yearend-bulb {
+  animation: yearendTwinkle 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yearend-count { animation: none; }
+  .yearend-snow { display: none; }
+  .yearend-bulb { animation: none; }
+}

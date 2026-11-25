@@ -40,6 +40,10 @@ No.S/
 │   │   ├── page.tsx              # 공연 정보 (포스터/안내/시간/장소/캐스팅)
 │   │   ├── apply/page.tsx        # 신청 폼
 │   │   └── thanks/[token]/page.tsx       # 감사 + 후원 계좌 + 후원 토글
+│   ├── yearend/[year]/           # 송년 공연 페이지 (외부 관객용, 비로그인, 데이터는 lib/yearend)
+│   │   ├── layout.tsx            # 단독 레이아웃 (Pretendard 글꼴은 yearend.css에서 CDN @import)
+│   │   ├── page.tsx              # 히어로·소개·프로그램·출연진·오시는 길 (연도별 정적 생성)
+│   │   └── _components/          # theme(ADS 참고 색·그림자 토큰), Lozenge, ChristmasDecor(오너먼트·가랜드·눈 언덕), Hero(숫자 카운트업·눈·장식), Program(부별 카드·크레딧), Cast, Visit(지도·관람 안내), ApplyButton(구글폼 신청 버튼), ScrollTopButton(맨 위로)
 │   └── api/
 │       ├── admin/sync-users/     # 회원 동기화 API (서버 라우트)
 │       │   └── route.ts
@@ -89,6 +93,10 @@ No.S/
 │   │   ├── constants.ts          # 정규식·토큰 길이 상수
 │   │   ├── server.ts             # 서버 헬퍼 (firebase-admin 사용)
 │   │   └── client.ts             # 클라이언트 헬퍼 (firebase 클라이언트 SDK)
+│   ├── yearend/                  # 송년 공연 콘텐츠 (Firestore 없이 코드 데이터로 관리)
+│   │   ├── types.ts              # YearEndConcert, ProgramPart, ProgramItem 등
+│   │   ├── {year}.ts             # 연도별 셋리스트·크레딧·일시/장소·관람 안내 데이터 (예: 2026.ts)
+│   │   └── index.ts              # 연도 조회, 출연진 집계 헬퍼
 │   └── hooks/
 │       └── useAuth.ts            # AuthContext 래퍼 훅
 ├── types/

@@ -1,0 +1,3 @@
+/* 송년 공연 페이지 전용 글꼴 — Pretendard 동적 서브셋 (jsDelivr CDN).
+ * 레이아웃에 <link>를 직접 두면 스트리밍 중 페이지가 숨은 복사본으로 한 번 더 남아서, CSS @import로 불러온다. */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
