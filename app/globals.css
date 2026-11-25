@@ -437,33 +437,23 @@ body {
   display: inline-block;
 }
 
-/* ─── 송년 공연 히어로 숫자 카운트업 (/yearend) ───────────────
- * --yearend-a(천 단위 앞자리)와 --yearend-b(뒤 세 자리)를 0부터 최종값까지 한 번 올린다.
- * 최종값은 요소의 inline style로 주입되고, 애니메이션은 from(0)만 정의해 끝나면 최종값이 남는다.
- * 커스텀 속성 등록 미지원 브라우저·모션 줄이기 설정에서는 처음부터 최종 숫자가 보인다. */
-@property --yearend-a {
-  syntax: '<integer>';
-  inherits: false;
-  initial-value: 0;
+/* ─── 송년 공연 (/yearend) ───────────────
+ * 히어로 숫자 카운트업(CountUp)은 스크립트가 붙기 전까지 숫자를 숨겨 둔다.
+ * 스크립트가 늦거나 없으면 2.5초 뒤 최종 숫자를 그냥 보여 준다. */
+@keyframes yearendShowLate {
+  to { opacity: 1; }
 }
-@property --yearend-b {
-  syntax: '<integer>';
-  inherits: false;
-  initial-value: 0;
+.yearend-num-pending {
+  opacity: 0;
+  animation: yearendShowLate 0s 2.5s forwards;
 }
-@counter-style yearend-pad3 {
-  system: extends decimal;
-  pad: 3 "0";
+
+/* 모바일 줄바꿈 — 제목은 줄 길이를 고르게, 본문은 마지막 줄에 한 단어만 남지 않게 */
+.yearend-root :is(h1, h2, h3) {
+  text-wrap: balance;
 }
-@keyframes yearendCount {
-  from { --yearend-a: 0; --yearend-b: 0; }
-}
-.yearend-count {
-  counter-reset: yearend-a var(--yearend-a) yearend-b var(--yearend-b);
-  animation: yearendCount 1.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
-}
-.yearend-count::after {
-  content: counter(yearend-a) "," counter(yearend-b, yearend-pad3);
+.yearend-root :is(p, li, dd) {
+  text-wrap: pretty;
 }
 
 
@@ -526,7 +516,6 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .yearend-count { animation: none; }
   .yearend-snow { display: none; }
   .yearend-bulb { animation: none; }
 }

@@ -25,20 +25,6 @@ export function HeroApplyButton({ url, note }: { url: string; note?: string }) {
   );
 }
 
-/** 상단 고정 메뉴 오른쪽 작은 버튼 */
-export function NavApplyButton({ url }: { url: string }) {
-  return (
-    <a
-      href={url}
-      {...linkProps}
-      className="ml-auto inline-flex h-8 shrink-0 items-center rounded-md px-3 text-sm font-semibold text-white hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#388BFF]"
-      style={{ background: BRAND }}
-    >
-      함께하기
-    </a>
-  );
-}
-
 // 카드 안 눈송이 — 히어로와 같은 방식, 개수만 적게
 const CARD_SNOW = Array.from({ length: 14 }, (_, i) => ({
   x: `${(i * 41 + 7) % 100}%`,
@@ -61,8 +47,8 @@ export function ApplyCard({ url, note }: { url: string; note?: string }) {
       {/* 장식 */}
       <Garland />
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        <Bauble color="#E2483D" className="top-24 -left-8 size-20 md:top-20 md:-left-6 md:size-28" />
-        <Bauble color="#F5CD47" className="top-28 -right-6 size-16 md:top-24 md:-right-4 md:size-24" />
+        <Bauble color="#E2483D" className="top-14 left-3 size-11 md:top-20 md:-left-6 md:size-28" />
+        <Bauble color="#F5CD47" className="top-16 right-4 size-9 md:top-24 md:-right-4 md:size-24" />
         <GiftBox className="bottom-6 left-[6%] size-12 md:size-16 -rotate-6" />
         <Star className="bottom-10 right-[9%] size-8 md:size-10" />
         {CARD_SNOW.map((f, i) => (

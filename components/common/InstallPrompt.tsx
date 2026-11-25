@@ -18,8 +18,8 @@ export default function InstallPrompt() {
   const [showIOSGuide, setShowIOSGuide] = useState(false);
   const [visible, setVisible] = useState(false);
 
-  // 외부 관객용 invite 경로에서는 PWA 설치 안내를 띄우지 않는다
-  const isInviteRoute = pathname?.startsWith('/invite/') ?? false;
+  // 외부 관객용 경로(정기공연 invite, 송년 공연 yearend)에서는 PWA 설치 안내를 띄우지 않는다
+  const isInviteRoute = (pathname?.startsWith('/invite/') || pathname?.startsWith('/yearend/')) ?? false;
 
   useEffect(() => {
     if (isInviteRoute) return;

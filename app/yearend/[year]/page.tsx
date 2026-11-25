@@ -8,7 +8,6 @@ import Cast from './_components/Cast';
 import Visit from './_components/Visit';
 import { ACCENTS, TEXT } from './_components/theme';
 import { Garland } from './_components/ChristmasDecor';
-import { hasApply } from './_components/ApplyButton';
 import ScrollTopButton from './_components/ScrollTopButton';
 
 interface PageParams {
@@ -46,12 +45,12 @@ export default async function YearEndPage({ params }: PageParams) {
   return (
     <main>
       <Hero concert={concert} />
-      <StickyNav parts={concert.parts} applyUrl={hasApply(concert.apply) ? concert.apply.url : undefined} />
+      <StickyNav parts={concert.parts} />
 
       <section aria-label="공연 소개" className="relative overflow-hidden bg-white">
         <div aria-hidden className="yearend-snowfield pointer-events-none absolute inset-0" />
         <div className="relative max-w-2xl mx-auto px-6 py-16 md:py-24 text-center">
-          <p className="yearend-reveal text-[17px] md:text-xl font-medium leading-[1.85] whitespace-pre-line break-keep" style={{ color: TEXT }}>
+          <p className="yearend-reveal text-base md:text-xl font-medium leading-[1.8] whitespace-pre-line break-keep" style={{ color: TEXT }}>
             {concert.intro}
           </p>
           {hashtags.length > 0 && (
@@ -59,7 +58,7 @@ export default async function YearEndPage({ params }: PageParams) {
               {hashtags.map((tag, i) => {
                 const a = ACCENTS[i % ACCENTS.length];
                 return (
-                  <li key={tag} className="rounded-[4px] px-2 py-0.5 text-sm font-semibold" style={{ background: a.bg, color: a.fg }}>
+                  <li key={tag} className="whitespace-nowrap rounded-[4px] px-2 py-0.5 text-sm font-semibold" style={{ background: a.bg, color: a.fg }}>
                     #{tag}
                   </li>
                 );

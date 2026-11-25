@@ -5,6 +5,7 @@ import type { YearEndConcert } from '@/lib/yearend/types';
 import Lozenge from './Lozenge';
 import { Bauble, CandyCane, Garland, GiftBox, Snowdrift, Star } from './ChristmasDecor';
 import { HeroApplyButton, hasApply } from './ApplyButton';
+import CountUp from './CountUp';
 import { BRAND, BRAND_TEXT, HEADING, SHADOW_OVERLAY, TEXT_SUBTLEST } from './theme';
 
 const KST = 'Asia/Seoul';
@@ -24,9 +25,6 @@ const SNOW = Array.from({ length: 40 }, (_, i) => ({
  * (모션 줄이기 설정이면 모두 멈춤). 아래쪽은 눈 쌓인 언덕으로 본문과 이어진다.
  */
 export default function Hero({ concert }: { concert: YearEndConcert }) {
-  const thousands = Math.floor(concert.heroNumber / 1000);
-  const rest = concert.heroNumber % 1000;
-  const counterStyle = { '--yearend-a': thousands, '--yearend-b': rest } as CSSProperties;
   const numberText = concert.heroNumber.toLocaleString('ko-KR');
 
   const start = concert.startAt ? new Date(concert.startAt) : null;
@@ -37,11 +35,12 @@ export default function Hero({ concert }: { concert: YearEndConcert }) {
     <section className="relative overflow-hidden text-white" style={{ background: BRAND }}>
       {/* 크리스마스 장식 */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        <Bauble color="#F5CD47" className="top-16 -right-14 size-36 md:top-14 md:-right-10 md:size-72" />
-        <Bauble color="#E2483D" className="top-[26rem] -left-14 size-28 md:top-56 md:-left-12 md:size-56" />
-        <GiftBox className="bottom-28 right-[5%] size-16 md:bottom-32 md:size-24 rotate-12" />
-        <CandyCane className="bottom-16 left-[8%] h-6 w-24 md:bottom-20 md:h-8 md:w-36 -rotate-12" />
-        <Star className="top-[17%] left-[7%] size-8 md:top-[40%] md:left-auto md:right-[14%] md:size-14" />
+        {/* 모바일: 화면 안쪽 모서리에 작게 / 데스크톱: 가장자리에 크게 걸친다 */}
+        <Bauble color="#F5CD47" className="top-[4.25rem] right-3 size-14 md:top-14 md:-right-10 md:size-72" />
+        <Bauble color="#E2483D" className="top-[5.5rem] left-4 size-11 md:top-56 md:-left-12 md:size-56" />
+        <GiftBox className="bottom-9 right-5 size-12 rotate-12 md:bottom-32 md:right-[5%] md:size-24" />
+        <CandyCane className="bottom-12 left-5 h-5 w-20 -rotate-12 md:bottom-20 md:left-[8%] md:h-8 md:w-36" />
+        <Star className="top-[10.5rem] right-7 size-6 md:top-[40%] md:right-[14%] md:size-14" />
         <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,102,228,0)_0%,rgba(9,50,140,0.35)_100%)]" />
       </div>
       <Garland />
@@ -69,9 +68,9 @@ export default function Hero({ concert }: { concert: YearEndConcert }) {
             {concert.heroLead}
           </span>
           <span aria-hidden className="mt-2 inline-flex items-baseline gap-1 md:gap-2">
-            <span
-              className="yearend-count font-black leading-none tracking-[-0.045em] tabular-nums text-[clamp(3.8rem,18vw,10.5rem)] [text-shadow:0_6px_0_rgba(9,30,66,0.18)]"
-              style={counterStyle}
+            <CountUp
+              value={concert.heroNumber}
+              className="font-black leading-none tracking-[-0.045em] tabular-nums text-[clamp(3.4rem,17vw,10.5rem)] [text-shadow:0_6px_0_rgba(9,30,66,0.18)]"
             />
             <span className="text-4xl md:text-7xl font-black tracking-[-0.04em] text-[#F5CD47]">{concert.heroUnit}</span>
           </span>

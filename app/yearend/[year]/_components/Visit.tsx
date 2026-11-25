@@ -136,7 +136,7 @@ export default function Visit({ concert }: { concert: YearEndConcert }) {
                     </span>
                     <div className="min-w-0">
                       <p className={`${HEADING} text-[17px] md:text-lg leading-snug break-keep`}>{n.title}</p>
-                      <p className="mt-1 text-sm md:text-[15px] leading-relaxed break-keep" style={{ color: TEXT_SUBTLE }}>
+                      <p className="mt-1 text-sm md:text-[15px] leading-relaxed whitespace-pre-line break-keep" style={{ color: TEXT_SUBTLE }}>
                         {n.body}
                       </p>
                     </div>

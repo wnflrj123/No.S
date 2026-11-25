@@ -8,7 +8,7 @@ import './yearend.css';
  */
 export default function YearEndLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="[font-family:'Pretendard_Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif] min-h-dvh bg-white text-[#172B4D] antialiased">
+    <div className="yearend-root [font-family:'Pretendard_Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif] min-h-dvh bg-white text-[#172B4D] antialiased">
       {children}
     </div>
   );

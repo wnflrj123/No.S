@@ -43,7 +43,8 @@ No.S/
 │   ├── yearend/[year]/           # 송년 공연 페이지 (외부 관객용, 비로그인, 데이터는 lib/yearend)
 │   │   ├── layout.tsx            # 단독 레이아웃 (Pretendard 글꼴은 yearend.css에서 CDN @import)
 │   │   ├── page.tsx              # 히어로·소개·프로그램·출연진·오시는 길 (연도별 정적 생성)
-│   │   └── _components/          # theme(ADS 참고 색·그림자 토큰), Lozenge, ChristmasDecor(오너먼트·가랜드·눈 언덕), Hero(숫자 카운트업·눈·장식), Program(부별 카드·크레딧), Cast, Visit(지도·관람 안내), ApplyButton(구글폼 신청 버튼), ScrollTopButton(맨 위로)
+│   │   ├── opengraph-image.tsx   # 공유 미리보기 이미지 1200×630 (빌드 때 생성, Pretendard 글꼴은 CDN에서)
+│   │   └── _components/          # theme(ADS 참고 색·그림자 토큰), Lozenge, ChristmasDecor(오너먼트·가랜드·눈 언덕), Hero(눈·장식), CountUp(숫자 카운트업, JS), Program(부별 카드·크레딧), Cast, Visit(지도·관람 안내), ApplyButton(구글폼 신청 버튼·카드), ScrollTopButton(맨 위로)
 │   └── api/
 │       ├── admin/sync-users/     # 회원 동기화 API (서버 라우트)
 │       │   └── route.ts

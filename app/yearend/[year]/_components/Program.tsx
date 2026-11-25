@@ -2,7 +2,6 @@ import type { Credit, EventItem, PlayItem, ProgramPartWithItems, SongItem, SongS
 import { songNumbers } from '@/lib/yearend';
 import Lozenge from './Lozenge';
 import { Garland } from './ChristmasDecor';
-import { NavApplyButton } from './ApplyButton';
 import { HEADING, SHADOW_OVERLAY, SHADOW_RAISED, TEXT_SUBTLE, TEXT_SUBTLEST } from './theme';
 
 /**
@@ -19,7 +18,7 @@ export default function Program({ parts }: { parts: ProgramPartWithItems[] }) {
   );
 }
 
-export function StickyNav({ parts, applyUrl }: { parts: ProgramPartWithItems[]; applyUrl?: string }) {
+export function StickyNav({ parts }: { parts: ProgramPartWithItems[] }) {
   const linkClass =
     'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2.5 font-medium text-[#44546F] hover:bg-[#091E42]/[0.06] hover:text-[#172B4D] focus-visible:outline-2 focus-visible:outline-[#388BFF]';
   return (
@@ -39,7 +38,6 @@ export function StickyNav({ parts, applyUrl }: { parts: ProgramPartWithItems[]; 
           <span aria-hidden>📍</span>
           오시는 길
         </a>
-        {applyUrl && <NavApplyButton url={applyUrl} />}
       </div>
     </nav>
   );
@@ -94,7 +92,7 @@ function PartSection({ part }: { part: ProgramPartWithItems }) {
           <p className="mt-3 text-lg md:text-xl font-semibold break-keep" style={{ color: part.accent }}>
             {part.subtitle}
           </p>
-          <p className="mt-2 max-w-lg text-[15px] md:text-base leading-relaxed break-keep" style={{ color: TEXT_SUBTLE }}>
+          <p className="mt-2 max-w-lg text-[15px] md:text-base leading-relaxed whitespace-pre-line break-keep" style={{ color: TEXT_SUBTLE }}>
             {part.description}
           </p>
         </header>
@@ -134,7 +132,7 @@ export function FamilyNote({ text, className = '' }: { text: string; className?:
       <Lozenge bg={FAMILY_BG} fg={FAMILY_FG}>
         💞 가족 무대
       </Lozenge>
-      <span>{text}</span>
+      <span className="whitespace-pre-line [text-wrap:pretty]">{text}</span>
     </p>
   );
 }
@@ -172,7 +170,13 @@ function SongRow({ item, no, part }: { item: SongItem; no: number; part: Program
           </p>
         )}
         {item.group && <p className={`${HEADING} mt-3 text-[15px]`}>{item.group}</p>}
-        <Credits credits={item.credits} part={part} className={item.group ? 'mt-1.5' : 'mt-3'} />
+        <Credits
+          credits={item.credits}
+          part={part}
+          // 배역이 많은 곡(라비보엠 등)은 두 개씩 끊어 읽기 쉽게, 밴드처럼 적으면 한 줄로
+          perLine={item.credits.filter(c => !c.lead && c.label && c.names.length === 1).length > 5 ? 2 : undefined}
+          className={item.group ? 'mt-1.5' : 'mt-3'}
+        />
         {item.note && (
           <p className="mt-1.5 text-sm font-medium" style={{ color: TEXT_SUBTLE }}>
             {item.note}
