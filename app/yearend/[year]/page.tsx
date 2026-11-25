@@ -27,10 +27,21 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   if (!concert) return { title: '존재하지 않는 페이지' };
   const description = concert.tagline.replace(/\n/g, ' ');
   return {
+    // 미리보기 이미지 주소를 www로 만든다. 루트 metadataBase(www 없음)는 www로 리다이렉트되는데,
+    // 카카오톡 미리보기는 리다이렉트를 따라가지 않아 이미지가 안 보인다.
+    metadataBase: new URL('https://www.samsung-musical.com'),
     title: concert.title,
     description,
-    openGraph: { title: concert.title, description },
-    twitter: { title: concert.title, description },
+    alternates: { canonical: `/yearend/${concert.year}` },
+    openGraph: {
+      title: concert.title,
+      description,
+      url: `/yearend/${concert.year}`,
+      siteName: 'No.S',
+      locale: 'ko_KR',
+      type: 'website',
+    },
+    twitter: { card: 'summary_large_image', title: concert.title, description },
   };
 }
 
