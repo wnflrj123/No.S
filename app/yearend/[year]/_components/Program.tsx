@@ -1,6 +1,7 @@
 import type { Credit, EventItem, PlayItem, ProgramPartWithItems, SongItem, SongSource } from '@/lib/yearend/types';
 import { songNumbers } from '@/lib/yearend';
 import Lozenge from './Lozenge';
+import Phrases from './Phrases';
 import { Garland } from './ChristmasDecor';
 import { HEADING, SHADOW_OVERLAY, SHADOW_RAISED, TEXT_SUBTLE, TEXT_SUBTLEST } from './theme';
 
@@ -90,10 +91,10 @@ function PartSection({ part }: { part: ProgramPartWithItems }) {
             {part.title}
           </h2>
           <p className="mt-3 text-lg md:text-xl font-semibold break-keep" style={{ color: part.accent }}>
-            {part.subtitle}
+            <Phrases text={part.subtitle} />
           </p>
           <p className="mt-2 max-w-lg text-[15px] md:text-base leading-relaxed whitespace-pre-line break-keep" style={{ color: TEXT_SUBTLE }}>
-            {part.description}
+            <Phrases text={part.description} />
           </p>
         </header>
 
@@ -132,7 +133,9 @@ export function FamilyNote({ text, className = '' }: { text: string; className?:
       <Lozenge bg={FAMILY_BG} fg={FAMILY_FG}>
         💞 가족 무대
       </Lozenge>
-      <span className="whitespace-pre-line [text-wrap:pretty]">{text}</span>
+      <span className="whitespace-pre-line [text-wrap:pretty]">
+        <Phrases text={text} />
+      </span>
     </p>
   );
 }
@@ -166,7 +169,7 @@ function SongRow({ item, no, part }: { item: SongItem; no: number; part: Program
         {item.family && <FamilyNote text={item.family} className="mt-2" />}
         {item.blurb && (
           <p className="mt-2 text-sm font-semibold leading-relaxed whitespace-pre-line break-keep" style={{ color: part.accent }}>
-            {item.blurb}
+            <Phrases text={item.blurb} />
           </p>
         )}
         {item.group && <p className={`${HEADING} mt-3 text-[15px]`}>{item.group}</p>}
@@ -216,7 +219,7 @@ function SpecialCard({ item, part }: { item: EventItem | PlayItem; part: Program
           <h3 className={`${HEADING} mt-2 text-2xl md:text-[28px] leading-tight break-keep`}>{title}</h3>
           {item.description && (
             <p className="mt-2 text-[15px] md:text-base leading-relaxed whitespace-pre-line break-keep" style={{ color: TEXT_SUBTLE }}>
-              {item.description}
+              <Phrases text={item.description} />
             </p>
           )}
           {item.kind === 'play' && item.family && <FamilyNote text={item.family} className="mt-3" />}

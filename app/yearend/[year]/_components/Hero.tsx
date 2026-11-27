@@ -3,6 +3,7 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { ko } from 'date-fns/locale';
 import type { YearEndConcert } from '@/lib/yearend/types';
 import Lozenge from './Lozenge';
+import Phrases from './Phrases';
 import { Bauble, CandyCane, Garland, GiftBox, Snowdrift, Star } from './ChristmasDecor';
 import { HeroApplyButton, hasApply } from './ApplyButton';
 import CountUp from './CountUp';
@@ -77,7 +78,7 @@ export default function Hero({ concert }: { concert: YearEndConcert }) {
         </h1>
 
         <p className="mt-8 md:mt-10 text-lg md:text-2xl font-semibold leading-snug whitespace-pre-line break-keep">
-          {concert.tagline}
+          <Phrases text={concert.tagline} />
         </p>
 
         {/* 일시·장소 카드 */}

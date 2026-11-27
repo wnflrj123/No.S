@@ -44,7 +44,7 @@ No.S/
 │   │   ├── layout.tsx            # 단독 레이아웃 (Pretendard 글꼴은 yearend.css에서 CDN @import)
 │   │   ├── page.tsx              # 히어로·소개·프로그램·출연진·오시는 길 (연도별 정적 생성)
 │   │   ├── opengraph-image.tsx   # 공유 미리보기 이미지 1200×630 (빌드 때 생성, Pretendard 글꼴은 CDN에서)
-│   │   └── _components/          # theme(ADS 참고 색·그림자 토큰), Lozenge, ChristmasDecor(오너먼트·가랜드·눈 언덕), Hero(눈·장식), CountUp(숫자 카운트업, JS), Program(부별 카드·크레딧), Cast, Visit(지도·관람 안내), ApplyButton(구글폼 신청 버튼·카드), ScrollTopButton(맨 위로)
+│   │   └── _components/          # theme(ADS 참고 색·그림자 토큰), Lozenge, ChristmasDecor(오너먼트·가랜드·눈 언덕), Hero(눈·장식), CountUp(숫자 카운트업, JS), Program(부별 카드·크레딧), Phrases(문구 어구 단위 줄바꿈: `\n` 줄바꿈, `|` 끊을 수 있는 곳), Cast, Visit(지도·관람 안내), ApplyButton(구글폼 신청 버튼·카드), ScrollTopButton(맨 위로)
 │   └── api/
 │       ├── admin/sync-users/     # 회원 동기화 API (서버 라우트)
 │       │   └── route.ts
@@ -97,7 +97,7 @@ No.S/
 │   ├── yearend/                  # 송년 공연 콘텐츠 (Firestore 없이 코드 데이터로 관리)
 │   │   ├── types.ts              # YearEndConcert, ProgramPart, ProgramItem 등
 │   │   ├── {year}.ts             # 연도별 셋리스트·크레딧·일시/장소·관람 안내 데이터 (예: 2026.ts)
-│   │   └── index.ts              # 연도 조회, 출연진 집계 헬퍼
+│   │   └── index.ts              # 연도 조회, 출연진 집계, plainText(줄바꿈 표시 제거) 헬퍼
 │   └── hooks/
 │       └── useAuth.ts            # AuthContext 래퍼 훅
 ├── types/

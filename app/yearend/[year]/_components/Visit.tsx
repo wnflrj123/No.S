@@ -2,6 +2,7 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { ko } from 'date-fns/locale';
 import type { YearEndConcert } from '@/lib/yearend/types';
 import Lozenge from './Lozenge';
+import Phrases from './Phrases';
 import { ApplyCard, hasApply } from './ApplyButton';
 import { ACCENTS, BRAND, BRAND_TEXT, HEADING, SHADOW_RAISED, SUNKEN, TEXT_SUBTLE } from './theme';
 
@@ -137,7 +138,7 @@ export default function Visit({ concert }: { concert: YearEndConcert }) {
                     <div className="min-w-0">
                       <p className={`${HEADING} text-[17px] md:text-lg leading-snug break-keep`}>{n.title}</p>
                       <p className="mt-1 text-sm md:text-[15px] leading-relaxed whitespace-pre-line break-keep" style={{ color: TEXT_SUBTLE }}>
-                        {n.body}
+                        <Phrases text={n.body} />
                       </p>
                     </div>
                   </li>

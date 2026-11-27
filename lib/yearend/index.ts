@@ -39,6 +39,11 @@ export function listCast(concert: YearEndConcert): string[] {
   return [...names].sort((a, b) => a.localeCompare(b, 'ko'));
 }
 
+/** 화면용 줄바꿈 표시(\n, |)를 뺀 한 줄짜리 문구 — 미리보기 설명 등에 쓴다 */
+export function plainText(text: string): string {
+  return text.replace(/\s*[\n|]\s*/g, ' ').trim();
+}
+
 export function countSongs(concert: YearEndConcert): number {
   return concert.parts.reduce((sum, p) => sum + p.items.filter(i => i.kind === 'song').length, 0);
 }

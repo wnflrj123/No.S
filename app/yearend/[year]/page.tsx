@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { getYearEndConcert, listCast, listYearEndYears } from '@/lib/yearend';
+import { getYearEndConcert, listCast, listYearEndYears, plainText } from '@/lib/yearend';
+import Phrases from './_components/Phrases';
 import Hero from './_components/Hero';
 import Program, { StickyNav } from './_components/Program';
 import Cast from './_components/Cast';
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   const { year } = await params;
   const concert = getYearEndConcert(year);
   if (!concert) return { title: '존재하지 않는 페이지' };
-  const description = concert.tagline.replace(/\n/g, ' ');
+  const description = plainText(concert.tagline);
   return {
     // 미리보기 이미지 주소를 www로 만든다. 루트 metadataBase(www 없음)는 www로 리다이렉트되는데,
     // 카카오톡 미리보기는 리다이렉트를 따라가지 않아 이미지가 안 보인다.
@@ -62,7 +63,7 @@ export default async function YearEndPage({ params }: PageParams) {
         <div aria-hidden className="yearend-snowfield pointer-events-none absolute inset-0" />
         <div className="relative max-w-2xl mx-auto px-6 py-16 md:py-24 text-center">
           <p className="yearend-reveal text-base md:text-xl font-medium leading-[1.8] whitespace-pre-line break-keep" style={{ color: TEXT }}>
-            {concert.intro}
+            <Phrases text={concert.intro} />
           </p>
           {hashtags.length > 0 && (
             <ul className="mt-8 flex flex-wrap justify-center gap-2">
